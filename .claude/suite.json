@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/sandrogekeler/AllesSandro/main/schemas/project.schema.json",
+  "product": "Kompass",
+  "kind": "other",
+  "tracking": "github-issues",
+  "roadmap": "agent_docs/ROADMAP.md",
+  "health": {
+    "commands": [
+      {
+        "name": "aislop",
+        "run": "npx --yes aislop@0.16.0 ci"
+      },
+      {
+        "name": "template conflicts",
+        "run": "! git grep -nE '^(<<<<<<< before updating|>>>>>>> after updating)$'"
+      }
+    ]
+  }
+}

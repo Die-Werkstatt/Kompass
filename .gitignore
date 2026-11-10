@@ -1,0 +1,21 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Claude Code local settings
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Copier leftovers
+*.rej
+
+# Bytecode from the .claude/ health runner, which every project runs
+__pycache__/

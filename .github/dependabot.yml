@@ -1,0 +1,18 @@
+# Project-owned (seeded once from AllesSandro). Dependabot owns dependency
+# updates; Renovate is limited to template updates (renovate.json).
+#
+# Note: Dependabot also bumps action pins inside locked workflows. That is
+# expected. The next template update merges cleanly unless AllesSandro changed
+# the same line, in which case it shows as a conflict (docs/updating.md there).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: sunday
+    labels: ['type:chore', 'area:build']
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ['*']

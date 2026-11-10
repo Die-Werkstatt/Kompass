@@ -1,0 +1,10 @@
+# Kompass
+
+
+
+## Development
+
+See [`agent_docs/CLAUDE.md`](agent_docs/CLAUDE.md) for structure, commands and
+conventions, and [`CONTRIBUTING.md`](CONTRIBUTING.md) for how changes land.
+
+<!-- Created from https://github.com/sandrogekeler/AllesSandro. -->

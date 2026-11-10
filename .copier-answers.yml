@@ -1,0 +1,16 @@
+# Changes here will be overwritten by Copier. Do not edit by hand.
+_commit: v0.6.0
+_src_path: https://github.com/sandrogekeler/AllesSandro.git
+aislop: true
+claude_action: true
+default_branch: main
+description: ''
+kind: other
+languages: []
+license: none
+owner: Die-Werkstatt
+project_name: Kompass
+public: false
+release_notes: false
+repo_name: Kompass
+tracking: github-issues

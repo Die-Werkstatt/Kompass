@@ -1,0 +1,79 @@
+# Kompass
+
+TODO: one paragraph on what this project is and who it is for.
+
+<!-- Project-owned. Seeded once from sandrogekeler/AllesSandro; rewrite freely.
+Keep it under ~200 lines: it is imported into every session by ../CLAUDE.md.
+Put rules that only matter for some files in .claude/rules/ with `paths:`
+frontmatter instead, so they load only when those files are touched. -->
+
+## Stack
+- TODO: frameworks and versions that matter
+
+## Project structure
+
+TODO: the top-level directories and what lives in each.
+
+## Architecture rules
+
+TODO: the few rules a change must not break (layering, IPC boundaries, where
+state lives). Short and checkable beats long and aspirational.
+
+## Build & dev commands
+
+```sh
+python3 .claude/suite-check.py   # every health check in .claude/suite.json
+```
+
+## Task tracking
+Work is tracked in GitHub Issues. Every issue carries a `type:`, an `area:` and
+exactly one priority (`p0`-`p3`) label. The issue forms ask for it and the
+`issue-priority` workflow applies it; an issue opened through the API (by an
+agent) sets the label in the same call, `p2` when unclear. Close issues from
+the pull request with `Fixes #N`.
+
+## Commits & pull requests
+
+- One pull request per piece of work, never one per tweak. Its `## Changelog`
+  section gives each change a line (`- feature: ...`, `- fix: ...`,
+  `- chore: ...`). Split only for risk, an independent revert or a different
+  release.
+- Changelog lines and titles are public release-notes copy: imperative,
+  sentence case, no trailing period, no em dashes.
+- Every pull request needs an `area:` label, plus a `type:` label when it has
+  no Changelog section, before it can merge (the `pr-labelled` status). Which
+  type: see `.github/pull_request_template.md`.
+
+## Files that come from the template
+
+This repo was created from sandrogekeler/AllesSandro and is kept in step with it
+by Renovate (`.copier-answers.yml` records the version). Two kinds of file:
+
+- **Locked** (re-applied on every template update): `.claude/suite-*.py`,
+  `.github/workflows/{codeql,scorecard,pr-labelled,labels,template-guard,issue-priority}.yml`
+  (CodeQL and Scorecard only on a public repo) and the optional `aislop.yml`,
+  `claude.yml`, `.aislop/base.yml`, `.github/scripts/changelog-section.py`,
+  `.github/scripts/release-notes.py`,
+  `.claude/rules/{writing,simplicity,typography}.md`. Do not edit them here: change
+  AllesSandro instead. A local edit is kept but shows up as a merge conflict on
+  the next template update.
+- **Seeded** (created once, owned by this repo): everything else, including
+  this file.
+
+A template-update PR with `<<<<<<< before updating` markers: see
+`.claude/rules/template-files.md`.
+
+## Docs
+
+Describe what is on disk, in the present tense. Intent goes in
+`agent_docs/ROADMAP.md` as an unchecked item. Unsure whether something landed?
+Check before writing it down.
+
+## Do not
+
+- Commit secrets, `.env` files or credentials.
+- Edit generated files or lockfiles by hand; regenerate them.
+
+## Deeper rules, loaded on demand
+
+`.claude/rules/*.md`: each one names the paths that load it.
