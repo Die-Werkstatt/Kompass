@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kompass Pie Playground</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;600&family=Barlow:wght@600&family=Archivo:wdth,wght@125,600&family=Jost:wght@500&display=swap">
+<style>
+/* Layout: control strip on top, one large canvas below where the pie opens at the pointer. Single dark look by choice (Ulm palette from round 2). */
+:root {
+  --ground: #0e0e0e;
+  --surface: #171717;
+  --line: #2c2c2c;
+  --ink: #f1f0ec;
+  --stone: #8f8d88;
+  --signal: #f2542d;
+  --theme-blue: #4772b3;
+  --sans: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box }
+html, body { height: 100% }
+body { background: var(--ground); color: var(--ink); font: 14px/1.5 var(--sans); }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 24px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 16px; }
+h1 { font-size: 22px; font-weight: 600; margin: 0 }
+.bar { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center }
+.group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap }
+.group > span { color: var(--stone); font-size: 13px; margin-right: 4px }
+button.opt { font: 13px var(--sans); color: var(--ink); background: var(--surface); border: 1px solid var(--line); padding: 5px 10px; cursor: pointer; border-radius: 0 }
+button.opt[aria-pressed="true"] { border-color: var(--signal); color: #fff }
+button.opt:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
+#stage { position: relative; height: min(620px, 72vh); min-height: 420px; background: var(--surface); border: 1px solid var(--line); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair }
+#stage:focus-visible { outline: 2px solid var(--signal) }
+#stage svg { position: absolute; inset: 0; width: 100%; height: 100% }
+.hint { position: absolute; left: 16px; bottom: 12px; right: 16px; font: 12px var(--mono); color: var(--stone); pointer-events: none }
+.crumb { position: absolute; left: 16px; top: 12px; font: 12px var(--mono); color: var(--stone); pointer-events: none }
+.log { display: flex; gap: 8px 16px; flex-wrap: wrap; font: 13px var(--mono); color: var(--stone); min-height: 20px }
+.log b { color: var(--ink); font-weight: 400 }
+.notes { color: var(--stone); font-size: 13px; display: grid; gap: 4px; max-width: 80ch }
+.notes p { margin: 0 }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Kompass pie playground</h1>
+
+  <div class="bar">
+    <div class="group" role="group" aria-label="Variant"><span>Variant</span>
+      <button class="opt" id="v-combo" data-v="combo" aria-pressed="true">G · Bearing needle</button>
+      <button class="opt" id="v-rays" data-v="rays" aria-pressed="false">D · Rays</button>
+      <button class="opt" id="v-wedge" data-v="wedge" aria-pressed="false">E · Lifted slot</button>
+      <button class="opt" id="v-needle" data-v="needle" aria-pressed="false">F · Needle</button>
+    </div>
+    <div class="group" role="group" aria-label="Hover colour"><span>Hover colour</span>
+      <button class="opt" id="h-theme" data-h="theme" aria-pressed="false">Blender theme blue</button>
+      <button class="opt" id="h-signal" data-h="signal" aria-pressed="true">Signal red</button>
+    </div>
+    <div class="group" role="group" aria-label="Trigger"><span>Open with</span>
+      <button class="opt" id="t-click" data-t="click" aria-pressed="true">Click / tap</button>
+      <button class="opt" id="t-key" data-t="key" aria-pressed="false">Hold Q</button>
+    </div>
+  </div>
+
+  <div id="stage" tabindex="0" aria-label="Pie canvas. Open a pie with a click, or hold Q.">
+    <svg id="svg" aria-hidden="true"></svg>
+    <div class="crumb" id="crumb">Modeling</div>
+    <div class="hint" id="hint">Click anywhere to open the pie. Move toward a slot, click to run it. Click the centre dial, Esc or right-click to go back.</div>
+  </div>
+
+  <div class="log" id="log"><span>Last run: <b id="last">nothing yet</b></span></div>
+
+  <div class="notes">
+    <p>Slots with a red corner open a sub-pie after the pointer rests on them for 0.1 s, centred on the pointer. Tools run only on a click, or on release after press and drag.</p>
+    <p>This mimics the gesture to judge the look. Timing, radius and the live pie's centre are Blender's own and come from the user's preferences.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var C = { ground: "#0e0e0e", surface: "#171717", line: "#2c2c2c", ink: "#f1f0ec", stone: "#8f8d88", signal: "#f2542d", blue: "#4772b3" };
+  var FONTS = { combo: "Barlow", rays: "Barlow", wedge: "Archivo", needle: "Jost" };
+  var FS = { combo: 13, rays: 13, wedge: 11, needle: 13 };
+
+  // Directions in degrees, 0 = north, clockwise. Blender fills slots in the order W, E, S, N, NW, NE, SW, SE.
+  var PIES = {
+    root: { name: "Modeling", items: {
+      0: { label: "Extrude", sub: "extrude" }, 45: { label: "Inset" }, 90: { label: "Bevel", sub: "bevel" }, 135: { label: "Knife" },
+      180: { label: "Loop Cut" }, 225: { label: "Merge", sub: "merge" }, 270: { label: "Subdivide" }, 315: { label: "Dissolve", sub: "dissolve" } } },
+    extrude: { name: "Extrude", items: { 270: { label: "Region" }, 90: { label: "Along Normals" }, 180: { label: "Individual" }, 0: { label: "Manifold" } } },
+    bevel: { name: "Bevel", items: { 270: { label: "Edges" }, 90: { label: "Vertices" } } },
+    merge: { name: "Merge", items: { 270: { label: "Merge At", sub: "mergeAt" }, 90: { label: "Clean Up", sub: "cleanup" }, 0: { label: "Collapse" }, 180: { label: "By Distance" } } },
+    mergeAt: { name: "Merge At", items: { 270: { label: "Center" }, 90: { label: "Cursor" }, 0: { label: "First" }, 180: { label: "Last" } } },
+    cleanup: { name: "Clean Up", items: { 270: { label: "Delete Loose" }, 90: { label: "Degenerate" }, 0: { label: "Fill Holes" }, 180: { label: "Make Planar" } } },
+    dissolve: { name: "Dissolve", items: { 270: { label: "Vertices" }, 90: { label: "Edges" }, 180: { label: "Faces" }, 0: { label: "Limited" } } }
+  };
+
+  var state = { variant: "combo", hover: "signal", trigger: "click", open: false, stack: [], cx: 0, cy: 0, angle: null, dir: null, downAt: 0, dragging: false, keyDown: false, px: 0, py: 0 };
+  var stage = document.getElementById("stage"), svg = document.getElementById("svg");
+  var DEAD = 22;
+
+  function el(tag, attrs, parent) { var n = document.createElementNS(NS, tag); for (var k in attrs) n.setAttribute(k, attrs[k]); (parent || svg).appendChild(n); return n; }
+  function mix(a, b, t) {
+    var A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16), o = "#";
+    [16, 8, 0].forEach(function (sh) { var v = Math.round(((A >> sh) & 255) * (1 - t) + ((B >> sh) & 255) * t); o += (v < 16 ? "0" : "") + v.toString(16); });
+    return o;
+  }
+  function P(cx, cy, r, deg) { var a = deg * Math.PI / 180; return [cx + Math.sin(a) * r, cy - Math.cos(a) * r]; }
+  function pie() { return PIES[state.stack[state.stack.length - 1] || "root"]; }
+  function nearestDir(items, ang) {
+    if (ang === null) return null;
+    var best = null, bd = 999;
+    Object.keys(items).forEach(function (k) { var d = Math.abs(((ang - +k) % 360 + 540) % 360 - 180); if (d < bd) { bd = d; best = +k; } });
+    return best;
+  }
+
+  function drawDial(cx, cy, ang, dir) {
+    var v = state.variant, k = Math.min(1, stage.clientWidth / 700) * (state.stack.length ? 0.72 : 1); // sub-pies get a smaller dial
+    if (v === "combo") {
+      // Round 1 bearing ring (5 degree ticks, longer every 45) with the F needle at its centre.
+      var R0 = 46 * k + 6;
+      el("circle", { cx: cx, cy: cy, r: R0 + 3, fill: "none", stroke: C.line, "stroke-width": 1.5 });
+      for (var t = 0; t < 72; t++) {
+        var deg = t * 5, major = t % 9 === 0, on = dir !== null && deg === dir;
+        var a1 = P(cx, cy, major ? R0 - 12 : R0 - 5, deg), a2 = P(cx, cy, R0, deg);
+        el("line", { x1: a1[0], y1: a1[1], x2: a2[0], y2: a2[1], stroke: on ? C.signal : major ? C.ink : C.stone, "stroke-width": on ? 3 : major ? 2 : 1, opacity: major || on ? 1 : .55 });
+      }
+      var nn = P(cx, cy, R0 + 12, 0);
+      var g3 = el("g", { transform: "rotate(" + (ang === null ? 0 : ang) + " " + cx + " " + cy + ")" });
+      el("path", { d: "M" + nn[0] + " " + (nn[1] - 4) + "l5 8h-10z", fill: C.signal }, g3);
+      var L3 = R0 - 22, W3 = 6 * k + 2;
+      el("path", { d: "M" + cx + " " + (cy - L3) + "L" + (cx + W3) + " " + (cy - 3) + "H" + (cx - W3) + "Z", fill: C.signal }, g3);
+      el("path", { d: "M" + (cx - W3) + " " + (cy + 3) + "H" + (cx + W3) + "L" + cx + " " + (cy + L3) + "Z", fill: C.ink }, g3);
+    } else if (v === "rays") {
+      for (var g = 0; g < 360; g += 45) { var on = g === dir, a = P(cx, cy, 14 * k + 4, g), b = P(cx, cy, (on ? 44 : 32) * k + 4, g);
+        el("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: on ? C.signal : C.ink, "stroke-width": 6 }); }
+    } else if (v === "wedge") {
+      var r = 30 * k + 6, h = dir === null ? 0 : dir;
+      if (dir === null) { el("circle", { cx: cx, cy: cy, r: r, fill: C.ink }); }
+      else {
+        var a1 = P(cx, cy, r, h + 30), a2 = P(cx, cy, r, h - 30);
+        el("path", { d: "M" + cx + " " + cy + "L" + a1 + "A" + r + " " + r + " 0 1 1 " + a2 + "Z", fill: C.ink });
+        var o = P(cx, cy, 11, h), w1 = P(o[0], o[1], r, h - 22.5), w2 = P(o[0], o[1], r, h + 22.5);
+        el("path", { d: "M" + o + "L" + w1 + "A" + r + " " + r + " 0 0 1 " + w2 + "Z", fill: C.signal });
+      }
+    } else {
+      var rr = 44 * k + 4;
+      for (var g2 = 0; g2 < 360; g2 += 45) { var m = P(cx, cy, rr, g2), s = g2 === dir ? 8 : 5;
+        el("rect", { x: m[0] - s / 2, y: m[1] - s / 2, width: s, height: s, fill: g2 === dir ? C.signal : C.stone }); }
+      var n = el("g", { transform: "rotate(" + (ang === null ? 0 : ang) + " " + cx + " " + cy + ")" });
+      var L = 36 * k + 2, W = 9 * k + 2;
+      el("path", { d: "M" + cx + " " + (cy - L) + "L" + (cx + W) + " " + (cy - 4) + "H" + (cx - W) + "Z", fill: C.signal }, n);
+      el("path", { d: "M" + (cx - W) + " " + (cy + 4) + "H" + (cx + W) + "L" + cx + " " + (cy + L) + "Z", fill: C.ink }, n);
+    }
+  }
+
+  function render() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var crumb = ["Modeling"].concat(state.stack.map(function (s) { return PIES[s].name; })).join(" / ");
+    document.getElementById("crumb").textContent = crumb;
+    if (!state.open) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    var R = Math.max(95, Math.min(150, Math.min(w, h) * 0.3));
+    var bw = w < 520 ? 84 : 120, bh = 32;
+    R = Math.min(R, w / 2 - bw - 2);
+    // keep the whole pie on the stage
+    var cx = Math.min(Math.max(state.cx, R * 1.1 + bw / 2 + 4), w - R * 1.1 - bw / 2 - 4);
+    var cy = Math.min(Math.max(state.cy, R + bh + 30), h - R - bh - 36); // N/S slots sit half a slot further out
+    if (w < R * 2.2 + bw + 8) cx = w / 2;
+    state.ccx = cx; state.ccy = cy; state.rects = [];
+    var kk = Math.min(1, w / 700) * (state.stack.length ? 0.72 : 1); state.innerR = 46 * kk + 9;
+    var items = pie().items, dir = state.dir;
+    drawDial(cx, cy, state.shown, dir);
+    var inside = Math.hypot(state.px - cx, state.py - cy) <= state.innerR;
+    var lab = el("text", { x: cx, y: cy + state.innerR + 22, "text-anchor": "middle", fill: inside ? C.ink : C.stone, opacity: inside ? 1 : 0.6, "font-size": 11, "letter-spacing": "0.12em", "font-family": "'Barlow', 'IBM Plex Sans', sans-serif" });
+    lab.textContent = state.stack.length ? "BACK" : "CLOSE";
+    if (state.stack.length) {
+      var ttl = el("text", { x: cx, y: cy - state.innerR - 18, "text-anchor": "middle", fill: C.ink, "font-size": 12, "font-weight": 600, "letter-spacing": "0.14em", "font-family": "'Barlow', 'IBM Plex Sans', sans-serif" });
+      ttl.textContent = pie().name.toUpperCase();
+    }
+    // Highlight strength follows the pointer: angular closeness (eased needle angle) times distance past the dial ring.
+    var pd = Math.hypot(state.px - cx, state.py - cy), n = Object.keys(items).length;
+    var radial = Math.max(0, Math.min(1, (pd - state.innerR) / Math.max(20, (R - state.innerR) * 0.6)));
+    var font = FONTS[state.variant], fs = FS[state.variant] * (w < 520 ? 0.8 : 1);
+    Object.keys(items).forEach(function (key) {
+      var deg = +key, it = items[key], p = P(cx, cy, R, deg);
+      var x = p[0] + (deg === 90 ? 0 : deg === 270 ? -bw : -bw / 2) + (deg === 45 || deg === 135 ? bw * 0.2 : deg === 225 || deg === 315 ? -bw * 0.2 : 0);
+      var y = p[1] - bh / 2 + (deg === 0 ? -bh * 0.5 : deg === 180 ? bh * 0.5 : 0);
+      if (deg === 90) x = p[0] - 4; if (deg === 270) x = p[0] - bw + 4;
+      state.rects.push({ x: x, y: y, w: bw, h: bh, sub: it.sub });
+      var hot = deg === dir, hue = state.hover === "theme" ? C.blue : C.signal;
+      var near = state.shown === null ? 0 : Math.max(0, 1 - Math.abs(((state.shown - deg) % 360 + 540) % 360 - 180) / (360 / Math.max(n, 2)));
+      var amt = near * near * radial * (hot ? 1 : 0.55);
+      if (hot) amt = Math.max(amt, 0.3);
+      var fill = mix(C.ground, hue, amt);
+      el("rect", { x: x, y: y, width: bw, height: bh, fill: fill, stroke: mix(C.line, hue, amt), "stroke-width": 1 });
+      if (it.sub) el("path", { d: "M" + (x + bw - 9) + " " + y + "H" + (x + bw) + "V" + (y + 9) + "Z", fill: amt > 0.6 && state.hover === "signal" ? C.ink : C.signal });
+      var t = el("text", { x: x + bw / 2, y: y + bh / 2 + fs * 0.36, "text-anchor": "middle", fill: mix(C.ink, "#ffffff", amt), "font-size": fs, "letter-spacing": state.variant === "needle" ? "0.12em" : "0.08em", "font-family": "'" + font + "', 'IBM Plex Sans', sans-serif" });
+      t.textContent = it.label.toUpperCase();
+    });
+  }
+
+  function local(e) { var r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  function track(x, y) {
+    state.px = x; state.py = y;
+    if (!state.open) return;
+    var dx = x - state.ccx, dy = y - state.ccy;
+    // The needle always follows the pointer; a slot is selected only outside the dial's outer ring.
+    var dist = Math.hypot(dx, dy);
+    state.angle = dist < 8 ? state.angle : (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+    state.dir = dist > (state.innerR || DEAD) ? nearestDir(pie().items, state.angle) : null;
+    // Resting on a sub-pie slot for HOLD ms opens the sub-pie centred on the pointer; tools still need a click.
+    var NEAR = 0, HOLD = 100, hit = null;
+    (state.rects || []).forEach(function (r) { if (r.sub && x > r.x - NEAR && x < r.x + r.w + NEAR && y > r.y - NEAR && y < r.y + r.h + NEAR) hit = r.sub; });
+    if (hit && hit !== state.suppress) {
+      if (state.pending !== hit) { clearTimeout(state.timer); state.pending = hit; state.timer = setTimeout(function () { state.pending = null; if (state.open) openSub(hit, state.px, state.py); }, HOLD); }
+    } else { clearTimeout(state.timer); state.pending = null; }
+    if (!hit) state.suppress = null;
+    render(); kick();
+  }
+  // The drawn needle eases toward the pointer angle along the shortest arc: about 90% of the way in 100 ms.
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches, raf = 0, last = 0;
+  function ease(ts) {
+    raf = 0;
+    if (state.angle === null) return;
+    if (state.shown === null || reduce) { state.shown = state.angle; render(); return; }
+    var dt = last ? Math.min(50, ts - last) : 16; last = ts;
+    var diff = ((state.angle - state.shown) % 360 + 540) % 360 - 180;
+    if (Math.abs(diff) < 0.2) { state.shown = state.angle; last = 0; render(); return; }
+    state.shown = (state.shown + diff * (1 - Math.exp(-dt / 45)) + 360) % 360;
+    render(); raf = requestAnimationFrame(ease);
+  }
+  function kick() { if (!raf) { last = 0; raf = requestAnimationFrame(ease); } }
+  function openSub(key, x, y) { clearTimeout(state.timer); state.pending = null; state.centres.push([state.ccx, state.ccy]); state.stack.push(key); state.cx = x; state.cy = y; state.dir = null; state.suppress = null; render(); }
+  function openAt(x, y) { state.open = true; state.stack = []; state.centres = []; state.suppress = null; state.cx = x; state.cy = y; state.angle = null; state.shown = null; state.dir = null; render(); track(x, y); }
+  function close() { clearTimeout(state.timer); state.pending = null; state.open = false; state.stack = []; state.dir = null; render(); }
+  function back() { if (!state.open) return; if (state.stack.length) { state.suppress = state.stack.pop(); var c = state.centres.pop(); state.cx = c[0]; state.cy = c[1]; state.dir = null; render(); track(state.px, state.py); } else close(); }
+  function choose() {
+    if (state.dir === null) return false;
+    var it = pie().items[state.dir];
+    if (it.sub) { openSub(it.sub, state.px, state.py); return true; }
+    var path = ["Modeling"].concat(state.stack.map(function (s) { return PIES[s].name; }));
+    document.getElementById("last").textContent = (state.stack.length ? path.slice(1).join(" / ") + " / " : "") + it.label;
+    close(); return true;
+  }
+
+  stage.addEventListener("pointerdown", function (e) {
+    if (e.button === 2) return;
+    var p = local(e); stage.focus();
+    if (!state.open) { if (state.trigger === "click") { openAt(p[0], p[1]); state.downAt = Date.now(); state.dragging = true; } return; }
+    track(p[0], p[1]);
+    if (!choose()) back(); // clicking the centre dial: back one level, or close at the root
+  });
+  stage.addEventListener("pointermove", function (e) { var p = local(e); track(p[0], p[1]); });
+  stage.addEventListener("pointerup", function () {
+    if (state.dragging && state.open && Date.now() - state.downAt > 250 && state.dir !== null) choose();
+    state.dragging = false;
+  });
+  stage.addEventListener("contextmenu", function (e) { e.preventDefault(); back(); });
+  stage.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { back(); e.preventDefault(); return; }
+    if (state.trigger === "key" && (e.key === "q" || e.key === "Q") && !e.repeat && !state.open) { state.keyDown = true; state.downAt = Date.now(); openAt(state.px, state.py); e.preventDefault(); }
+  });
+  stage.addEventListener("keyup", function (e) {
+    if (state.trigger === "key" && (e.key === "q" || e.key === "Q") && state.keyDown) {
+      state.keyDown = false;
+      if (state.open && Date.now() - state.downAt > 250 && state.dir !== null) choose();
+    }
+  });
+  window.addEventListener("resize", render);
+
+  function wire(attr, key) {
+    document.querySelectorAll("button[data-" + attr + "]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        state[key] = b.dataset[attr];
+        document.querySelectorAll("button[data-" + attr + "]").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+        if (key === "trigger") document.getElementById("hint").textContent = state.trigger === "key"
+          ? "Point inside, hold Q: release over a slot to run it, or tap Q and click. Click the centre dial, Esc or right-click to go back."
+          : "Click anywhere to open the pie. Move toward a slot, click to run it. Click the centre dial, Esc or right-click to go back.";
+        render();
+      });
+    });
+  }
+  wire("v", "variant"); wire("h", "hover"); wire("t", "trigger");
+
+  // Open on load in a realistic state: pie centred, pointing north-east.
+  function boot() { var w = stage.clientWidth, h = stage.clientHeight; openAt(w / 2, h / 2); track(w / 2 + 80, h / 2 - 80); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot); else boot();
+})();
+</script>
+</body>
+</html>
