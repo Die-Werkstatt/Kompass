@@ -19,13 +19,13 @@ plan assumes Blender's own UI font and CC0 icons.
 
 Milestone 1, pies open from shortcuts (#5).
 
-- [ ] Open a stored pie as a native pie, with operator, tool, sub-pie and empty
-      slots (#14, #15)
-- [ ] Shortcut and context per pie, with the conflict warning (#16)
+- [ ] Warn when a pie's shortcut is already used in its keymap (#16). It needs
+      somewhere to set a shortcut, so it comes with import or the editor.
 - [ ] Export and import in the add-on preferences, with a list of the stored
       pies (#20, first half). Uninstalling deletes the pie file, so this ships
       with the first version that can store a pie, together with the user
-      documentation that says so.
+      documentation that says so. Import is also the first caller of
+      `core.store.save`.
 
 In parallel:
 
