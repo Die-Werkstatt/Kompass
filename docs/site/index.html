@@ -1,0 +1,1171 @@
+<title>Kompass Landing Variations</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Three single-page sites, one shown at a time (#a, #b, #c). Each commits to one look: A and B on the brand's dark ground, C on paper.
+   Barlow carries display and labels (the brand wordmark face); IBM Plex Sans carries running text (the house text face from Laterna). */
+:root {
+  --page: #000;
+  --display: "Barlow", "Barlow Semi Condensed", "IBM Plex Sans", sans-serif;
+  --text: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box }
+body { overflow-x: clip; background: var(--page); font: 16px/1.55 var(--text); -webkit-font-smoothing: antialiased; }
+.site {
+  --bg: #000; --surface: #111; --line: #2c2c2c; --ink: #f1f0ec; --stone: #8f8d88; --signal: #f2542d; --on-signal: #0e0e0e;
+  background: var(--bg); color: var(--ink); min-height: 100%;
+}
+.site[data-v="b"] { --surface: #141414; --line: #2f2f2f }
+.site[data-v="c"] { --bg: #f1f0ec; --surface: #e8e6e0; --line: #c9c5bc; --ink: #0e0e0e; --stone: #5d5a54; --signal: #d9431f; --on-signal: #f1f0ec }
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+a { color: inherit }
+a:focus-visible, button:focus-visible, .stage:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; text-transform: uppercase; margin: 0; text-wrap: balance }
+p { margin: 0 }
+
+/* header */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px }
+.lockup { height: 15px; width: auto; display: block; color: var(--ink) }
+.lockup path { stroke-linecap: butt }
+.nav { display: flex; gap: 28px; font: 500 14px/1 var(--display); letter-spacing: .12em; text-transform: uppercase }
+.nav a { text-decoration: none; color: var(--stone) }
+.nav a:hover { color: var(--ink) }
+
+/* buttons */
+/* Outlined buttons fill on hover like a pie slot: a circle grows from the pointer in 120 ms. */
+.btn { --fill: var(--ink); --on: var(--bg); position: relative; overflow: hidden; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px; font: 600 15px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; text-decoration: none; border: 1.5px solid var(--fill); color: var(--fill); background: transparent; white-space: nowrap; transition: color 120ms ease-out }
+.btn::before { content: ""; position: absolute; z-index: -1; left: var(--x, 50%); top: var(--y, 50%); width: 300%; aspect-ratio: 1; border-radius: 50%; background: var(--fill); transform: translate(-50%, -50%) scale(0); transition: transform 120ms ease-out }
+.btn:hover, .btn:focus-visible { color: var(--on) }
+.btn:hover::before, .btn:focus-visible::before { transform: translate(-50%, -50%) scale(1) }
+.btn.kompass { --fill: var(--signal); --on: #ffffff }
+.actions { display: flex; flex-wrap: wrap; gap: 12px }
+
+/* demo stage (shared) */
+.stage { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: default }
+.stage svg.layer, .depth svg.layer { position: absolute; inset: 0; width: 100%; height: 100% }
+.stage .try { position: absolute; right: 14px; bottom: 12px; font: 500 12px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--stone); pointer-events: none }
+.key { display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 7px; border: 1.5px solid currentColor; font: 500 14px/1 var(--text) }
+
+/* ============ A · Dial ============ */
+.a-hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px 56px; align-items: center; padding-block: 40px 88px }
+.a-copy { display: grid; gap: 28px; align-content: center }
+.a-copy h1 { font-size: clamp(40px, 5.2vw, 72px); line-height: .95; letter-spacing: .02em; white-space: nowrap }
+.a-copy .lead { font-size: 18px; color: var(--stone); max-width: 30ch }
+.gesture { display: flex; gap: 0; border-top: 1px solid var(--line); padding-top: 18px; flex-wrap: wrap }
+.gesture span { display: flex; align-items: center; gap: 10px; font: 500 13px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--stone); padding-right: 22px; transition: color .2s }
+.gesture span.on { color: var(--ink) }
+.gesture span.on .key { color: var(--signal) }
+.gesture i { display: inline-block; width: 8px; height: 8px; background: var(--line); transition: background .2s }
+.gesture span.on i { background: var(--signal) }
+.a-stagebox { display: grid; gap: 12px; min-width: 0 }
+/* The demo has no frame: it bleeds past the column and fades toward its edges. */
+.a-stagebox { margin: -48px max(-16px, calc((1200px - 100vw) / 2)) -48px -48px }
+.a-stage { height: clamp(460px, 54vw, 700px); background: transparent;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent); mask-composite: intersect }
+.a-stage > svg.layer { z-index: 3 }
+.a-stage > svg.scene-grid { z-index: 1 }
+.a-stage > svg.scene-cube { z-index: 2 }
+/* Two pies further back show that every pie can differ: darker, smaller, slightly out of focus. */
+/* Each loop gives a background pie a new random distance: further away means smaller, blurrier and darker. */
+.depth { position: absolute; z-index: 0; pointer-events: none; width: 56%; height: 100%; opacity: 0; transition: opacity .8s }
+.readout { display: flex; justify-content: space-between; gap: 16px; font: 13px/1.4 var(--mono); color: var(--stone) }
+.readout b { font-weight: 400; color: var(--ink) }
+
+.a-dl { border-top: 1px solid var(--line); padding-block: 72px 96px; display: grid; gap: 40px; position: relative; isolation: isolate }
+.a-dl > :not(.dl-depth) { position: relative; z-index: 1 }
+/* One pie plays beside the download plates across the full page width. */
+.dl-depth { position: absolute; inset: 0 calc(50% - 50vw); z-index: 0; overflow: hidden; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent) }
+.a-dl header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap }
+.a-dl h2 { font-size: clamp(32px, 4vw, 48px); letter-spacing: .04em }
+.a-dl header p { color: var(--stone); font-size: 15px }
+.plates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px }
+.plate { border: 1px solid var(--line); background: rgb(17 17 17 / .45); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); padding: 32px; display: grid; gap: 0; align-content: start }
+.plate.full { border-color: var(--signal); position: relative }
+/* Two soft highlights circle the Kompass tile's outline from opposite ends and stay inside its 1 px border. */
+@property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg }
+.plate.full::before, .plate.full::after { content: ""; position: absolute; inset: -1px; padding: 1px; pointer-events: none;
+  background: conic-gradient(from var(--sweep), transparent 0deg, #ffcbb8 40deg, transparent 90deg, transparent 180deg, #ffcbb8 220deg, transparent 270deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: .9; animation: sweep 7s linear infinite }
+/* A wider, fainter band just inside the line softens the highlight inward only. */
+.plate.full::after { inset: 0; padding: 3px; opacity: .12 }
+@keyframes sweep { to { --sweep: 360deg } }
+@media (prefers-reduced-motion: reduce) { .plate.full::before, .plate.full::after { animation: none } }
+.plate .name { display: flex; justify-content: space-between; align-items: baseline; gap: 12px }
+.plate h3 { font-size: 28px; line-height: 1; letter-spacing: .14em }
+.plate > p { color: var(--stone); margin-top: 12px }
+.plate .facts4 { margin-top: 28px }
+.spec { display: grid; grid-template-columns: max-content minmax(0, 1fr); margin: 0; border-top: 1px solid var(--line) }
+.spec dt, .spec dd { padding: 11px 0; border-bottom: 1px solid var(--line); margin: 0; font-size: 15px }
+.spec dt { color: var(--stone); padding-right: 24px }
+.plate .btn { justify-self: start; margin-top: 32px }
+/* Four facts per tile in a 2 x 2 grid, no rules between them. */
+.facts4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; margin: 0 }
+.facts4 div { display: grid; gap: 2px; min-width: 0 }
+.facts4 dt { font: 500 12px/1.4 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--stone) }
+.facts4 dd { margin: 0; font-size: 16px }
+
+/* ============ B · Viewport ============ */
+.b-hero { padding-block: 32px 80px; display: grid; gap: 36px }
+.b-head { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 24px 48px; align-items: end }
+.b-head h1 { font-size: clamp(40px, 5.6vw, 72px); line-height: .95; letter-spacing: .02em }
+.b-head .side { display: grid; gap: 20px }
+.b-head .side p { color: var(--stone); font-size: 17px; max-width: 36ch }
+.vp { border: 1px solid var(--line); background: #1e1e1e; display: grid; grid-template-rows: auto 1fr }
+.vp-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 12px; background: #161616; border-bottom: 1px solid var(--line); font: 500 12px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--stone); min-width: 0 }
+.vp-bar .crumbs { display: flex; gap: 18px; white-space: nowrap; overflow: hidden }
+.vp-bar .hold { display: flex; align-items: center; gap: 10px; white-space: nowrap }
+.vp-bar .hold .key { height: 24px; min-width: 24px; transition: color .15s, background .15s }
+.vp-bar .hold .key.down { background: var(--signal); border-color: var(--signal); color: var(--on-signal) }
+.b-stage { height: clamp(380px, 50vw, 600px) }
+.op { position: absolute; left: 14px; bottom: 14px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #161616; border: 1px solid var(--line); font: 13px/1 var(--text); color: var(--ink); opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .25s; pointer-events: none }
+.op.show { opacity: 1; transform: none }
+.op svg { width: 10px; height: 10px }
+
+.b-dl { padding-block: 72px 96px; border-top: 1px solid var(--line) }
+.b-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 40px 56px }
+.b-grid h2 { font-size: clamp(32px, 4vw, 48px); letter-spacing: .04em }
+.b-grid .intro { display: grid; gap: 16px; align-content: start }
+.b-grid .intro p { color: var(--stone) }
+.tablebox { overflow-x: auto }
+table.cmp { width: 100%; border-collapse: collapse; min-width: 520px }
+.cmp th, .cmp td { text-align: left; padding: 14px 16px 14px 0; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 15px }
+.cmp thead th { border-bottom: 1.5px solid var(--ink); padding-bottom: 18px; vertical-align: bottom }
+.cmp thead th h3 { font-size: 22px; line-height: 1; letter-spacing: .14em; margin-bottom: 16px }
+.cmp tbody th { font-weight: 400; color: var(--stone); width: 28% }
+.cmp td.hi { color: var(--ink) }
+.cmp td.hi::before { content: ""; display: inline-block; width: 7px; height: 7px; background: var(--signal); margin-right: 10px; vertical-align: 2px }
+
+/* ============ C · Paper ============ */
+.c-hero { padding-block: 24px 0; display: grid; gap: 32px }
+.c-title { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: 24px 48px; align-items: end; border-bottom: 1.5px solid var(--ink); padding-bottom: 28px }
+.c-title h1 { margin: 0; line-height: 0 }
+.c-title .wordmark { width: 100%; height: auto; color: var(--ink) }
+.c-title .side { display: grid; gap: 18px }
+.c-title .side strong { font: 600 22px/1.15 var(--display); letter-spacing: .1em; text-transform: uppercase }
+.c-title .side p { color: var(--stone); font-size: 16px }
+.c-stage { height: clamp(380px, 48vw, 580px); background: #e8e6e0; border: 1px solid var(--line) }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 24px }
+.steps li { border-top: 4px solid var(--line); padding-top: 16px; display: grid; gap: 6px; transition: border-color .2s; min-width: 0 }
+.steps li.on { border-top-color: var(--signal) }
+.steps .n { font: 600 40px/1 var(--display); color: var(--stone); transition: color .2s }
+.steps li.on .n { color: var(--signal) }
+.steps h3 { font-size: 17px; letter-spacing: .12em }
+.steps p { font-size: 14px; color: var(--stone); min-height: 1.5em; overflow-wrap: anywhere }
+
+.c-dl { margin-top: 96px; background: var(--ink); color: var(--bg) }
+.c-dl .wrap { padding-block: 72px 88px; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px 64px }
+.c-dl h2 { font-size: clamp(32px, 4vw, 48px); letter-spacing: .04em }
+.c-dl .left { display: grid; gap: 28px; align-content: start }
+.c-dl .left p { color: #a9a6a0 }
+.c-dl .btn { --fill: var(--bg); --on: var(--ink) }
+.c-dl .btn.kompass { --fill: #f2542d; --on: #ffffff }
+.c-dl .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; border-top: 1px solid #3a3a3a; padding-top: 20px }
+.c-dl .facts div { display: grid; gap: 4px; font-size: 14px }
+.c-dl .facts span { color: #a9a6a0 }
+.install { list-style: none; margin: 0; padding: 0; counter-reset: s; display: grid }
+.install li { counter-increment: s; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; padding-block: 22px; border-top: 1px solid #3a3a3a }
+.install li:last-child { border-bottom: 1px solid #3a3a3a }
+.install li::before { content: counter(s); font: 600 40px/1 var(--display); color: #f2542d }
+.install h3 { font-size: 18px; letter-spacing: .12em; margin-bottom: 6px }
+.install p { color: #a9a6a0; font-size: 15px }
+
+/* footer */
+.foot { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-block: 28px 96px; font-size: 13px; color: var(--stone); border-top: 1px solid var(--line) }
+.site[data-v="c"] .foot { border-top: 0 }
+
+/* variation switcher: review chrome, not part of the designs */
+.switch { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 20; display: flex; align-items: center; gap: 4px; padding: 4px; background: #262626; border: 1px solid #3d3d3d; box-shadow: 0 6px 24px #0008; max-width: calc(100vw - 32px) }
+.switch span { font: 500 12px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; color: #9a9a9a; padding: 0 8px 0 10px; white-space: nowrap }
+.switch button { font: 500 13px/1 var(--display); letter-spacing: .1em; text-transform: uppercase; color: #e6e6e6; background: transparent; border: 0; padding: 10px 12px; cursor: pointer; white-space: nowrap; min-height: 40px }
+.switch button[aria-pressed="true"] { background: #f2542d; color: #0e0e0e }
+
+@media (max-width: 860px) {
+  .a-hero, .b-head, .b-grid, .c-title, .c-dl .wrap { grid-template-columns: minmax(0, 1fr) }
+  .plates { grid-template-columns: minmax(0, 1fr) }
+  .a-hero { padding-block: 24px 64px }
+  .a-stagebox { margin: -24px -16px }
+}
+@media (max-width: 560px) {
+  .nav { gap: 18px }
+  .nav .opt { display: none }
+  .plate { padding: 22px }
+  .steps { grid-template-columns: minmax(0, 1fr); gap: 16px }
+  .c-dl .facts { grid-template-columns: minmax(0, 1fr) }
+  .switch span { display: none }
+  .a-stage, .b-stage, .c-stage { height: 400px }
+  table.cmp { min-width: 0 }
+  .cmp th, .cmp td { font-size: 14px; padding-right: 10px }
+  .cmp tbody th { width: 22% }
+  .cmp thead th h3 { font-size: 18px }
+  .cmp .btn { padding: 0 12px; font-size: 13px; letter-spacing: .08em }
+  .cmp td.hi::before { display: none }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<!-- ================= A · DIAL ================= -->
+<div class="site" data-v="a" id="site-a">
+  <div class="wrap">
+    <header class="top">
+      <a href="#a" aria-label="Kompass home"><svg class="lockup" xmlns="http://www.w3.org/2000/svg" viewBox="4 4 356.21 56" role="img" aria-label="Kompass"><path style="stroke:var(--signal)" stroke-width="3.25" d="M32.00 15.00L32.00 6.00"/><path stroke="currentColor" stroke-width="3.25" d="M44.02 19.98L50.38 13.62"/><path stroke="currentColor" stroke-width="3.25" d="M49.00 32.00L58.00 32.00"/><path stroke="currentColor" stroke-width="3.25" d="M44.02 44.02L50.38 50.38"/><path stroke="currentColor" stroke-width="3.25" d="M32.00 49.00L32.00 58.00"/><path stroke="currentColor" stroke-width="3.25" d="M19.98 44.02L13.62 50.38"/><path stroke="currentColor" stroke-width="3.25" d="M15.00 32.00L6.00 32.00"/><path stroke="currentColor" stroke-width="3.25" d="M19.98 19.98L13.62 13.62"/><circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3.25"/><path style="fill:var(--signal)" d="M32 20L36.5 30H27.5Z"/><path fill="currentColor" d="M27.5 34H36.5L32 44Z"/><g transform="translate(84.107 50.667) scale(0.05333)"><path fill="currentColor" d="M73 -12V-688Q73 -693 76.5 -696.5Q80 -700 85 -700H177Q182 -700 185.5 -696.5Q189 -693 189 -688V-389Q189 -386 191.0 -385.0Q193 -384 195 -386L455 -693Q461 -700 470 -700H574Q584 -700 584 -693Q584 -690 581 -685L352 -404Q349 -400 351 -397L597 -14Q599 -8 599 -7Q599 0 589 0H484Q475 0 470 -8L272 -316Q268 -322 265 -317L191 -231Q189 -227 189 -224V-12Q189 -7 185.5 -3.5Q182 0 177 0H85Q80 0 76.5 -3.5Q73 -7 73 -12Z"/><path fill="currentColor" d="M816 -236V-464Q816 -536 848.0 -591.5Q880 -647 937.5 -677.5Q995 -708 1070 -708Q1146 -708 1203.5 -677.5Q1261 -647 1293.0 -591.5Q1325 -536 1325 -464V-236Q1325 -163 1293.0 -107.0Q1261 -51 1203.5 -20.5Q1146 10 1070 10Q995 10 937.0 -20.5Q879 -51 847.5 -107.0Q816 -163 816 -236ZM1209 -232V-465Q1209 -530 1171.0 -569.0Q1133 -608 1070 -608Q1008 -608 970.0 -569.0Q932 -530 932 -465V-232Q932 -168 970.0 -129.0Q1008 -90 1070 -90Q1133 -90 1171.0 -129.0Q1209 -168 1209 -232Z"/><path fill="currentColor" d="M2059 -700H2151Q2156 -700 2159.5 -696.5Q2163 -693 2163 -688V-12Q2163 -7 2159.5 -3.5Q2156 0 2151 0H2059Q2054 0 2050.5 -3.5Q2047 -7 2047 -12V-489Q2047 -492 2044.5 -493.0Q2042 -494 2041 -491L1916 -299Q1911 -291 1902 -291H1856Q1847 -291 1842 -299L1716 -490Q1715 -493 1712.5 -492.0Q1710 -491 1710 -488V-12Q1710 -7 1706.5 -3.5Q1703 0 1698 0H1606Q1601 0 1597.5 -3.5Q1594 -7 1594 -12V-688Q1594 -693 1597.5 -696.5Q1601 -700 1606 -700H1698Q1707 -700 1712 -692L1875 -445Q1877 -443 1879.0 -443.0Q1881 -443 1882 -445L2045 -692Q2050 -700 2059 -700Z"/><path fill="currentColor" d="M2942 -492Q2942 -431 2915.0 -384.0Q2888 -337 2838.5 -311.5Q2789 -286 2724 -286H2564Q2559 -286 2559 -281V-12Q2559 -7 2555.5 -3.5Q2552 0 2547 0H2455Q2450 0 2446.5 -3.5Q2443 -7 2443 -12V-689Q2443 -694 2446.5 -697.5Q2450 -701 2455 -701H2730Q2793 -701 2841.0 -675.0Q2889 -649 2915.5 -601.5Q2942 -554 2942 -492ZM2826 -489Q2826 -539 2795.0 -570.0Q2764 -601 2713 -601H2564Q2559 -601 2559 -596V-385Q2559 -380 2564 -380H2713Q2764 -380 2795.0 -410.0Q2826 -440 2826 -489Z"/><path fill="currentColor" d="M3605 -10 3572 -117Q3570 -121 3567 -121H3303Q3300 -121 3298 -117L3265 -10Q3262 0 3252 0H3152Q3146 0 3143.0 -3.5Q3140 -7 3142 -14L3359 -690Q3362 -700 3372 -700H3497Q3507 -700 3510 -690L3728 -14Q3729 -12 3729 -9Q3729 0 3718 0H3618Q3608 0 3605 -10ZM3333 -212H3536Q3542 -212 3540 -218L3437 -553Q3436 -557 3434.0 -557.0Q3432 -557 3431 -553L3329 -218Q3328 -212 3333 -212Z"/><path fill="currentColor" d="M3941 -193V-218Q3941 -223 3944.5 -226.5Q3948 -230 3953 -230H4042Q4047 -230 4050.5 -226.5Q4054 -223 4054 -218V-199Q4054 -153 4095.0 -122.5Q4136 -92 4207 -92Q4268 -92 4299.0 -118.0Q4330 -144 4330 -185Q4330 -213 4313.0 -232.5Q4296 -252 4264.5 -268.0Q4233 -284 4170 -308Q4099 -334 4055.0 -357.0Q4011 -380 3981.5 -419.5Q3952 -459 3952 -518Q3952 -606 4016.0 -657.0Q4080 -708 4187 -708Q4262 -708 4319.5 -682.0Q4377 -656 4409.0 -609.5Q4441 -563 4441 -502V-485Q4441 -480 4437.5 -476.5Q4434 -473 4429 -473H4339Q4334 -473 4330.5 -476.5Q4327 -480 4327 -485V-496Q4327 -543 4288.5 -575.5Q4250 -608 4182 -608Q4127 -608 4096.5 -585.0Q4066 -562 4066 -520Q4066 -490 4082.0 -471.0Q4098 -452 4130.0 -436.5Q4162 -421 4229 -397Q4300 -370 4342.5 -348.0Q4385 -326 4415.5 -286.5Q4446 -247 4446 -188Q4446 -98 4379.5 -45.0Q4313 8 4198 8Q4120 8 4062.0 -17.0Q4004 -42 3972.5 -87.0Q3941 -132 3941 -193Z"/><path fill="currentColor" d="M4672 -193V-218Q4672 -223 4675.5 -226.5Q4679 -230 4684 -230H4773Q4778 -230 4781.5 -226.5Q4785 -223 4785 -218V-199Q4785 -153 4826.0 -122.5Q4867 -92 4938 -92Q4999 -92 5030.0 -118.0Q5061 -144 5061 -185Q5061 -213 5044.0 -232.5Q5027 -252 4995.5 -268.0Q4964 -284 4901 -308Q4830 -334 4786.0 -357.0Q4742 -380 4712.5 -419.5Q4683 -459 4683 -518Q4683 -606 4747.0 -657.0Q4811 -708 4918 -708Q4993 -708 5050.5 -682.0Q5108 -656 5140.0 -609.5Q5172 -563 5172 -502V-485Q5172 -480 5168.5 -476.5Q5165 -473 5160 -473H5070Q5065 -473 5061.5 -476.5Q5058 -480 5058 -485V-496Q5058 -543 5019.5 -575.5Q4981 -608 4913 -608Q4858 -608 4827.5 -585.0Q4797 -562 4797 -520Q4797 -490 4813.0 -471.0Q4829 -452 4861.0 -436.5Q4893 -421 4960 -397Q5031 -370 5073.5 -348.0Q5116 -326 5146.5 -286.5Q5177 -247 5177 -188Q5177 -98 5110.5 -45.0Q5044 8 4929 8Q4851 8 4793.0 -17.0Q4735 -42 4703.5 -87.0Q4672 -132 4672 -193Z"/></g></svg></a>
+      <nav class="nav"><a href="#dl-a">Download</a><a class="opt" href="https://github.com/Die-Werkstatt/Kompass">Source</a></nav>
+    </header>
+    <section class="a-hero">
+      <div class="a-copy">
+        <h1>Make pies<br>for Blender</h1>
+        <p class="lead">Add and customize the tools you reach for most on radial menus.</p>
+        <div class="actions"><a class="btn kompass" href="#dl-a">Download Kompass</a></div>
+      </div>
+      <div class="a-stagebox">
+        <div class="stage a-stage" data-demo="a" tabindex="0" aria-label="Kompass pie demo. Click to open the pie and try it.">
+        </div>
+      </div>
+    </section>
+    <section class="a-dl" id="dl-a">
+      <div class="dl-depth" aria-hidden="true"><div class="depth" data-depth="0"></div></div>
+      <header><h2>Download</h2><p>Blender 5.2 or later</p></header>
+      <div class="plates">
+        <article class="plate">
+          <div class="name"><h3>Native</h3></div>
+          <p>Drawn by Blender using its native systems.</p>
+          <dl class="facts4">
+            <div><dt>Style</dt><dd>Native</dd></div>
+            <div><dt>Slots</dt><dd>8</dd></div>
+            <div><dt>Navigation</dt><dd>Native</dd></div>
+            <div><dt>Custom tools</dt><dd>Not supported</dd></div>
+          </dl>
+          <a class="btn" href="#dl-a">Download Native</a>
+        </article>
+        <article class="plate full">
+          <div class="name"><h3>Kompass</h3></div>
+          <p>The Kompass pie and its visual editor.</p>
+          <dl class="facts4">
+            <div><dt>Style</dt><dd>Custom design</dd></div>
+            <div><dt>Slots</dt><dd>12</dd></div>
+            <div><dt>Navigation</dt><dd>Intuitive</dd></div>
+            <div><dt>Custom tools</dt><dd>Supported</dd></div>
+          </dl>
+          <a class="btn kompass" href="#dl-a">Download Kompass</a>
+        </article>
+      </div>
+    </section>
+    <footer class="foot"><span>Kompass for Blender</span><span>GPL-3.0-or-later</span></footer>
+  </div>
+</div>
+
+<!-- ================= B · VIEWPORT ================= -->
+<div class="site" data-v="b" id="site-b" hidden>
+  <div class="wrap">
+    <header class="top">
+      <a href="#b" aria-label="Kompass home"><svg class="lockup" xmlns="http://www.w3.org/2000/svg" viewBox="4 4 356.21 56" role="img" aria-label="Kompass"><path style="stroke:var(--signal)" stroke-width="3.25" d="M32.00 15.00L32.00 6.00"/><path stroke="currentColor" stroke-width="3.25" d="M44.02 19.98L50.38 13.62"/><path stroke="currentColor" stroke-width="3.25" d="M49.00 32.00L58.00 32.00"/><path stroke="currentColor" stroke-width="3.25" d="M44.02 44.02L50.38 50.38"/><path stroke="currentColor" stroke-width="3.25" d="M32.00 49.00L32.00 58.00"/><path stroke="currentColor" stroke-width="3.25" d="M19.98 44.02L13.62 50.38"/><path stroke="currentColor" stroke-width="3.25" d="M15.00 32.00L6.00 32.00"/><path stroke="currentColor" stroke-width="3.25" d="M19.98 19.98L13.62 13.62"/><circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3.25"/><path style="fill:var(--signal)" d="M32 20L36.5 30H27.5Z"/><path fill="currentColor" d="M27.5 34H36.5L32 44Z"/><g transform="translate(84.107 50.667) scale(0.05333)"><path fill="currentColor" d="M73 -12V-688Q73 -693 76.5 -696.5Q80 -700 85 -700H177Q182 -700 185.5 -696.5Q189 -693 189 -688V-389Q189 -386 191.0 -385.0Q193 -384 195 -386L455 -693Q461 -700 470 -700H574Q584 -700 584 -693Q584 -690 581 -685L352 -404Q349 -400 351 -397L597 -14Q599 -8 599 -7Q599 0 589 0H484Q475 0 470 -8L272 -316Q268 -322 265 -317L191 -231Q189 -227 189 -224V-12Q189 -7 185.5 -3.5Q182 0 177 0H85Q80 0 76.5 -3.5Q73 -7 73 -12Z"/><path fill="currentColor" d="M816 -236V-464Q816 -536 848.0 -591.5Q880 -647 937.5 -677.5Q995 -708 1070 -708Q1146 -708 1203.5 -677.5Q1261 -647 1293.0 -591.5Q1325 -536 1325 -464V-236Q1325 -163 1293.0 -107.0Q1261 -51 1203.5 -20.5Q1146 10 1070 10Q995 10 937.0 -20.5Q879 -51 847.5 -107.0Q816 -163 816 -236ZM1209 -232V-465Q1209 -530 1171.0 -569.0Q1133 -608 1070 -608Q1008 -608 970.0 -569.0Q932 -530 932 -465V-232Q932 -168 970.0 -129.0Q1008 -90 1070 -90Q1133 -90 1171.0 -129.0Q1209 -168 1209 -232Z"/><path fill="currentColor" d="M2059 -700H2151Q2156 -700 2159.5 -696.5Q2163 -693 2163 -688V-12Q2163 -7 2159.5 -3.5Q2156 0 2151 0H2059Q2054 0 2050.5 -3.5Q2047 -7 2047 -12V-489Q2047 -492 2044.5 -493.0Q2042 -494 2041 -491L1916 -299Q1911 -291 1902 -291H1856Q1847 -291 1842 -299L1716 -490Q1715 -493 1712.5 -492.0Q1710 -491 1710 -488V-12Q1710 -7 1706.5 -3.5Q1703 0 1698 0H1606Q1601 0 1597.5 -3.5Q1594 -7 1594 -12V-688Q1594 -693 1597.5 -696.5Q1601 -700 1606 -700H1698Q1707 -700 1712 -692L1875 -445Q1877 -443 1879.0 -443.0Q1881 -443 1882 -445L2045 -692Q2050 -700 2059 -700Z"/><path fill="currentColor" d="M2942 -492Q2942 -431 2915.0 -384.0Q2888 -337 2838.5 -311.5Q2789 -286 2724 -286H2564Q2559 -286 2559 -281V-12Q2559 -7 2555.5 -3.5Q2552 0 2547 0H2455Q2450 0 2446.5 -3.5Q2443 -7 2443 -12V-689Q2443 -694 2446.5 -697.5Q2450 -701 2455 -701H2730Q2793 -701 2841.0 -675.0Q2889 -649 2915.5 -601.5Q2942 -554 2942 -492ZM2826 -489Q2826 -539 2795.0 -570.0Q2764 -601 2713 -601H2564Q2559 -601 2559 -596V-385Q2559 -380 2564 -380H2713Q2764 -380 2795.0 -410.0Q2826 -440 2826 -489Z"/><path fill="currentColor" d="M3605 -10 3572 -117Q3570 -121 3567 -121H3303Q3300 -121 3298 -117L3265 -10Q3262 0 3252 0H3152Q3146 0 3143.0 -3.5Q3140 -7 3142 -14L3359 -690Q3362 -700 3372 -700H3497Q3507 -700 3510 -690L3728 -14Q3729 -12 3729 -9Q3729 0 3718 0H3618Q3608 0 3605 -10ZM3333 -212H3536Q3542 -212 3540 -218L3437 -553Q3436 -557 3434.0 -557.0Q3432 -557 3431 -553L3329 -218Q3328 -212 3333 -212Z"/><path fill="currentColor" d="M3941 -193V-218Q3941 -223 3944.5 -226.5Q3948 -230 3953 -230H4042Q4047 -230 4050.5 -226.5Q4054 -223 4054 -218V-199Q4054 -153 4095.0 -122.5Q4136 -92 4207 -92Q4268 -92 4299.0 -118.0Q4330 -144 4330 -185Q4330 -213 4313.0 -232.5Q4296 -252 4264.5 -268.0Q4233 -284 4170 -308Q4099 -334 4055.0 -357.0Q4011 -380 3981.5 -419.5Q3952 -459 3952 -518Q3952 -606 4016.0 -657.0Q4080 -708 4187 -708Q4262 -708 4319.5 -682.0Q4377 -656 4409.0 -609.5Q4441 -563 4441 -502V-485Q4441 -480 4437.5 -476.5Q4434 -473 4429 -473H4339Q4334 -473 4330.5 -476.5Q4327 -480 4327 -485V-496Q4327 -543 4288.5 -575.5Q4250 -608 4182 -608Q4127 -608 4096.5 -585.0Q4066 -562 4066 -520Q4066 -490 4082.0 -471.0Q4098 -452 4130.0 -436.5Q4162 -421 4229 -397Q4300 -370 4342.5 -348.0Q4385 -326 4415.5 -286.5Q4446 -247 4446 -188Q4446 -98 4379.5 -45.0Q4313 8 4198 8Q4120 8 4062.0 -17.0Q4004 -42 3972.5 -87.0Q3941 -132 3941 -193Z"/><path fill="currentColor" d="M4672 -193V-218Q4672 -223 4675.5 -226.5Q4679 -230 4684 -230H4773Q4778 -230 4781.5 -226.5Q4785 -223 4785 -218V-199Q4785 -153 4826.0 -122.5Q4867 -92 4938 -92Q4999 -92 5030.0 -118.0Q5061 -144 5061 -185Q5061 -213 5044.0 -232.5Q5027 -252 4995.5 -268.0Q4964 -284 4901 -308Q4830 -334 4786.0 -357.0Q4742 -380 4712.5 -419.5Q4683 -459 4683 -518Q4683 -606 4747.0 -657.0Q4811 -708 4918 -708Q4993 -708 5050.5 -682.0Q5108 -656 5140.0 -609.5Q5172 -563 5172 -502V-485Q5172 -480 5168.5 -476.5Q5165 -473 5160 -473H5070Q5065 -473 5061.5 -476.5Q5058 -480 5058 -485V-496Q5058 -543 5019.5 -575.5Q4981 -608 4913 -608Q4858 -608 4827.5 -585.0Q4797 -562 4797 -520Q4797 -490 4813.0 -471.0Q4829 -452 4861.0 -436.5Q4893 -421 4960 -397Q5031 -370 5073.5 -348.0Q5116 -326 5146.5 -286.5Q5177 -247 5177 -188Q5177 -98 5110.5 -45.0Q5044 8 4929 8Q4851 8 4793.0 -17.0Q4735 -42 4703.5 -87.0Q4672 -132 4672 -193Z"/></g></svg></a>
+      <nav class="nav"><a href="#dl-b">Download</a><a class="opt" href="https://github.com/Die-Werkstatt/Kompass">Source</a></nav>
+    </header>
+    <section class="b-hero">
+      <div class="b-head">
+        <h1>Make pies<br>for Blender</h1>
+        <div class="side">
+          <p>Build pies from any tool, menu or property. Each pie opens on its own shortcut, right where you work.</p>
+          <div class="actions"><a class="btn" href="#dl-b">Download</a></div>
+        </div>
+      </div>
+      <div class="vp">
+        <div class="vp-bar"><span class="crumbs"><span>Edit Mode</span><span>Face select</span><span>Cube</span></span><span class="hold"><span class="key" data-keycap>Q</span>Modeling pie</span></div>
+        <div class="stage b-stage" data-demo="b" tabindex="0" aria-label="Kompass pie over a 3D viewport. Click to open the pie and try it.">
+          <div class="op" data-op><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M3 1l5 4-5 4z" fill="currentColor"/></svg><span data-last>Extrude</span></div>
+          <span class="try">Click to try</span>
+        </div>
+      </div>
+    </section>
+    <section class="b-dl" id="dl-b">
+      <div class="b-grid">
+        <div class="intro">
+          <h2>Download</h2>
+          <p>Kompass adds its own pie and the visual editor.</p>
+          <p>Blender 5.2 or later.</p>
+        </div>
+        <div class="tablebox">
+          <table class="cmp">
+            <thead><tr><th></th>
+              <th><h3>Native</h3><a class="btn" href="#dl-b">Download</a></th>
+              <th><h3>Kompass</h3><a class="btn kompass" href="#dl-b">Download</a></th></tr></thead>
+            <tbody>
+              <tr><th>Pie</th><td>Native pie</td><td class="hi">Kompass pie</td></tr>
+              <tr><th>Slots</th><td>8</td><td class="hi">12</td></tr>
+              <tr><th>Sub-pies</th><td>Open on click</td><td class="hi">Open on hover</td></tr>
+              <tr><th>Editor</th><td>Lists in the sidebar</td><td class="hi">Drag tools onto a live pie</td></tr>
+              <tr><th>Look</th><td>Your Blender theme</td><td>Kompass dial and needle</td></tr>
+              <tr><th>Shortcuts</th><td>One per pie</td><td>One per pie</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    <footer class="foot"><span>Kompass for Blender</span><span>GPL-3.0-or-later</span></footer>
+  </div>
+</div>
+
+<!-- ================= C · PAPER ================= -->
+<div class="site" data-v="c" id="site-c" hidden>
+  <div class="wrap">
+    <header class="top">
+      <a href="#c" aria-label="Kompass home"><svg class="lockup" xmlns="http://www.w3.org/2000/svg" viewBox="4 4 356.21 56" role="img" aria-label="Kompass"><path style="stroke:var(--signal)" stroke-width="3.25" d="M32.00 15.00L32.00 6.00"/><path stroke="currentColor" stroke-width="3.25" d="M44.02 19.98L50.38 13.62"/><path stroke="currentColor" stroke-width="3.25" d="M49.00 32.00L58.00 32.00"/><path stroke="currentColor" stroke-width="3.25" d="M44.02 44.02L50.38 50.38"/><path stroke="currentColor" stroke-width="3.25" d="M32.00 49.00L32.00 58.00"/><path stroke="currentColor" stroke-width="3.25" d="M19.98 44.02L13.62 50.38"/><path stroke="currentColor" stroke-width="3.25" d="M15.00 32.00L6.00 32.00"/><path stroke="currentColor" stroke-width="3.25" d="M19.98 19.98L13.62 13.62"/><circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3.25"/><path style="fill:var(--signal)" d="M32 20L36.5 30H27.5Z"/><path fill="currentColor" d="M27.5 34H36.5L32 44Z"/><g transform="translate(84.107 50.667) scale(0.05333)"><path fill="currentColor" d="M73 -12V-688Q73 -693 76.5 -696.5Q80 -700 85 -700H177Q182 -700 185.5 -696.5Q189 -693 189 -688V-389Q189 -386 191.0 -385.0Q193 -384 195 -386L455 -693Q461 -700 470 -700H574Q584 -700 584 -693Q584 -690 581 -685L352 -404Q349 -400 351 -397L597 -14Q599 -8 599 -7Q599 0 589 0H484Q475 0 470 -8L272 -316Q268 -322 265 -317L191 -231Q189 -227 189 -224V-12Q189 -7 185.5 -3.5Q182 0 177 0H85Q80 0 76.5 -3.5Q73 -7 73 -12Z"/><path fill="currentColor" d="M816 -236V-464Q816 -536 848.0 -591.5Q880 -647 937.5 -677.5Q995 -708 1070 -708Q1146 -708 1203.5 -677.5Q1261 -647 1293.0 -591.5Q1325 -536 1325 -464V-236Q1325 -163 1293.0 -107.0Q1261 -51 1203.5 -20.5Q1146 10 1070 10Q995 10 937.0 -20.5Q879 -51 847.5 -107.0Q816 -163 816 -236ZM1209 -232V-465Q1209 -530 1171.0 -569.0Q1133 -608 1070 -608Q1008 -608 970.0 -569.0Q932 -530 932 -465V-232Q932 -168 970.0 -129.0Q1008 -90 1070 -90Q1133 -90 1171.0 -129.0Q1209 -168 1209 -232Z"/><path fill="currentColor" d="M2059 -700H2151Q2156 -700 2159.5 -696.5Q2163 -693 2163 -688V-12Q2163 -7 2159.5 -3.5Q2156 0 2151 0H2059Q2054 0 2050.5 -3.5Q2047 -7 2047 -12V-489Q2047 -492 2044.5 -493.0Q2042 -494 2041 -491L1916 -299Q1911 -291 1902 -291H1856Q1847 -291 1842 -299L1716 -490Q1715 -493 1712.5 -492.0Q1710 -491 1710 -488V-12Q1710 -7 1706.5 -3.5Q1703 0 1698 0H1606Q1601 0 1597.5 -3.5Q1594 -7 1594 -12V-688Q1594 -693 1597.5 -696.5Q1601 -700 1606 -700H1698Q1707 -700 1712 -692L1875 -445Q1877 -443 1879.0 -443.0Q1881 -443 1882 -445L2045 -692Q2050 -700 2059 -700Z"/><path fill="currentColor" d="M2942 -492Q2942 -431 2915.0 -384.0Q2888 -337 2838.5 -311.5Q2789 -286 2724 -286H2564Q2559 -286 2559 -281V-12Q2559 -7 2555.5 -3.5Q2552 0 2547 0H2455Q2450 0 2446.5 -3.5Q2443 -7 2443 -12V-689Q2443 -694 2446.5 -697.5Q2450 -701 2455 -701H2730Q2793 -701 2841.0 -675.0Q2889 -649 2915.5 -601.5Q2942 -554 2942 -492ZM2826 -489Q2826 -539 2795.0 -570.0Q2764 -601 2713 -601H2564Q2559 -601 2559 -596V-385Q2559 -380 2564 -380H2713Q2764 -380 2795.0 -410.0Q2826 -440 2826 -489Z"/><path fill="currentColor" d="M3605 -10 3572 -117Q3570 -121 3567 -121H3303Q3300 -121 3298 -117L3265 -10Q3262 0 3252 0H3152Q3146 0 3143.0 -3.5Q3140 -7 3142 -14L3359 -690Q3362 -700 3372 -700H3497Q3507 -700 3510 -690L3728 -14Q3729 -12 3729 -9Q3729 0 3718 0H3618Q3608 0 3605 -10ZM3333 -212H3536Q3542 -212 3540 -218L3437 -553Q3436 -557 3434.0 -557.0Q3432 -557 3431 -553L3329 -218Q3328 -212 3333 -212Z"/><path fill="currentColor" d="M3941 -193V-218Q3941 -223 3944.5 -226.5Q3948 -230 3953 -230H4042Q4047 -230 4050.5 -226.5Q4054 -223 4054 -218V-199Q4054 -153 4095.0 -122.5Q4136 -92 4207 -92Q4268 -92 4299.0 -118.0Q4330 -144 4330 -185Q4330 -213 4313.0 -232.5Q4296 -252 4264.5 -268.0Q4233 -284 4170 -308Q4099 -334 4055.0 -357.0Q4011 -380 3981.5 -419.5Q3952 -459 3952 -518Q3952 -606 4016.0 -657.0Q4080 -708 4187 -708Q4262 -708 4319.5 -682.0Q4377 -656 4409.0 -609.5Q4441 -563 4441 -502V-485Q4441 -480 4437.5 -476.5Q4434 -473 4429 -473H4339Q4334 -473 4330.5 -476.5Q4327 -480 4327 -485V-496Q4327 -543 4288.5 -575.5Q4250 -608 4182 -608Q4127 -608 4096.5 -585.0Q4066 -562 4066 -520Q4066 -490 4082.0 -471.0Q4098 -452 4130.0 -436.5Q4162 -421 4229 -397Q4300 -370 4342.5 -348.0Q4385 -326 4415.5 -286.5Q4446 -247 4446 -188Q4446 -98 4379.5 -45.0Q4313 8 4198 8Q4120 8 4062.0 -17.0Q4004 -42 3972.5 -87.0Q3941 -132 3941 -193Z"/><path fill="currentColor" d="M4672 -193V-218Q4672 -223 4675.5 -226.5Q4679 -230 4684 -230H4773Q4778 -230 4781.5 -226.5Q4785 -223 4785 -218V-199Q4785 -153 4826.0 -122.5Q4867 -92 4938 -92Q4999 -92 5030.0 -118.0Q5061 -144 5061 -185Q5061 -213 5044.0 -232.5Q5027 -252 4995.5 -268.0Q4964 -284 4901 -308Q4830 -334 4786.0 -357.0Q4742 -380 4712.5 -419.5Q4683 -459 4683 -518Q4683 -606 4747.0 -657.0Q4811 -708 4918 -708Q4993 -708 5050.5 -682.0Q5108 -656 5140.0 -609.5Q5172 -563 5172 -502V-485Q5172 -480 5168.5 -476.5Q5165 -473 5160 -473H5070Q5065 -473 5061.5 -476.5Q5058 -480 5058 -485V-496Q5058 -543 5019.5 -575.5Q4981 -608 4913 -608Q4858 -608 4827.5 -585.0Q4797 -562 4797 -520Q4797 -490 4813.0 -471.0Q4829 -452 4861.0 -436.5Q4893 -421 4960 -397Q5031 -370 5073.5 -348.0Q5116 -326 5146.5 -286.5Q5177 -247 5177 -188Q5177 -98 5110.5 -45.0Q5044 8 4929 8Q4851 8 4793.0 -17.0Q4735 -42 4703.5 -87.0Q4672 -132 4672 -193Z"/></g></svg></a>
+      <nav class="nav"><a href="#dl-c">Download</a><a class="opt" href="https://github.com/Die-Werkstatt/Kompass">Source</a></nav>
+    </header>
+    <section class="c-hero">
+      <div class="c-title">
+        <h1 aria-label="Kompass"><svg class="wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="73 -716 5104 732" role="img" aria-label="KOMPASS"><title>KOMPASS</title><path fill="currentColor" d="M73 -12V-688Q73 -693 76.5 -696.5Q80 -700 85 -700H177Q182 -700 185.5 -696.5Q189 -693 189 -688V-389Q189 -386 191.0 -385.0Q193 -384 195 -386L455 -693Q461 -700 470 -700H574Q584 -700 584 -693Q584 -690 581 -685L352 -404Q349 -400 351 -397L597 -14Q599 -8 599 -7Q599 0 589 0H484Q475 0 470 -8L272 -316Q268 -322 265 -317L191 -231Q189 -227 189 -224V-12Q189 -7 185.5 -3.5Q182 0 177 0H85Q80 0 76.5 -3.5Q73 -7 73 -12Z"/><path fill="currentColor" d="M816 -236V-464Q816 -536 848.0 -591.5Q880 -647 937.5 -677.5Q995 -708 1070 -708Q1146 -708 1203.5 -677.5Q1261 -647 1293.0 -591.5Q1325 -536 1325 -464V-236Q1325 -163 1293.0 -107.0Q1261 -51 1203.5 -20.5Q1146 10 1070 10Q995 10 937.0 -20.5Q879 -51 847.5 -107.0Q816 -163 816 -236ZM1209 -232V-465Q1209 -530 1171.0 -569.0Q1133 -608 1070 -608Q1008 -608 970.0 -569.0Q932 -530 932 -465V-232Q932 -168 970.0 -129.0Q1008 -90 1070 -90Q1133 -90 1171.0 -129.0Q1209 -168 1209 -232Z"/><path fill="currentColor" d="M2059 -700H2151Q2156 -700 2159.5 -696.5Q2163 -693 2163 -688V-12Q2163 -7 2159.5 -3.5Q2156 0 2151 0H2059Q2054 0 2050.5 -3.5Q2047 -7 2047 -12V-489Q2047 -492 2044.5 -493.0Q2042 -494 2041 -491L1916 -299Q1911 -291 1902 -291H1856Q1847 -291 1842 -299L1716 -490Q1715 -493 1712.5 -492.0Q1710 -491 1710 -488V-12Q1710 -7 1706.5 -3.5Q1703 0 1698 0H1606Q1601 0 1597.5 -3.5Q1594 -7 1594 -12V-688Q1594 -693 1597.5 -696.5Q1601 -700 1606 -700H1698Q1707 -700 1712 -692L1875 -445Q1877 -443 1879.0 -443.0Q1881 -443 1882 -445L2045 -692Q2050 -700 2059 -700Z"/><path fill="currentColor" d="M2942 -492Q2942 -431 2915.0 -384.0Q2888 -337 2838.5 -311.5Q2789 -286 2724 -286H2564Q2559 -286 2559 -281V-12Q2559 -7 2555.5 -3.5Q2552 0 2547 0H2455Q2450 0 2446.5 -3.5Q2443 -7 2443 -12V-689Q2443 -694 2446.5 -697.5Q2450 -701 2455 -701H2730Q2793 -701 2841.0 -675.0Q2889 -649 2915.5 -601.5Q2942 -554 2942 -492ZM2826 -489Q2826 -539 2795.0 -570.0Q2764 -601 2713 -601H2564Q2559 -601 2559 -596V-385Q2559 -380 2564 -380H2713Q2764 -380 2795.0 -410.0Q2826 -440 2826 -489Z"/><path fill="currentColor" d="M3605 -10 3572 -117Q3570 -121 3567 -121H3303Q3300 -121 3298 -117L3265 -10Q3262 0 3252 0H3152Q3146 0 3143.0 -3.5Q3140 -7 3142 -14L3359 -690Q3362 -700 3372 -700H3497Q3507 -700 3510 -690L3728 -14Q3729 -12 3729 -9Q3729 0 3718 0H3618Q3608 0 3605 -10ZM3333 -212H3536Q3542 -212 3540 -218L3437 -553Q3436 -557 3434.0 -557.0Q3432 -557 3431 -553L3329 -218Q3328 -212 3333 -212Z"/><path fill="currentColor" d="M3941 -193V-218Q3941 -223 3944.5 -226.5Q3948 -230 3953 -230H4042Q4047 -230 4050.5 -226.5Q4054 -223 4054 -218V-199Q4054 -153 4095.0 -122.5Q4136 -92 4207 -92Q4268 -92 4299.0 -118.0Q4330 -144 4330 -185Q4330 -213 4313.0 -232.5Q4296 -252 4264.5 -268.0Q4233 -284 4170 -308Q4099 -334 4055.0 -357.0Q4011 -380 3981.5 -419.5Q3952 -459 3952 -518Q3952 -606 4016.0 -657.0Q4080 -708 4187 -708Q4262 -708 4319.5 -682.0Q4377 -656 4409.0 -609.5Q4441 -563 4441 -502V-485Q4441 -480 4437.5 -476.5Q4434 -473 4429 -473H4339Q4334 -473 4330.5 -476.5Q4327 -480 4327 -485V-496Q4327 -543 4288.5 -575.5Q4250 -608 4182 -608Q4127 -608 4096.5 -585.0Q4066 -562 4066 -520Q4066 -490 4082.0 -471.0Q4098 -452 4130.0 -436.5Q4162 -421 4229 -397Q4300 -370 4342.5 -348.0Q4385 -326 4415.5 -286.5Q4446 -247 4446 -188Q4446 -98 4379.5 -45.0Q4313 8 4198 8Q4120 8 4062.0 -17.0Q4004 -42 3972.5 -87.0Q3941 -132 3941 -193Z"/><path fill="currentColor" d="M4672 -193V-218Q4672 -223 4675.5 -226.5Q4679 -230 4684 -230H4773Q4778 -230 4781.5 -226.5Q4785 -223 4785 -218V-199Q4785 -153 4826.0 -122.5Q4867 -92 4938 -92Q4999 -92 5030.0 -118.0Q5061 -144 5061 -185Q5061 -213 5044.0 -232.5Q5027 -252 4995.5 -268.0Q4964 -284 4901 -308Q4830 -334 4786.0 -357.0Q4742 -380 4712.5 -419.5Q4683 -459 4683 -518Q4683 -606 4747.0 -657.0Q4811 -708 4918 -708Q4993 -708 5050.5 -682.0Q5108 -656 5140.0 -609.5Q5172 -563 5172 -502V-485Q5172 -480 5168.5 -476.5Q5165 -473 5160 -473H5070Q5065 -473 5061.5 -476.5Q5058 -480 5058 -485V-496Q5058 -543 5019.5 -575.5Q4981 -608 4913 -608Q4858 -608 4827.5 -585.0Q4797 -562 4797 -520Q4797 -490 4813.0 -471.0Q4829 -452 4861.0 -436.5Q4893 -421 4960 -397Q5031 -370 5073.5 -348.0Q5116 -326 5146.5 -286.5Q5177 -247 5177 -188Q5177 -98 5110.5 -45.0Q5044 8 4929 8Q4851 8 4793.0 -17.0Q4735 -42 4703.5 -87.0Q4672 -132 4672 -193Z"/></svg></h1>
+        <div class="side">
+          <strong>Make pies for Blender</strong>
+          <p>Any tool, menu or property on a pie, one key away.</p>
+          <div class="actions"><a class="btn" href="#dl-c">Download</a></div>
+        </div>
+      </div>
+      <div class="stage c-stage" data-demo="c" tabindex="0" aria-label="Kompass pie demo. Click to open the pie and try it."><span class="try">Click to try</span></div>
+      <ol class="steps" data-steps>
+        <li data-step="1"><span class="n">1</span><h3>Hold the shortcut</h3><p>The pie opens at the pointer.</p></li>
+        <li data-step="2"><span class="n">2</span><h3>Point</h3><p>The needle follows. Rest on a slot to open its sub-pie.</p></li>
+        <li data-step="3"><span class="n">3</span><h3>Release</h3><p data-last>The tool runs.</p></li>
+      </ol>
+    </section>
+  </div>
+  <section class="c-dl" id="dl-c">
+    <div class="wrap">
+      <div class="left">
+        <h2>Download</h2>
+        <p>Kompass adds its own pie, hover sub-pies and the visual editor.</p>
+        <div class="actions"><a class="btn" href="#dl-c">Download Native</a><a class="btn kompass" href="#dl-c">Download Kompass</a></div>
+        <div class="facts">
+          <div><span>Blender</span>5.2 or later</div>
+          <div><span>Format</span>Extension .zip</div>
+        </div>
+      </div>
+      <ol class="install">
+        <li><div><h3>Download the .zip</h3><p>Keep it zipped.</p></div></li>
+        <li><div><h3>Install from disk</h3><p>In Blender, open Preferences, then Get Extensions, and choose Install from Disk.</p></div></li>
+        <li><div><h3>Set a shortcut</h3><p>Give each pie its own key in the Kompass panel.</p></div></li>
+      </ol>
+    </div>
+  </section>
+  <div class="wrap"><footer class="foot"><span>Kompass for Blender</span><span>GPL-3.0-or-later</span></footer></div>
+</div>
+
+<nav class="switch" aria-label="Variation">
+  <span>Variation</span>
+  <button type="button" id="sw-a" data-to="a" aria-pressed="true">A · Dial</button>
+  <button type="button" id="sw-b" data-to="b" aria-pressed="false">B · Viewport</button>
+  <button type="button" id="sw-c" data-to="c" aria-pressed="false">C · Paper</button>
+</nav>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var PIES = {
+    root: { name: "Modeling", items: {
+      0: { label: "Extrude", sub: "extrude" }, 45: { label: "Inset" }, 90: { label: "Bevel", sub: "bevel" }, 135: { label: "Knife from View" },
+      180: { label: "Loop Cut" }, 225: { label: "Merge", sub: "merge" }, 270: { label: "Subdivide" }, 315: { label: "Dissolve", sub: "dissolve" } } },
+    extrude: { name: "Extrude", items: { 270: { label: "Faces" }, 90: { label: "Along Normals" }, 180: { label: "Individual" }, 0: { label: "Manifold" } } },
+    bevel: { name: "Bevel", items: { 270: { label: "Edges" }, 90: { label: "Vertices" } } },
+    merge: { name: "Merge", items: { 270: { label: "Merge At", sub: "mergeAt" }, 90: { label: "Clean Up", sub: "cleanup" }, 0: { label: "Collapse" }, 180: { label: "By Distance" } } },
+    mergeAt: { name: "Merge At", items: { 270: { label: "Center" }, 90: { label: "Cursor" }, 0: { label: "First" }, 180: { label: "Last" } } },
+    cleanup: { name: "Clean Up", items: { 270: { label: "Delete Loose" }, 90: { label: "Degenerate" }, 0: { label: "Fill Holes" }, 180: { label: "Make Planar" } } },
+    dissolve: { name: "Dissolve", items: { 270: { label: "Vertices" }, 90: { label: "Edges" }, 180: { label: "Faces" }, 0: { label: "Limited" } } }
+  };
+  var DARK = { ground: "#0e0e0e", line: "#2c2c2c", ink: "#f1f0ec", stone: "#8f8d88", signal: "#f2542d", hot: "#ffffff", cursor: "#f1f0ec", cursorEdge: "#0e0e0e", subFill: "#4a4946", subLine: "#5a5955" };
+  var PAPER = { ground: "#f7f6f2", line: "#c9c5bc", ink: "#0e0e0e", stone: "#7a766f", signal: "#d9431f", hot: "#ffffff", cursor: "#0e0e0e", cursorEdge: "#f7f6f2", subFill: "#d6d2ca", subLine: "#a29e95", light: true };
+
+  function mix(a, b, t) {
+    var A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16), o = "#";
+    [16, 8, 0].forEach(function (sh) { var v = Math.round(((A >> sh) & 255) * (1 - t) + ((B >> sh) & 255) * t); o += (v < 16 ? "0" : "") + v.toString(16); });
+    return o;
+  }
+  function P(cx, cy, r, deg) { var a = deg * Math.PI / 180; return [cx + Math.sin(a) * r, cy - Math.cos(a) * r]; }
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+  var MOTION = 120; // ms for every pie transition
+  function easeIO(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+  // The scripted session: hold Q, point, rest on a sub-pie slot, release. Then a second pass through two sub-pie levels and back.
+  var SCRIPT = [
+    ["reset"], ["home", .5, .58, 700], ["wait", 500],
+    ["keydown"], ["wait", 300], ["slot", 0, 650], ["wait", 300],
+    ["slot", 90, 600], ["wait", 250], ["keyup"], ["wait", 1300],
+    ["home", .56, .42, 800], ["wait", 300], ["keydown"], ["wait", 300], ["slot", 225, 750], ["wait", 380],
+    ["slot", 0, 650], ["wait", 380], ["keyup"], ["wait", 1500]
+  ];
+
+  // Variation A's hero runs one route per tool: Extrude, Inset, Bevel, Loop Cut, Merge and Subdivide, each on a fresh cube.
+  function route(x, y, path) {
+    var s = [["home", x, y, 800], ["wait", 300], ["keydown"], ["wait", 300]];
+    path.forEach(function (g, k) { s.push(["slot", g, k ? 650 : 700], ["wait", k < path.length - 1 ? 380 : 300]); });
+    return s.concat([["keyup"], ["wait", 1500]]);
+  }
+  var SCRIPT_A = [["reset"], ["home", .5, .58, 700], ["wait", 500]].concat(
+    [["keydown"], ["wait", 300], ["slot", 0, 650], ["wait", 300], ["slot", 90, 600], ["wait", 250], ["keyup"], ["wait", 1300]],
+    route(.46, .44, [45]), route(.54, .56, [90, 270]), route(.5, .42, [180]), route(.56, .42, [225, 0]), route(.44, .52, [270]));
+
+  var uidN = 0;
+  function Demo(stage, opts) {
+    var d = this;
+    d.stage = stage; d.C = opts.colors; d.opts = opts;
+    d.bg = document.createElementNS(NS, "svg"); d.bg.setAttribute("class", "layer"); d.bg.setAttribute("aria-hidden", "true");
+    d.svg = document.createElementNS(NS, "svg"); d.svg.setAttribute("class", "layer"); d.svg.setAttribute("aria-hidden", "true");
+    stage.insertBefore(d.svg, stage.firstChild); stage.insertBefore(d.bg, d.svg);
+    d.s = { open: false, closing: false, o: 0, t: 0, ghost: null, stack: [], centres: [], cx: 0, cy: 0, px: 0, py: 0, angle: null, shown: null, dir: null, rects: {}, innerR: 30 };
+    d.uid = "k" + (++uidN); d.s.scroll = {};
+    d.user = false; d.ghost = !reduce; d.dirty = true; d.step = 0; d.lastActive = 0;
+    d.i = 0; d.op = null; d.t0 = 0;
+    d.pies = opts.pies || PIES; d.script = opts.script || SCRIPT;
+    d.size();
+    if (!opts.passive) d.bind();
+  }
+  Demo.prototype.size = function () { this.w = this.stage.clientWidth; this.h = this.stage.clientHeight; this.dirty = true; };
+  Demo.prototype.el = function (tag, attrs, parent) { var n = document.createElementNS(NS, tag); for (var k in attrs) n.setAttribute(k, attrs[k]); (parent || this.layer || this.svg).appendChild(n); return n; };
+  Demo.prototype.pieKey = function () { return (this.s.stack[this.s.stack.length - 1] || "root") + "/"; };
+  Demo.prototype.pie = function () { return this.pies[this.s.stack[this.s.stack.length - 1] || "root"]; };
+  Demo.prototype.setStep = function (n) { if (this.step !== n) { this.step = n; if (this.opts.onStep) this.opts.onStep(n); } };
+
+  // Geometry: radius, slot size and the clamped centre for the current pie.
+  Demo.prototype.layout = function () {
+    var s = this.s, w = this.w, h = this.h;
+    var bw = w < 520 ? 88 : w < 760 ? 104 : 118, bh = w < 520 ? 28 : 32;
+    var R = Math.max(92, Math.min(150, w * 0.16, h * 0.2));
+    var items = this.pie().items, n = Object.keys(items).length, wide = n > 8;
+    // Slot width: at least bw, grows to fit the label plus padding, at most 1.5 bw (120 / 12 / 180 px at full size); on narrow stages slots keep bw and long labels scroll.
+    var fs = w < 520 ? 11 : w < 760 ? 12 : 13, pad = 12 * bw / 120, ws = {}, tws = {}, mw = bw;
+    Object.keys(items).forEach(function (key) {
+      var tw = textW(items[key].label.toUpperCase(), fs);
+      tws[key] = tw; ws[key] = Math.min(bw * (w < 520 ? 1 : 1.5), Math.max(bw, Math.ceil(tw + 2 * pad))); mw = Math.max(mw, ws[key]);
+    });
+    // Twelve slots sit on the equal-gap bearings and a 170 px ring (scaled with the slot); other counts > 8 get the smallest ring that clears.
+    R = n === 12 && items[42] ? 170 * bw / 120 : wide ? Math.max(R, ringR(n, mw, bh)) : Math.max(92, Math.min(R, w / 2 - mw - 2));
+    if (s.stack.length) R *= 0.78;
+    var fx = w * 0.075, cx = Math.min(Math.max(s.cx, R + mw + 2 + fx), w - R - mw - 2 - fx);
+    var cy = Math.min(Math.max(s.cy, R + bh + 26), h - R - bh - 30);
+    if (w < 2 * (R + mw + 2 + fx)) cx = w / 2;
+    var k = Math.min(1, w / 700) * (s.stack.length ? 0.72 : 1);
+    s.ccx = cx; s.ccy = cy; s.R = R; s.bw = bw; s.bh = bh; s.k = k; s.fs = fs; s.pad = pad; s.innerR = 46 * k + 9;
+    var rects = {};
+    Object.keys(items).forEach(function (key) {
+      var deg = +key, p = P(cx, cy, R, deg), sw = ws[key], over = Math.max(0, tws[key] + 2 * pad - sw);
+      // One rule for every count and width: the slot's inner edge touches the ring point.
+      var a = deg * Math.PI / 180;
+      rects[deg] = { x: p[0] - sw / 2 + Math.sin(a) * sw / 2, y: p[1] - bh / 2 - Math.cos(a) * bh / 2, w: sw, h: bh, sub: items[key].sub, over: over };
+    });
+    s.rects = rects;
+  };
+
+  // Distance from a point to a slot's box, 0 on the box.
+  function gap(r, x, y) { return Math.hypot(Math.max(r.x - x, 0, x - r.x - r.w), Math.max(r.y - y, 0, y - r.y - r.h)); }
+  var measure = document.createElement("canvas").getContext("2d");
+  function textW(str, fs) { measure.font = "600 " + fs + "px Barlow, sans-serif"; return measure.measureText(str).width + str.length * fs * 0.08; }
+
+  // Smallest radius at which n evenly spaced slots keep a 6 px gap (Kompass holds up to 12).
+  var ringCache = {};
+  function ringR(n, bw, bh) {
+    var key = n + "/" + bw + "/" + bh;
+    if (ringCache[key]) return ringCache[key];
+    for (var R = 90; R < 400; R += 2) {
+      var rs = [];
+      for (var k = 0; k < n; k++) { var a = k * 2 * Math.PI / n; rs.push([(R + bw / 2) * Math.sin(a), -(R + bh / 2) * Math.cos(a)]); }
+      var ok = rs.every(function (A, i) { return rs.every(function (B, j) { return j <= i || Math.abs(A[0] - B[0]) >= bw + 6 || Math.abs(A[1] - B[1]) >= bh + 6; }); });
+      if (ok) break;
+    }
+    return (ringCache[key] = R);
+  }
+
+  // The area where a root pie opens without being pushed: its sub-pies are planned to land inside it too.
+  Demo.prototype.safe = function () {
+    var w = this.w, h = this.h, bw = w < 520 ? 88 : w < 760 ? 104 : 118, bh = w < 520 ? 28 : 32;
+    var R = Math.min(Math.max(92, Math.min(150, w * 0.16, h * 0.2)), w / 2 - bw - 2);
+    var a = { x0: R + bw + 2, x1: w - R - bw - 2, y0: R + bh + 26, y1: h - R - bh - 30 };
+    if (a.x1 < a.x0) a.x0 = a.x1 = w / 2;
+    if (a.y1 < a.y0) a.y0 = a.y1 = h / 2;
+    return a;
+  };
+  Demo.prototype.nearest = function (ang) {
+    if (ang === null) return null;
+    var best = null, bd = 999;
+    Object.keys(this.pie().items).forEach(function (k) { var d = Math.abs(((ang - +k) % 360 + 540) % 360 - 180); if (d < bd) { bd = d; best = +k; } });
+    return best;
+  };
+
+  Demo.prototype.track = function (x, y) {
+    var d = this, s = d.s;
+    s.px = x; s.py = y; d.dirty = true;
+    if (!s.open || s.closing) return;
+    d.layout();
+    var dx = x - s.ccx, dy = y - s.ccy, dist = Math.hypot(dx, dy);
+    s.angle = dist < 8 ? s.angle : (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+    var was = s.dir;
+    s.dir = dist > s.innerR ? d.nearest(s.angle) : null;
+    if (s.dir !== was && d.opts.onHover) d.opts.onHover(s.dir === null ? null : s.stack.map(function (k) { return d.pies[k].name; }).concat(d.pie().items[s.dir].label));
+    if (s.dir !== null && d.step === 1) d.setStep(2);
+    // Resting on a sub-pie slot for 100 ms opens the sub-pie at the pointer.
+    var hit = null;
+    Object.keys(s.rects).forEach(function (k) { var r = s.rects[k]; if (r.sub && x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h) hit = r.sub; });
+    if (hit && hit !== s.suppress) {
+      if (s.pending !== hit) { clearTimeout(s.timer); s.pending = hit; s.pendingAt = performance.now(); s.timer = setTimeout(function () { s.pending = null; if (s.open) d.openSub(hit); }, 100); }
+    } else { clearTimeout(s.timer); s.pending = null; }
+    if (!hit) s.suppress = null;
+  };
+  Demo.prototype.openAt = function (x, y) {
+    var s = this.s; s.open = true; s.closing = false; s.o = 0; s.t = 0; s.ghost = null; s.stack = []; s.centres = []; s.suppress = null; s.scroll = {}; s.cx = x; s.cy = y; s.angle = null; s.shown = null; s.dir = null;
+    this.setStep(1); this.track(x, y);
+    if (this.opts.onOpen) this.opts.onOpen();
+  };
+  Demo.prototype.openSub = function (key) {
+    var s = this.s; clearTimeout(s.timer); s.pending = null; this.snapshot(s.px, s.py, 0.9); s.o = 0; s.t = 0; s.centres.push([s.ccx, s.ccy]); s.stack.push(key); s.cx = s.px; s.cy = s.py; s.dir = null; s.suppress = null; this.dirty = true; this.track(s.px, s.py);
+    if (this.user) this.lastActive = performance.now();
+  };
+  // Closing plays the open transition backwards; the pie is gone once it reaches 0.
+  Demo.prototype.close = function () { var s = this.s; clearTimeout(s.timer); s.pending = null; if (s.open) s.closing = true; s.dir = null; this.dirty = true; if (this.opts.onHover) this.opts.onHover(null); };
+  // Keeps a copy of the pie as drawn, to fade and shrink it toward (ox, oy) while the next pie opens.
+  Demo.prototype.snapshot = function (ox, oy, to) {
+    var s = this.s; s.ghost = null;
+    if (reduce || !this.pieG) return;
+    s.ghost = { node: this.pieG.cloneNode(true), o: 1, ox: ox, oy: oy, to: to };
+  };
+  Demo.prototype.back = function () {
+    var s = this.s; if (!s.open || s.closing) return;
+    if (s.stack.length) { this.snapshot(s.ccx, s.ccy, 0.88); s.o = 0; s.t = 0; s.suppress = s.stack.pop(); var c = s.centres.pop(); s.cx = c[0]; s.cy = c[1]; s.dir = null; this.track(s.px, s.py); }
+    else { this.close(); this.setStep(0); }
+  };
+  Demo.prototype.choose = function () {
+    var s = this.s; if (!s.open || s.closing || s.dir === null) return false;
+    var it = this.pie().items[s.dir];
+    if (it.sub) { this.openSub(it.sub); return true; }
+    var d = this, path = s.stack.map(function (k) { return d.pies[k].name; }).concat(it.label);
+    this.close(); this.setStep(3);
+    if (this.opts.onRun) this.opts.onRun(path);
+    return true;
+  };
+
+  // ---------- drawing ----------
+  // Hovering the dial morphs the needle into a signal disc with a white border (e: 0 needle, 1 disc).
+  Demo.prototype.drawDial = function (cx, cy, ang, dir, e) {
+    var C = this.C, k = this.s.k, el = this.el.bind(this);
+    var R0 = 46 * k + 6, L = R0 - 22, W = 6 * k + 2;
+    el("circle", { cx: cx, cy: cy, r: R0 + 3, fill: C.ground, "fill-opacity": 0.92, stroke: C.line, "stroke-width": 1.5 });
+    for (var t = 0; t < 72; t++) {
+      var deg = t * 5, major = t % 9 === 0, on = dir !== null && deg === dir;
+      var a1 = P(cx, cy, R0 - (major ? lerp(12, 5, e) : 5), deg), a2 = P(cx, cy, R0, deg);
+      el("line", { x1: a1[0], y1: a1[1], x2: a2[0], y2: a2[1], stroke: on ? C.signal : major ? C.ink : C.stone, "stroke-width": on ? 3 : major ? 2 : 1, opacity: major || on ? 1 : .55 });
+    }
+    // On centre hover the outer arrow slides onto the ring, shrinks to nothing and fades.
+    var ay = cy - lerp(R0 + 12, R0 + 3, e), as = 1 - e;
+    var g = el("g", { transform: "rotate(" + (ang === null ? 0 : ang) + " " + cx + " " + cy + ")" });
+    if (as > 0) el("path", { d: "M" + cx + " " + (ay - 4 * as) + "l" + 5 * as + " " + 8 * as + "h" + (-10 * as) + "z", fill: C.signal, opacity: 1 - e }, g);
+    var sc = 1 - e;
+    if (sc > 0) {
+      var n = el("g", { transform: "translate(" + cx + " " + cy + ") scale(" + sc + ") translate(" + (-cx) + " " + (-cy) + ")", opacity: 1 - clamp01(e * 1.3) }, g);
+      el("path", { d: "M" + cx + " " + (cy - L) + "L" + (cx + W) + " " + (cy - 3) + "H" + (cx - W) + "Z", fill: C.signal }, n);
+      el("path", { d: "M" + (cx - W) + " " + (cy + 3) + "H" + (cx + W) + "L" + cx + " " + (cy + L) + "Z", fill: C.ink }, n);
+    }
+    if (e > 0) el("circle", { cx: cx, cy: cy, r: L * 0.75 * e, fill: C.signal, stroke: C.hot, "stroke-width": 3 * clamp01(e * 2) });
+  };
+  Demo.prototype.drawCursor = function (x, y) {
+    var C = this.C;
+    // The demo's own pointer is an arrow in signal red with a light edge, so it never reads as the visitor's cursor.
+    this.el("path", { d: "M" + x + " " + y + "l0 18l4.8 -4.5l3.4 7.6l3.2 -1.4l-3.3 -7.4l6.6 -.3z", fill: C.signal, stroke: C.cursor, "stroke-width": 1.4, "stroke-linejoin": "round" });
+  };
+  Demo.prototype.render = function () {
+    var d = this, s = d.s, C = d.C, svg = d.svg, el = d.el.bind(d);
+    d.dirty = false;
+    d.layer = null; d.pieG = null;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    if (d.opts.drawBg) d.opts.drawBg(d);
+    var gh = s.ghost;
+    if (gh) {
+      var ge = easeOut(gh.o), gs = lerp(gh.to, 1, ge);
+      gh.node.setAttribute("opacity", ge);
+      gh.node.setAttribute("transform", "translate(" + gh.ox + " " + gh.oy + ") scale(" + gs + ") translate(" + (-gh.ox) + " " + (-gh.oy) + ")");
+      svg.appendChild(gh.node);
+    }
+    if (s.open) {
+      d.layout();
+      var cx = s.ccx, cy = s.ccy, R = s.R, dir = s.dir, items = d.pie().items, n = Object.keys(items).length;
+      // Opening fades in, the dial grows from 92% and slots travel out from 88% of their distance; closing reverses it.
+      var eo = easeOut(s.o), pull = lerp(0.88, 1, eo), e = easeIO(s.t);
+      var pg = el("g", { opacity: eo }); d.pieG = pg; d.layer = pg;
+      d.layer = el("g", { transform: "translate(" + cx + " " + cy + ") scale(" + lerp(0.92, 1, eo) + ") translate(" + (-cx) + " " + (-cy) + ")" });
+      d.drawDial(cx, cy, s.shown, dir, e);
+      d.layer = pg;
+      var lab = el("text", { x: cx, y: cy + (s.innerR + 22) * pull, "text-anchor": "middle", fill: mix(C.stone, C.ink, e), opacity: lerp(0.7, 1, e), "font-size": 11, "letter-spacing": "0.12em", "font-family": "Barlow, sans-serif", "font-weight": 600, stroke: C.ground, "stroke-width": 3, "paint-order": "stroke" });
+      lab.textContent = s.stack.length ? "BACK" : "CLOSE";
+      if (s.stack.length) {
+        var ttl = el("text", { x: cx, y: cy - (s.innerR + 18) * pull, "text-anchor": "middle", fill: C.ink, "font-size": 12, "font-weight": 600, "letter-spacing": "0.14em", "font-family": "Barlow, sans-serif", stroke: C.ground, "stroke-width": 3, "paint-order": "stroke" });
+        ttl.textContent = d.pie().name.toUpperCase();
+      }
+      var pd = Math.hypot(s.px - cx, s.py - cy);
+      var radial = Math.max(0, Math.min(1, (pd - s.innerR) / Math.max(20, (R - s.innerR) * 0.6)));
+      var fs = s.fs;
+      var now = performance.now();
+      Object.keys(items).forEach(function (key) {
+        var deg = +key, it = items[key], r0 = s.rects[deg];
+        var r = { w: r0.w, h: r0.h, x: cx + (r0.x + r0.w / 2 - cx) * pull - r0.w / 2, y: cy + (r0.y + r0.h / 2 - cy) * pull - r0.h / 2 };
+        var hot = deg === dir;
+        var near = s.shown === null ? 0 : Math.max(0, 1 - Math.abs(((s.shown - deg) % 360 + 540) % 360 - 180) / (360 / Math.max(n, 2)));
+        var amt = near * near * radial * (hot ? 1 : 0.55);
+        if (hot) amt = Math.max(amt, 0.3);
+        // The highlight fades with the pointer's distance from the slot's box and is gone at 24 px, the reach of a click.
+        amt *= Math.max(0, 1 - gap(r0, s.px, s.py) / 24);
+        var txt = mix(C.ink, C.hot, amt);
+        if (it.sub) {
+          // Sub-pie slots: grey highlight; while the pointer rests on one, red fills it away from the centre until the sub-pie opens.
+          el("rect", { x: r.x, y: r.y, width: r.w, height: r.h, fill: mix(C.ground, C.subFill, amt), stroke: mix(C.subLine, C.stone, amt), "stroke-width": 1 });
+          if (C.light) txt = C.ink;
+          var f = s.pending === it.sub ? clamp01((now - s.pendingAt) / 100) : 0;
+          if (f > 0) {
+            var fx = r.x, fy = r.y, fw = r.w, fh = r.h;
+            // The fill grows outward along the bearing's stronger axis.
+            var sa = Math.sin(deg * Math.PI / 180), ca = Math.cos(deg * Math.PI / 180);
+            if (Math.abs(ca) > Math.abs(sa)) { fh = r.h * f; if (ca > 0) fy = r.y + r.h - fh; }
+            else { fw = r.w * f; if (sa < 0) fx = r.x + r.w - fw; }
+            el("rect", { x: fx, y: fy, width: fw, height: fh, fill: C.signal });
+            el("rect", { x: r.x + .5, y: r.y + .5, width: r.w - 1, height: r.h - 1, fill: "none", stroke: C.signal, "stroke-width": 1 });
+            txt = C.hot;
+          }
+          el("path", { d: "M" + (r.x + r.w - 9) + " " + r.y + "H" + (r.x + r.w) + "V" + (r.y + 9) + "Z", fill: f > 0.85 ? C.hot : C.signal });
+        } else {
+          el("rect", { x: r.x, y: r.y, width: r.w, height: r.h, fill: mix(C.ground, C.signal, amt), stroke: mix(C.line, C.signal, amt), "stroke-width": 1 });
+        }
+        var ta = { x: r.x + r.w / 2, y: r.y + r.h / 2 + fs * 0.36, "text-anchor": "middle", fill: txt, "font-size": fs, "font-weight": 600, "letter-spacing": "0.08em", "font-family": "Barlow, sans-serif" };
+        if (r0.over) {
+          // A label wider than the slot is clipped at the padding and scrolls left while hovered.
+          var cid = d.uid + "c" + deg, cp = el("clipPath", { id: cid });
+          el("rect", { x: r.x + s.pad, y: r.y, width: r.w - 2 * s.pad, height: r.h }, cp);
+          ta.x = r.x + s.pad - (s.scroll[d.pieKey() + deg] || { off: 0 }).off; ta["text-anchor"] = "start"; ta["clip-path"] = "url(#" + cid + ")";
+        }
+        var t = el("text", ta);
+        t.textContent = it.label.toUpperCase();
+      });
+      d.layer = null;
+    }
+    if (d.ghost && !d.user && !(d.holdUntil > performance.now())) d.drawCursor(s.px, s.py);
+  };
+
+  // ---------- the scripted pointer ----------
+  // A hand-like move: an aim point slightly off centre, a duration that varies a little and a path that bows to one side.
+  // The variation lives in the path only: the pointer settles on its target without correcting back.
+  function human(o, to, dur, spread) {
+    var r = Math.random;
+    o.to = [to[0] + (r() * 2 - 1) * spread[0], to[1] + (r() * 2 - 1) * spread[1]];
+    o.dur = dur * (0.92 + r() * 0.16);
+    var dx = o.to[0] - o.from[0], dy = o.to[1] - o.from[1], dist = Math.hypot(dx, dy) || 1, bow = dist * (0.03 + r() * 0.04) * (r() < 0.5 ? -1 : 1);
+    o.ctrl = [o.from[0] + dx * 0.45 - dy / dist * bow, o.from[1] + dy * 0.45 + dx / dist * bow];
+  }
+  function humanAt(o, t) {
+    // Minimum-jerk speed profile along a quadratic curve; it ends at the target with zero speed.
+    var e = t * t * t * (10 - 15 * t + 6 * t * t), a = 1 - e;
+    return [a * a * o.from[0] + 2 * a * e * o.ctrl[0] + e * e * o.to[0], a * a * o.from[1] + 2 * a * e * o.ctrl[1] + e * e * o.to[1]];
+  }
+  Demo.prototype.tick = function (now) {
+    var d = this, s = d.s;
+    if (!d.user && !reduce) {
+      var guard = 0;
+      while (guard++ < 8 && !(d.holdUntil > now)) {
+        if (!d.op) {
+          var op = d.script[d.i]; d.i = (d.i + 1) % d.script.length;
+          d.op = { a: op, t0: now, from: [s.px, s.py] };
+          var dur = 0, to = null;
+          if (op[0] === "safe") { var sf = d.safe(); to = [sf.x0 + op[1] * (sf.x1 - sf.x0), sf.y0 + op[2] * (sf.y1 - sf.y0)]; dur = op[3]; }
+          else if (op[0] === "home") { to = [op[1] * d.w, op[2] * d.h]; dur = op[3]; }
+          else if (op[0] === "to") { d.layout(); to = P(s.ccx, s.ccy, s.R * op[2], op[1]); dur = op[3]; }
+          else if (op[0] === "slot") { d.layout(); var r = s.rects[op[1]]; to = [r.x + r.w * 0.5, r.y + r.h * 0.55]; dur = op[2]; }
+          else if (op[0] === "center") { d.layout(); to = [s.ccx + 5, s.ccy + 7]; dur = op[1]; }
+          else if (op[0] === "wait") dur = op[1];
+          else if (op[0] === "keydown") { d.openAt(s.px, s.py); if (d.opts.onKey) d.opts.onKey(true); }
+          else if (op[0] === "keyup") { if (d.opts.onKey) d.opts.onKey(false); if (!d.choose()) { d.close(); d.setStep(0); } }
+          else if (op[0] === "click") { if (!d.choose()) d.back(); }
+          else if (op[0] === "hide") { d.stage.style.opacity = 0; }
+          else if (op[0] === "reset") { d.setStep(0); if (d.opts.onReset) d.opts.onReset(); }
+          if (to) human(d.op, to, dur, op[0] === "slot" ? [s.rects[op[1]].w * (s.rects[op[1]].sub ? 0.04 : 0.1), s.rects[op[1]].h * 0.1] : op[0] === "home" ? [6, 6] : [2, 2]);
+          else d.op.dur = dur;
+          dur = d.op.dur;
+          if (!dur) { d.op = null; continue; }
+        }
+        var o = d.op, t = Math.min(1, (now - o.t0) / o.dur);
+        if (o.to) { var hp = humanAt(o, t); d.track(hp[0], hp[1]); }
+        else if (o.a[0] === "wait" && d.step === 3 && t > .7 && !s.open) d.setStep(0);
+        if (t >= 1) { d.op = null; continue; }
+        break;
+      }
+    } else if (d.user && !reduce) {
+      // Idle for 8 s: an open pie closes and the script resumes once it is gone; a closed demo resumes the script.
+      if (s.open && !s.closing && !d.pendingOpen && now - d.lastActive > 8000) { d.idleClose = true; d.close(); }
+      else if (!s.open && !d.pendingOpen && (d.idleClose || now - d.lastActive > 8000)) {
+        d.user = false; d.idleClose = false; d.op = null; d.i = 0; d.stage.classList.remove("live");
+      }
+    }
+    var dt = d.lastT ? Math.min(50, now - d.lastT) : 16, step = reduce ? 1 : dt / MOTION;
+    if (s.open) {
+      var hov = Math.hypot(s.px - s.ccx, s.py - s.ccy) <= s.innerR ? 1 : 0;
+      // While closing, the dial keeps the state it had when the close began.
+      if (!s.closing && s.t !== hov) { s.t = hov > s.t ? Math.min(1, s.t + step) : Math.max(0, s.t - step); d.dirty = true; }
+      var oT = s.closing ? 0 : 1;
+      if (s.o !== oT) { s.o = oT > s.o ? Math.min(1, s.o + step) : Math.max(0, s.o - step); d.dirty = true; }
+      if (s.closing && s.o === 0) {
+        s.closing = false; s.open = false; s.stack = []; d.dirty = true;
+        if (d.pendingOpen) { var po = d.pendingOpen; d.pendingOpen = null; d.lastActive = now; d.openAt(po[0], po[1]); d.track(s.px, s.py); }
+      }
+      if (s.pending) d.dirty = true;
+      // Long labels: wait 400 ms on hover, slide left at 40 px/s to the end, ease back (60 ms time constant) on leave.
+      var pk = d.pieKey();
+      Object.keys(s.rects).forEach(function (deg) {
+        var r = s.rects[deg]; if (!r.over) return;
+        var sc = s.scroll[pk + deg] || (s.scroll[pk + deg] = { off: 0, since: 0 }), prev = sc.off;
+        if (+deg === s.dir && !s.closing && gap(r, s.px, s.py) < 24) { sc.since = sc.since || now; sc.off = reduce ? 0 : Math.min(r.over, Math.max(sc.off, (now - sc.since - 400) * 0.04)); }
+        else { sc.since = 0; sc.off = sc.off < 0.3 ? 0 : sc.off * Math.exp(-dt / 60); }
+        if (sc.off !== prev) d.dirty = true;
+      });
+    }
+    if (s.ghost) { s.ghost.o = Math.max(0, s.ghost.o - step); if (s.ghost.o === 0) s.ghost = null; d.dirty = true; }
+    // The drawn needle eases toward the pointer angle along the shortest arc (time constant 45 ms).
+    if (s.open && s.angle !== null) {
+      if (s.shown === null || reduce) { s.shown = s.angle; d.dirty = true; }
+      else {
+        var diff = ((s.angle - s.shown) % 360 + 540) % 360 - 180;
+        if (Math.abs(diff) > 0.2) { s.shown = (s.shown + diff * (1 - Math.exp(-dt / 45)) + 360) % 360; d.dirty = true; }
+        else if (s.shown !== s.angle) { s.shown = s.angle; d.dirty = true; }
+      }
+    }
+    d.lastT = now;
+    // The background steps every frame, also while the pie itself is animating.
+    var bg = d.opts.animBg && d.opts.animBg(d, now);
+    if (d.dirty || bg) d.render();
+  };
+
+  // ---------- the visitor takes over ----------
+  Demo.prototype.bind = function () {
+    var d = this, st = d.stage;
+    function local(e) { var r = st.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+    // Taking over fades out a pie the script has open; the user's own pie opens once it is gone.
+    function takeover(p) {
+      if (!d.user) {
+        d.user = true; d.op = null; d.setStep(0); if (d.opts.onKey) d.opts.onKey(false); st.classList.add("live");
+        if (d.s.open) { if (!d.s.closing) d.close(); d.pendingOpen = p; }
+      }
+      d.lastActive = performance.now(); d.idleClose = false;
+    }
+    st.addEventListener("pointerdown", function (e) {
+      if (e.button === 2) return;
+      var p = local(e); takeover(p); st.focus({ preventScroll: true });
+      if (d.pendingOpen) { d.pendingOpen = p; d.track(p[0], p[1]); return; }
+      if (!d.s.open || d.s.closing) { d.openAt(p[0], p[1]); d.downAt = Date.now(); d.dragging = true; return; }
+      d.track(p[0], p[1]);
+      // A click away from the dial and every slot closes the pie instead of picking by direction.
+      var s = d.s, m = 24, inDial = Math.hypot(p[0] - s.ccx, p[1] - s.ccy) <= s.innerR;
+      var nearSlot = Object.keys(s.rects).some(function (k) { return gap(s.rects[k], p[0], p[1]) < m; });
+      if (!inDial && !nearSlot) { d.close(); return; }
+      if (!d.choose()) d.back();
+    });
+    // Moving the pointer is not interaction for the idle timers: only clicks, keys and opening a sub-pie are.
+    st.addEventListener("pointermove", function (e) { if (!d.user) return; var p = local(e); d.track(p[0], p[1]); });
+    st.addEventListener("pointerup", function () { if (d.user && d.dragging && d.s.open && Date.now() - d.downAt > 250 && d.s.dir !== null) d.choose(); d.dragging = false; });
+    st.addEventListener("contextmenu", function (e) { if (d.user) { e.preventDefault(); d.back(); } });
+    st.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && d.user) { d.back(); e.preventDefault(); }
+      if ((e.key === "q" || e.key === "Q") && !e.repeat) { takeover([d.s.px || d.w / 2, d.s.py || d.h / 2]); if (!d.s.open && !d.pendingOpen) { d.keyAt = Date.now(); d.openAt(d.s.px || d.w / 2, d.s.py || d.h / 2); } e.preventDefault(); }
+    });
+    st.addEventListener("keyup", function (e) {
+      if ((e.key === "q" || e.key === "Q") && d.user && d.s.open && Date.now() - d.keyAt > 250 && d.s.dir !== null) d.choose();
+    });
+  };
+
+  // ---------- variant B: a viewport behind the pie ----------
+  var cube = { h: 1, target: 1 };
+  function drawViewport(d) {
+    var w = d.w, h = d.h, el = d.el.bind(d), s = Math.min(w, h) / 9.5, ox = w * 0.5, oy = h * 0.56;
+    function pr(x, y, z) { return [ox + (x - y) * 0.866 * s, oy + (x + y) * 0.32 * s - z * s * 0.95]; }
+    for (var i = -6; i <= 6; i++) {
+      var a = pr(i, -6, 0), b = pr(i, 6, 0), c = pr(-6, i, 0), e = pr(6, i, 0), op = i === 0 ? .5 : .22;
+      el("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: "#4a4a4a", "stroke-width": 1, opacity: op });
+      el("line", { x1: c[0], y1: c[1], x2: e[0], y2: e[1], stroke: "#4a4a4a", "stroke-width": 1, opacity: op });
+    }
+    var H = cube.h * 1.6, q = function (x, y, z) { return pr(x, y, z).join(","); };
+    // visible faces: front-left (y = 1), front-right (x = 1), top (z = H)
+    el("polygon", { points: [q(-1, 1, 0), q(1, 1, 0), q(1, 1, H), q(-1, 1, H)].join(" "), fill: "#3a3a3a", stroke: "#111", "stroke-width": 1.2 });
+    el("polygon", { points: [q(1, -1, 0), q(1, 1, 0), q(1, 1, H), q(1, -1, H)].join(" "), fill: "#2e2e2e", stroke: "#111", "stroke-width": 1.2 });
+    el("polygon", { points: [q(-1, -1, H), q(1, -1, H), q(1, 1, H), q(-1, 1, H)].join(" "), fill: "#5a3a30", stroke: d.C.signal, "stroke-width": 1.6 });
+    var ctr = pr(0, 0, H); el("rect", { x: ctr[0] - 2, y: ctr[1] - 2, width: 4, height: 4, fill: d.C.signal });
+  }
+
+  // ---------- variant A: a soft Blender-style viewport behind the pies ----------
+  // The background pies sit behind the grid and cube; the main pie is on top. Tools run from the main pie change the cube;
+  // opening a new pie resets it.
+  function makeScene(stage) {
+    var grid = document.createElementNS(NS, "svg"), body = document.createElementNS(NS, "svg");
+    grid.setAttribute("class", "layer scene-grid"); body.setAttribute("class", "layer scene-cube");
+    grid.setAttribute("aria-hidden", "true"); body.setAttribute("aria-hidden", "true");
+    stage.insertBefore(grid, stage.firstChild); stage.appendChild(body);
+    // top: height factor; bevel: chamfer width; size: 1 whole, 0 merged to (tx, ty, tz); the rest are 0..1 line or effect strengths.
+    var REST = { top: 1, inset: 0, bevel: 0, knife: 0, loop: 0, sub: 0, size: 1, flash: 0, dis: 0, loose: 0, degen: 0, hole: 0, tilt: 0, dup: 0 };
+    // Clean-up tools fix a problem: hovering their slot shows the problem on the cube, running them clears it.
+    var ISSUE = { "Delete Loose": "loose", "Degenerate": "degen", "Fill Holes": "hole", "Make Planar": "tilt", "By Distance": "dup", "Dissolve": "dis" };
+    var cur = {}, goal = {}, rising = {}, fixed = {}, slow = {}, tweens = {}, merge = [0, 0, 1], gw = 0, gh = 0, cam, ORIGIN = [0, 0, 1];
+    function reset() { for (var k in REST) { goal[k] = REST[k]; if (!(k in cur)) cur[k] = REST[k]; } rising = {}; fixed = {}; slow = {}; }
+    function issueOf(path) { return path && (ISSUE[path[path.length - 1]] || (path[0] === "Dissolve" && path.length > 1 ? "dis" : null)); }
+    reset();
+    function add(parent, tag, attrs) { var n = document.createElementNS(NS, tag); for (var k in attrs) n.setAttribute(k, attrs[k]); parent.appendChild(n); return n; }
+    function sub3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+    function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+    function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+    function norm(a) { var l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
+    function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+    function camera(w, h) {
+      var eye = [8, -10, 5], at = [0, 0, 0.8], f = norm(sub3(at, eye)), r = norm(cross(f, [0, 0, 1])), u = cross(r, f);
+      return { eye: eye, f: f, r: r, u: u, F: Math.min(h * 1.2, w * 0.9), ox: w * 0.68, oy: h * 0.64 };
+    }
+    function view(p) { var d = sub3(p, cam.eye); return [dot(d, cam.r), dot(d, cam.u), dot(d, cam.f)]; }
+    function screen(v) { return [cam.ox + cam.F * v[0] / v[2], cam.oy - cam.F * v[1] / v[2]]; }
+    function P(p) { return screen(view(p)); }
+    function f1(n) { return n.toFixed(1); }
+    // A ground segment clipped to the near plane, as a path fragment.
+    function seg(a, b) {
+      var va = view(a), vb = view(b), near = 0.6;
+      if (va[2] < near && vb[2] < near) return "";
+      if (va[2] < near || vb[2] < near) {
+        var t = (near - va[2]) / (vb[2] - va[2]), m = [va[0] + (vb[0] - va[0]) * t, va[1] + (vb[1] - va[1]) * t, near];
+        if (va[2] < near) va = m; else vb = m;
+      }
+      var p = screen(va), q = screen(vb);
+      return "M" + f1(p[0]) + " " + f1(p[1]) + "L" + f1(q[0]) + " " + f1(q[1]);
+    }
+    // Lines fade with distance from the cube; segments share one path per fade step.
+    function drawGrid() {
+      while (grid.firstChild) grid.removeChild(grid.firstChild);
+      var N = 24, steps = 6, buckets = { line: [], x: [], y: [] };
+      for (var k in buckets) for (var b = 0; b < steps; b++) buckets[k].push("");
+      function put(kind, a, c) {
+        var fade = Math.pow(1 - Math.min(1, Math.hypot((a[0] + c[0]) / 2, (a[1] + c[1]) / 2) / N), 1.8);
+        if (fade <= 0) return;
+        buckets[kind][Math.min(steps - 1, Math.floor(fade * steps))] += seg(a, c);
+      }
+      for (var i = -N; i <= N; i++) for (var j = -N; j < N; j++) {
+        put(i === 0 ? "y" : "line", [i, j, 0], [i, j + 1, 0]);
+        put(i === 0 ? "x" : "line", [j, i, 0], [j + 1, i, 0]);
+      }
+      var look = { line: ["#ffffff", 0.06], x: ["#c4473b", 0.34], y: ["#7da33c", 0.34] };
+      for (var kind in buckets) buckets[kind].forEach(function (d, b) {
+        if (d) add(grid, "path", { d: d, stroke: look[kind][0], "stroke-opacity": (look[kind][1] * (b + 1) / steps).toFixed(3), "stroke-width": 1, fill: "none" });
+      });
+    }
+    // Flat shading from the face normal, matching Blender's solid view: light top, bright front, dark right side.
+    var SHADE = [[[1, 0, 0], 75], [[-1, 0, 0], 58], [[0, 1, 0], 58], [[0, -1, 0], 162], [[0, 0, 1], 139], [[0, 0, -1], 44]];
+    function shade(n) {
+      var sum = 0, wsum = 0;
+      SHADE.forEach(function (s) { var w = Math.pow(Math.max(0, dot(n, s[0])), 2); sum += w * s[1]; wsum += w; });
+      var g = Math.round(sum / (wsum || 1)), h = g.toString(16).padStart(2, "0");
+      return "#" + h + h + (Math.min(255, g + 2)).toString(16).padStart(2, "0");
+    }
+    // Point at (u, v) on a quad listed bottom-left, bottom-right, top-right, top-left.
+    function on(q, u, v) { return lerp3(lerp3(q[0], q[1], u), lerp3(q[3], q[2], u), v); }
+    // A bevelled box: 6 main faces, 12 rounded edges of SEG strips each and 8 rounded corners of SEG * SEG triangles (all skipped when the bevel is 0).
+    var SEG = 2;
+    function mesh() {
+      var H = 2 * cur.top, b = 0.16 * cur.bevel;
+      // A surface point: the corner of the inner box for octant s, pushed out by b along the unit direction w (taken per axis, in the octant).
+      function pt(s, w) {
+        var p = [0, 1, 2].map(function (k) { return (k === 2 ? (s[k] > 0 ? H - b : b) : s[k] * (1 - b)) + b * w[k] * s[k]; });
+        // Make Planar starts from a tilted top and flattens it.
+        if (p[2] > H / 2) p[2] += cur.tilt * 0.45 * p[0];
+        return lerp3(merge, p, cur.size);
+      }
+      function vert(s, face) { var w = [0, 0, 0]; w[face] = 1; return pt(s, w); }
+      // Arc weights: f(i) for i = 0..SEG walks a quarter circle, so neighbouring strips and corners share their vertices.
+      function f(i) { return Math.sin(Math.PI * i / (2 * SEG)); }
+      var polys = [], signs = [-1, 1];
+      [2, 1, 0].forEach(function (A) {
+        signs.forEach(function (sA) {
+          var T = A === 2 ? [0, 1] : [A === 1 ? 0 : 1, 2], q = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(function (uv) {
+            var s = [0, 0, 0]; s[A] = sA; s[T[0]] = uv[0]; s[T[1]] = uv[1]; return vert(s, A);
+          });
+          polys.push({ q: q, main: A, sign: sA });
+        });
+      });
+      // Strips and corners take their normal from how they are built: near zero width a computed normal would flip from frame to frame.
+      if (b > 0.004) {
+        [[0, 1, 2], [0, 2, 1], [1, 2, 0]].forEach(function (e) {
+          signs.forEach(function (sA) { signs.forEach(function (sB) {
+            var s0 = [0, 0, 0], s1 = [0, 0, 0]; s0[e[0]] = s1[e[0]] = sA; s0[e[1]] = s1[e[1]] = sB; s0[e[2]] = -1; s1[e[2]] = 1;
+            function w(i) { var r = [0, 0, 0]; r[e[0]] = f(SEG - i); r[e[1]] = f(i); return r; }
+            for (var i = 0; i < SEG; i++) {
+              var wa = w(i), wb = w(i + 1), an = [0, 0, 0]; an[e[0]] = sA * (wa[e[0]] + wb[e[0]]); an[e[1]] = sB * (wa[e[1]] + wb[e[1]]);
+              polys.push({ q: [pt(s0, wa), pt(s1, wa), pt(s1, wb), pt(s0, wb)], an: norm(an), bev: true });
+            }
+          }); });
+        });
+        signs.forEach(function (x) { signs.forEach(function (y) { signs.forEach(function (z) {
+          var s = [x, y, z];
+          function W(i, j) { return norm([f(i), f(j), f(SEG - i - j)]); }
+          function tri(a, c, d) {
+            var wa = W(a[0], a[1]), wc = W(c[0], c[1]), wd = W(d[0], d[1]);
+            polys.push({ q: [pt(s, wa), pt(s, wc), pt(s, wd)], an: norm([0, 1, 2].map(function (k) { return s[k] * (wa[k] + wc[k] + wd[k]); })), bev: true });
+          }
+          for (var i = 0; i < SEG; i++) for (var j = 0; i + j < SEG; j++) {
+            tri([i, j], [i + 1, j], [i, j + 1]);
+            if (i + j + 1 < SEG) tri([i + 1, j], [i + 1, j + 1], [i, j + 1]);
+          }
+        }); }); });
+      }
+      var centre = lerp3(merge, [0, 0, H / 2], cur.size);
+      polys.forEach(function (p) {
+        var c = p.q.reduce(function (m, v) { return [m[0] + v[0] / p.q.length, m[1] + v[1] / p.q.length, m[2] + v[2] / p.q.length]; }, [0, 0, 0]);
+        var n = p.an || norm(cross(sub3(p.q[1], p.q[0]), sub3(p.q[3], p.q[0])));
+        if (dot(n, sub3(c, centre)) < 0) n = [-n[0], -n[1], -n[2]];
+        p.n = n; p.c = c; p.front = dot(n, sub3(cam.eye, c)) > 0; p.fill = shade(n);
+      });
+      return { polys: polys, H: H, b: b };
+    }
+    function drawCube() {
+      while (body.firstChild) body.removeChild(body.firstChild);
+      var o = P(ORIGIN);
+      if (cur.size < 0.03) { add(body, "circle", { cx: o[0], cy: o[1], r: 2.6, fill: "#ffa133", stroke: "#1a1a1a", "stroke-width": 0.8 }); return; }
+      var m = mesh(), polys = m.polys;
+      function pts(q) { return q.map(function (p) { var s = P(p); return f1(s[0]) + "," + f1(s[1]); }).join(" "); }
+      var front = polys.filter(function (p) { return p.front; }), top = polys.filter(function (p) { return p.main === 2 && p.sign > 0; })[0];
+      // Fill Holes: the top face opens to show the inside, then fills again.
+      if (cur.hole > 0.01) polys.filter(function (p) { return !p.front; }).forEach(function (p) { add(body, "polygon", { points: pts(p.q), fill: "#1f1f20" }); });
+      var wire = Math.max(Math.min(1, cur.sub), cur.dis, Math.min(1, cur.loop * 2), Math.min(1, cur.inset * 2), cur.knife, cur.degen, Math.min(1, Math.max(0, cur.top - 1) * 3), Math.min(1, cur.bevel * 2));
+      // Outline: visible faces stroked wide underneath; the fills on top leave only the outer half.
+      var glow = 1 + 0.8 * cur.flash, sel = (1 - wire).toFixed(3);
+      front.forEach(function (p) { if (p === top && cur.hole > 0.01) return; add(body, "polygon", { points: pts(p.q), fill: "#ffa133", stroke: "#ffa133", "stroke-width": 3 * glow, "stroke-linejoin": "round", "stroke-opacity": sel }); });
+      front.forEach(function (p) { add(body, "polygon", { points: pts(p.q), fill: p.fill, stroke: p.fill, "stroke-width": 0.6, "stroke-linejoin": "round", opacity: p === top ? (1 - cur.hole).toFixed(3) : 1 }); });
+      var lines = [];
+      // Like Blender's Edit Mode: what the tool edits is selected, its edges light and its faces tinted orange; the rest stays dark.
+      function stroke(d, k, sel) { if (d) lines.push([d, k, sel]); }
+      function tint(q, k) { add(body, "polygon", { points: pts(q), fill: "#ffa133", "fill-opacity": (0.2 * k).toFixed(3) }); }
+      function outline(q) { return "M" + q.map(function (v) { var s = P(v); return f1(s[0]) + " " + f1(s[1]); }).join("L") + "Z"; }
+      function L(a, b) { var p = P(a), q = P(b); return "M" + f1(p[0]) + " " + f1(p[1]) + "L" + f1(q[0]) + " " + f1(q[1]); }
+      function loop(q, k) { return L(on(q, k, k), on(q, 1 - k, k)) + L(on(q, 1 - k, k), on(q, 1 - k, 1 - k)) + L(on(q, 1 - k, 1 - k), on(q, k, 1 - k)) + L(on(q, k, 1 - k), on(q, k, k)); }
+      front.filter(function (p) { return p.main !== undefined; }).forEach(function (p) {
+        var q = p.q, side = p.main !== 2;
+        // Lines draw in with motion: subdivide grows from the centre, loop cut slides down from the top, knife cuts across, inset moves in.
+        // Subdivide works on the whole selected cube, so all of it stays selected.
+        if (cur.sub > 0.01) { var g = cur.sub / 2; tint(q, cur.sub); stroke(L(on(q, .5, .5 - g), on(q, .5, .5 + g)) + L(on(q, .5 - g, .5), on(q, .5 + g, .5)) + outline(q), cur.sub, true); }
+        if (cur.dis > 0.01) stroke(L(on(q, .5, 0), on(q, .5, 1)) + L(on(q, 0, .5), on(q, 1, .5)), cur.dis);
+        if (side && cur.loop > 0.01) { var v = 0.92 - 0.42 * cur.loop; stroke(L(on(q, 0, v), on(q, 1, v)), Math.min(1, cur.loop * 2), true); }
+        if (side && cur.top > 1.01) { var vr = (2 - m.b) / (m.H - 2 * m.b); stroke(L(on(q, 0, vr), on(q, 1, vr)), Math.min(1, (cur.top - 1) * 3)); }
+        if (!side && p.sign > 0 && cur.inset > 0.01) { var ki = 0.22 * cur.inset, kk = Math.min(1, cur.inset * 2); tint([on(q, ki, ki), on(q, 1 - ki, ki), on(q, 1 - ki, 1 - ki), on(q, ki, 1 - ki)], kk); stroke(loop(q, ki), kk, true); }
+        // Extrude leaves the moved top face selected.
+        if (!side && p.sign > 0 && cur.top > 1.01) { var ke = Math.min(1, (cur.top - 1) * 3); tint(q, ke); stroke(outline(q), ke, true); }
+        if (!side && p.sign > 0 && cur.degen > 0.01) stroke(L(on(q, .15, .3), on(q, .85, .42)) + L(on(q, .85, .42), on(q, .2, .4)) + L(on(q, .2, .4), on(q, .15, .3)), cur.degen);
+      });
+      // Knife from View: one straight screen-space line from the top face down across the side sweeps over the silhouette and cuts every visible face it crosses.
+      if (cur.knife > 0.01) {
+        var sp = front.map(function (p) { return p.q.map(P); }), all = [].concat.apply([], sp);
+        var x0 = Math.min.apply(null, all.map(function (s) { return s[0]; })) - 4, x1 = Math.max.apply(null, all.map(function (s) { return s[0]; })) + 4;
+        var y0 = Math.min.apply(null, all.map(function (s) { return s[1]; })), y1 = Math.max.apply(null, all.map(function (s) { return s[1]; }));
+        var T = P(on(top.q, .3, .45)), S = [x1, y0 + (y1 - y0) * .62], k = (S[1] - T[1]) / (S[0] - T[0]);
+        var A = [x0, T[1] + k * (x0 - T[0])], D = [x1 - x0, k * (x1 - x0)], tEnd = cur.knife, d = "";
+        sp.forEach(function (poly) {
+          // Cyrus-Beck: clip the line to this convex face; the face's winding sign decides which side is inside.
+          var n = poly.length, area = 0, lo = 0, hi = tEnd;
+          for (var i = 0; i < n; i++) { var u = poly[i], w = poly[(i + 1) % n]; area += u[0] * w[1] - w[0] * u[1]; }
+          for (var i2 = 0; i2 < n && lo < hi; i2++) {
+            var u2 = poly[i2], w2 = poly[(i2 + 1) % n], nx = -(w2[1] - u2[1]) * Math.sign(area), ny = (w2[0] - u2[0]) * Math.sign(area);
+            var num = nx * (A[0] - u2[0]) + ny * (A[1] - u2[1]), den = nx * D[0] + ny * D[1];
+            if (Math.abs(den) < 1e-9) { if (num < 0) hi = -1; continue; }
+            var tt = -num / den;
+            if (den > 0) lo = Math.max(lo, tt); else hi = Math.min(hi, tt);
+          }
+          if (hi > lo) d += "M" + f1(A[0] + D[0] * lo) + " " + f1(A[1] + D[1] * lo) + "L" + f1(A[0] + D[0] * hi) + " " + f1(A[1] + D[1] * hi);
+        });
+        stroke(d, 1, true);
+      }
+      // Whenever a tool shows its new edges, the cube's own edges show too, like a wireframe in Edit Mode; the selection outline fades out meanwhile.
+      if (wire > 0.01) stroke(front.filter(function (p) { return !p.bev; }).map(function (p) { return outline(p.q); }).join(""), wire);
+      // Bevel: the edges between its segments and the faces show as thin lines.
+      // Bevel leaves its new faces selected.
+      if (m.b > 0.004) { var kb = Math.min(1, cur.bevel * 2), bev = front.filter(function (p) { return p.bev; }); bev.forEach(function (p) { tint(p.q, kb); }); stroke(bev.map(function (p) { return outline(p.q); }).join(""), 0.7 * kb, true); }
+      lines.sort(function (a, b) { return (a[2] ? 1 : 0) - (b[2] ? 1 : 0); });
+      lines.forEach(function (l) { add(body, "path", { d: l[0], stroke: l[2] ? "#f4f4f4" : "#141414", "stroke-opacity": ((l[2] ? 0.9 : 0.75) * l[1]).toFixed(2), "stroke-width": 1.2, fill: "none", "stroke-linecap": "round" }); });
+      // Merge by Distance: doubled vertices show at the corners and fade as they merge.
+      if (cur.dup > 0.01) [[-1, -1], [1, -1], [1, 1]].forEach(function (c) { [0, m.H].forEach(function (z) {
+        var s = P([c[0], c[1], z]);
+        [-3.5, 3.5].forEach(function (o) { add(body, "circle", { cx: s[0] + o * cur.dup, cy: s[1], r: 3, fill: "#ffa133", stroke: "#1a1a1a", "stroke-width": 0.8, opacity: Math.min(1, cur.dup * 2).toFixed(2) }); });
+      }); });
+      // Delete Loose: stray vertices and an edge beside the cube fade away.
+      if (cur.loose > 0.01) {
+        var lv = [[1.8, -1.4, 2.6], [-1.6, -1.8, 2.2], [1.6, -0.6, 0.4]], g2 = add(body, "g", { opacity: cur.loose.toFixed(2) });
+        lv.forEach(function (v) { var s = P(v); add(g2, "circle", { cx: s[0], cy: s[1], r: 2.4, fill: "#d8d8d8" }); });
+        var a1 = P(lv[0]), a2 = P([2.3, -1.1, 3.1]); add(g2, "path", { d: "M" + f1(a1[0]) + " " + f1(a1[1]) + "L" + f1(a2[0]) + " " + f1(a2[1]), stroke: "#d8d8d8", "stroke-width": 1.2 });
+      }
+      add(body, "circle", { cx: o[0], cy: o[1], r: 2.6, fill: "#ffa133", stroke: "#1a1a1a", "stroke-width": 0.8 });
+    }
+    var dirty = true;
+    return {
+      // Called every frame by the main demo; redraws only when the stage size or the cube changed.
+      step: function (d, now) {
+        if (d.w !== gw || d.h !== gh) { gw = d.w; gh = d.h; cam = camera(gw, gh); drawGrid(); dirty = true; }
+        // Every change is a fixed-length ease-in-out from where the value is now, so it lands without a slow tail.
+        for (var k in goal) {
+          var tw = tweens[k];
+          if (!tw || tw.to !== goal[k]) tw = tweens[k] = { from: cur[k], to: goal[k], t0: now, dur: k === "flash" ? (rising[k] ? 160 : 450) : slow[k] ? 650 : 320 };
+          var p = reduce ? 1 : Math.max(0, Math.min(1, (now - tw.t0) / tw.dur)), v = tw.from + (tw.to - tw.from) * easeIO(p);
+          if (v !== cur[k]) { cur[k] = v; dirty = true; }
+          if (rising[k] && p >= 1) { rising[k] = false; goal[k] = 0; }
+        }
+        if (dirty) { dirty = false; drawCube(); }
+        return false;
+      },
+      reset: reset,
+      preview: function (path) {
+        var show = issueOf(path);
+        for (var p in ISSUE) { var k = ISSUE[p]; if (!fixed[k]) { slow[k] = false; goal[k] = k === show ? 1 : 0; } }
+      },
+      run: function (path) {
+        var tool = path[0], leaf = path[path.length - 1], H = 2 * cur.top;
+        function pulse(k) { goal[k] = 1; rising[k] = true; }
+        pulse("flash");
+        if (tool === "Extrude") goal.top = 1.6;
+        else if (tool === "Inset") goal.inset = 1;
+        else if (tool === "Bevel") goal.bevel = 1;
+        else if (tool === "Knife from View") goal.knife = 1;
+        else if (tool === "Loop Cut") goal.loop = 1;
+        else if (tool === "Subdivide") goal.sub = 1;
+        else if (issueOf(path)) { var k = issueOf(path); fixed[k] = true; slow[k] = true; goal[k] = 0; tweens[k] = null; }
+        else if (tool === "Merge") {
+          // Collapse and Merge At gather every vertex at one point: the centre, the 3D cursor at the world origin, or a corner.
+          merge = leaf === "Cursor" ? [0, 0, 0] : leaf === "First" ? [-1, -1, H] : leaf === "Last" ? [1, -1, 0] : [0, 0, H / 2];
+          goal.size = 0;
+        }
+      }
+    };
+  }
+
+  // ---------- variant A: two background pies with other layouts ----------
+  var BACK = {
+    far: { root: { name: "Shading", items: { 0: { label: "Solid" }, 90: { label: "Material" }, 180: { label: "Rendered" }, 270: { label: "Wireframe" } } } },
+    near: { root: { name: "Sculpt", items: {
+      0: { label: "Draw" }, 36: { label: "Clay Strips" }, 72: { label: "Crease" }, 108: { label: "Grab" }, 144: { label: "Snake Hook" },
+      180: { label: "Smooth" }, 216: { label: "Flatten" }, 252: { label: "Inflate" }, 288: { label: "Pinch" }, 324: { label: "Mask" } } } },
+    view: { root: { name: "View", items: { 0: { label: "Top" }, 42: { label: "Front" }, 68: { label: "Camera" }, 90: { label: "Right" },
+      112: { label: "Selected" }, 138: { label: "Local" }, 180: { label: "Bottom" }, 222: { label: "Back" }, 248: { label: "Ortho" },
+      270: { label: "Left" }, 292: { label: "Frame All" }, 318: { label: "Perspective" } } } }
+  };
+  // z runs from 0 (far) to 1 (near).
+  // On each loop the background pie switches sides, left or right of the plates, and may run off the page edge.
+  var lastSpot = Math.random() < .5 ? 0 : 1, spots = [[4, 14], [82, 14]];
+  function placeDepth(el) {
+    var spot = 1 - lastSpot;
+    var z = Math.random(), s = 0.6 + 0.35 * z;
+    var x = spots[spot][0] + Math.random() * spots[spot][1], y = 50 + Math.random() * 10;
+    lastSpot = spot;
+    el.style.left = (x - 28) + "%";
+    el.style.top = (y - 50) + "%";
+    el.style.transform = "scale(" + s.toFixed(2) + ")";
+    // further away: smaller, blurrier and darker
+    el.style.filter = "blur(" + (4.2 - 2.4 * z).toFixed(1) + "px) brightness(" + (0.28 + 0.2 * z).toFixed(2) + ")";
+  }
+  function backScript(degs, start) {
+    var s = [["wait", start], ["reset"], ["home", .5, .5, 10], ["keydown"], ["wait", 400]];
+    degs.forEach(function (g) { s.push(["slot", g, 1100], ["wait", 900]); });
+    return s.concat([["keyup"], ["wait", 500], ["hide"], ["wait", 850]]);
+  }
+
+  // ---------- wiring per variant ----------
+  var demos = {};
+  function stepper(root) {
+    var items = root ? root.querySelectorAll("[data-step]") : [];
+    return function (n) { items.forEach(function (it) { it.classList.toggle("on", +it.dataset.step === n || (n === 3 && +it.dataset.step === 3)); }); };
+  }
+  function lastSetter(site, fmt) { var el = site.querySelector("[data-last]"); return function (path) { el.textContent = fmt(path); }; }
+
+  function build() {
+    var sa = document.getElementById("site-a"), sb = document.getElementById("site-b"), sc = document.getElementById("site-c");
+    var scene = makeScene(sa.querySelector("[data-demo]"));
+    demos.a = new Demo(sa.querySelector("[data-demo]"), { colors: DARK, script: SCRIPT_A, animBg: scene.step.bind(scene), onRun: scene.run, onOpen: scene.reset, onHover: scene.preview });
+    // One background pie; on each loop it takes a layout it was not just showing.
+    var layouts = [[BACK.near, [108, 288, 36, 180]], [BACK.far, [90, 180, 270]], [BACK.view, [318, 68, 138, 248, 0]]];
+    demos.a.extras = [0].map(function (i) {
+      var el = sa.querySelector('[data-depth="' + i + '"]'), x = new Demo(el, { colors: DARK, pies: layouts[i][0], passive: true, script: backScript(layouts[i][1], i * 900),
+        onReset: function () {
+          var free = layouts.filter(function (l) { return l[0] !== x.pies; }), pick = free[Math.floor(Math.random() * free.length)];
+          x.pies = pick[0]; x.script = backScript(pick[1], 0);
+          placeDepth(el); requestAnimationFrame(function () { el.style.opacity = 1; });
+        } });
+      return x;
+    });
+    demos.a.extras.forEach(function (x) { x.ghost = false; if (reduce) { placeDepth(x.stage); x.stage.style.opacity = 1; } });
+
+    var opEl = sb.querySelector("[data-op]"), keycap = sb.querySelector("[data-keycap]"), setB = lastSetter(sb, function (p) { return p.join(" ") === "Extrude Along Normals" ? "Extrude Faces Along Normals" : p.join(" "); }), opTimer;
+    demos.b = new Demo(sb.querySelector("[data-demo]"), {
+      colors: { ground: "#1a1a1a", line: "#3a3a3a", ink: "#f1f0ec", stone: "#8f8d88", signal: "#f2542d", hot: "#ffffff", cursor: "#f1f0ec", cursorEdge: "#0e0e0e", subFill: "#4a4946", subLine: "#5a5955" },
+      drawBg: drawViewport,
+      animBg: function (d) { if (Math.abs(cube.h - cube.target) > 0.002) { cube.h += (cube.target - cube.h) * (reduce ? 1 : 0.12); return true; } return false; },
+      onKey: function (down) { keycap.classList.toggle("down", down); },
+      onRun: function (p) { setB(p); opEl.classList.add("show"); clearTimeout(opTimer); opTimer = setTimeout(function () { opEl.classList.remove("show"); }, 2600); if (p[p.length - 1] === "Along Normals") cube.target = cube.target > 1.4 ? 1 : 1.55; },
+      onReset: function () { cube.target = 1; }
+    });
+
+    var setC = lastSetter(sc, function (p) { return "Ran " + p.join(" / ") + "."; });
+    var cStep = stepper(sc.querySelector("[data-steps]"));
+    demos.c = new Demo(sc.querySelector("[data-demo]"), { colors: PAPER, onStep: cStep, onRun: setC });
+
+    Object.keys(demos).forEach(function (k) {
+      var d = demos[k];
+      if (reduce) { d.openAt(d.w * .5, d.h * .5); d.track(d.w * .5 + 60, d.h * .5 - 70); d.ghost = false; }
+      else { d.s.px = d.w * .56; d.s.py = d.h * .62; }
+      d.render();
+    });
+  }
+
+  // ---------- routing between variations ----------
+  var current = "a";
+  function show(v) {
+    if (!/^[abc]$/.test(v)) v = "a";
+    current = v;
+    ["a", "b", "c"].forEach(function (k) { document.getElementById("site-" + k).hidden = k !== v; document.getElementById("sw-" + k).setAttribute("aria-pressed", k === v ? "true" : "false"); });
+    document.documentElement.style.setProperty("--page", v === "c" ? "#f1f0ec" : "#000");
+    document.documentElement.style.colorScheme = v === "c" ? "light" : "dark";
+    var d = demos[v];
+    if (d) {
+      d.size();
+      if (reduce) { d.openAt(d.w * .5, d.h * .5); d.track(d.w * .5 + 60, d.h * .5 - 70); }
+      // The first pie opens 0.5 s after the page shows, from the stage centre.
+      else if (!d.user) { d.op = null; d.s.open = false; d.s.px = d.w * .5; d.s.py = d.h * .58; d.i = 3; d.holdUntil = performance.now() + 500; }
+      d.render();
+      (d.extras || []).forEach(function (x) { x.size(); x.holdUntil = performance.now() + 500; if (reduce) { x.openAt(x.w * .5, x.h * .5); x.track(x.w * .5 - 50, x.h * .5 + 40); } x.render(); });
+    }
+  }
+  document.querySelectorAll(".switch button").forEach(function (b) {
+    b.addEventListener("click", function () { if (location.hash !== "#" + b.dataset.to) location.hash = b.dataset.to; else show(b.dataset.to); window.scrollTo(0, 0); });
+  });
+  // Button fill starts where the pointer enters and shrinks toward where it leaves.
+  document.querySelectorAll(".btn").forEach(function (b) {
+    function at(e) { var r = b.getBoundingClientRect(); b.style.setProperty("--x", (e.clientX - r.left) + "px"); b.style.setProperty("--y", (e.clientY - r.top) + "px"); }
+    b.addEventListener("pointerenter", at); b.addEventListener("pointerleave", at);
+  });
+  window.addEventListener("hashchange", function () { var h = location.hash.slice(1); if (/^[abc]$/.test(h)) show(h); });
+  window.addEventListener("resize", function () { var d = demos[current]; if (d) { d.size(); (d.extras || []).forEach(function (x) { x.size(); }); } });
+
+  // Each demo, and each background pie in the download section, only runs while it is on screen.
+  function loop(now) {
+    var d = demos[current];
+    if (d) { if (d.visible !== false) d.tick(now); (d.extras || []).forEach(function (x) { if (x.visible !== false) x.tick(now); }); }
+    requestAnimationFrame(loop);
+  }
+  function boot() {
+    build();
+    if ("IntersectionObserver" in window) {
+      var all = Object.keys(demos).reduce(function (m, k) { return m.concat(demos[k], demos[k].extras || []); }, []);
+      var io = new IntersectionObserver(function (es) { es.forEach(function (e) { all.forEach(function (x) { if ((x.opts.passive ? x.stage.parentNode : x.stage) === e.target) x.visible = e.isIntersecting; }); }); });
+      all.forEach(function (x) { io.observe(x.opts.passive ? x.stage.parentNode : x.stage); });
+    }
+    var h = location.hash.slice(1); show(/^[abc]$/.test(h) ? h : "a");
+    requestAnimationFrame(loop);
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot); else boot();
+})();
+</script>
