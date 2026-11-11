@@ -38,30 +38,34 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
 
 ## Editor
 
-- [ ] Preferences > Add-ons > Kompass > Open Editor: a new window opens with
-      the Select pie on a dark canvas. In its sidebar (N), the Kompass tab
-      lists the pies.
+- [ ] Preferences > Add-ons > Kompass > Open Editor: a small new window opens
+      with the Select pie on a black canvas. Its sidebar shows the Kompass
+      tab, which lists the pies.
 - [ ] Move the pointer around the dial: the needle and the outer arrow
       follow it, and the nearest slot lights up red, stronger further out.
 - [ ] Move the pointer into the dial: the needle turns into a red disc with
       a white border, the long ticks shorten and the outer arrow fades. Move
       out: it turns back.
-- [ ] Click LASSO: it gets a white outline and the Slot panel in the Kompass
-      tab names it. Click far from every slot: the outline is gone.
-- [ ] Rest the pointer on MESH: nothing opens. Click it, then click it again:
-      the Mesh pie opens. Click the dial: Select is back, MESH still outlined.
-- [ ] With MESH selected, Slot > Swap With > N: MESH and the north slot
-      change places and the outline follows MESH. Clear: the slot is empty.
-      Close and reopen Blender: both changes are still there.
-- [ ] Slot > Add to Pie, type "subdiv", pick Subdivide (mesh.subdivide): a
-      SUBDIVIDE box follows the pointer and the slot near it is outlined red.
-      Click LASSO: the slot reads SUBDIVIDE and a LASSO box follows the
-      pointer. Click the empty slot: LASSO is there and nothing follows.
-- [ ] Add to Pie again, pick a tool, press Esc: nothing follows the pointer
-      and no slot changed. The same with a right-click.
+- [ ] Click LASSO: it gets a white outline and a menu opens beside it. Click
+      far from every slot: the outline is gone.
+- [ ] Rest the pointer on MESH: nothing opens. Click it and choose Open: the
+      Mesh pie shows. Click the dial: Select is back, MESH still outlined.
+- [ ] Press SELECT BOX, move to LASSO and release: a SELECT BOX box follows
+      the pointer, LASSO is outlined red, and the two change places. Drag a
+      slot onto an empty one: it moves there. Release far from every slot:
+      nothing changes.
+- [ ] Click a slot, Replace, type "subdiv", pick Subdivide (mesh.subdivide):
+      the slot reads SUBDIVIDE. Click an empty slot: the menu says Add.
+- [ ] Click a slot, New Sub-Pie: the slot reads SUB-PIE with a red corner and
+      the pie list has a Sub-Pie. Click a slot, Remove: it is empty.
+- [ ] Close and reopen Blender: the changes are still there.
 - [ ] In the 3D Viewport, Shift+Alt+Q: the pie shows the new slots.
+- [ ] In the Shortcut panel click the shortcut and press Shift+C: the button
+      reads Shift C and a line says Blender also has "Frame All" on it. Click
+      it and press Esc: it stays. Choose Mesh Edit Mode below it. Press the X:
+      the button reads Set Shortcut. Set Shift+Alt+Q again.
 - [ ] Turn on Preview in the Kompass tab for the steps up to Reduce Motion:
-      the Slot panel is gone and a click outlines nothing.
+      a click outlines nothing and opens no menu.
 - [ ] MESH has a grey outline and lights up grey, not red. Rest the pointer
       on it: red fills it downward and the Mesh pie opens, with a smaller
       dial and BACK below. Select fades and shrinks while Mesh fades in.

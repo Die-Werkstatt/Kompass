@@ -138,7 +138,22 @@ def steps():
     x = canvas.x + (canvas.width - sidebar.width) // 2
     y = canvas.y + canvas.height // 2
 
+    # The pie is drawn smaller where the window is small. The steps below
+    # give places in the pie's own lengths, measured from its centre.
+    paint = importlib.import_module(addon + ".blender.paint")
+    here = {"window": editor_window, "area": editor_area, "region": canvas}
+    with bpy.context.temp_override(**here):
+        scale = paint.Canvas(bpy.context, 8).scale
+    centre = x, y
+
+    def at(x, y):
+        return (
+            centre[0] + round((x - centre[0]) * scale),
+            centre[1] + round((y - centre[1]) * scale),
+        )
+
     def click(x, y):
+        x, y = at(x, y)
         editor_window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x - 3, y=y)
         yield PAUSE / 2
         editor_window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
@@ -148,34 +163,58 @@ def steps():
         editor_window.event_simulate(type="LEFTMOUSE", value="RELEASE", x=x, y=y)
         yield PAUSE / 2
 
+    def pick(x, y):
+        """Click a slot and close the menu the click opens."""
+        yield from click(x, y)
+        editor_window.event_simulate(type="ESC", value="PRESS", x=x, y=y)
+        editor_window.event_simulate(type="ESC", value="RELEASE", x=x, y=y)
+        yield PAUSE / 2
+
     # A click selects a slot and a click far from every slot selects none.
-    # South is the Mesh sub-pie: resting on it opens nothing, the first click
-    # selects it and the second opens it.
+    # South is the Mesh sub-pie: resting on it opens nothing, Open shows it.
     east, west = layout.BEARINGS.index(90), layout.BEARINGS.index(270)
     mesh = layout.BEARINGS.index(180)
     left, bottom = layout.slot_corner(mesh, 8)
-    yield from click(x + 2 * FLICK, y)
+    yield from pick(x + 2 * FLICK, y)
     assert editor.selected() == east, editor.selected()
+    assert not bpy.ops.kompass.slot_open.poll()
     yield from click(x + 5 * FLICK // 2, y + 2 * FLICK)
     assert editor.selected() is None, editor.selected()
-    yield from click(x, y + int(bottom) + 10)
+    yield from pick(x, y + int(bottom) + 10)
     assert editor.shown().id == "select" and editor.selected() == mesh
-    yield from click(x, y + int(bottom) + 10)
+    assert bpy.ops.kompass.slot_open() == {"FINISHED"}
     assert editor.shown().id == "mesh" and editor.selected() is None
     yield from click(x, y)
     assert editor.shown().id == "select" and editor.selected() == mesh
 
-    # The selected slot is swapped with another and cleared.
+    # A slot dragged onto another changes places with it.
     before = editor.shown().slots
-    yield from click(x + 2 * FLICK, y)
-    assert bpy.ops.kompass.slot_swap(other=west) == {"FINISHED"}
+    for step, value in enumerate(("NOTHING", "PRESS", *["NOTHING"] * 8, "RELEASE")):
+        kind = "MOUSEMOVE" if value == "NOTHING" else "LEFTMOUSE"
+        along = at(x + 2 * FLICK - min(max(step - 1, 0), 8) * FLICK // 2, y)[0]
+        editor_window.event_simulate(type=kind, value=value, x=along, y=y)
+        yield PAUSE / 4
     after = editor.shown().slots
     assert (after[west], after[east]) == (before[east], before[west])
     assert editor.selected() == west
+
+    # The selected slot is emptied, filled from the search, and given a new
+    # sub-pie.
     assert bpy.ops.kompass.slot_clear() == {"FINISHED"}
     assert editor.shown().slots[west] is None
     assert not bpy.ops.kompass.slot_clear.poll()
-    assert editor.shown().slots[east] == before[west]
+    slots = importlib.import_module(addon + ".blender.slots")
+    slots._find()
+    kinds = {found[0].partition(" ")[0] for found in slots._found}
+    assert kinds == {"tool", "operator", "pie"}, kinds
+    assert "tool VIEW_3D builtin.select_box" in {found[0] for found in slots._found}
+    assert bpy.ops.kompass.slot_fill(found="operator mesh.subdivide") == {"FINISHED"}
+    assert editor.shown().slots[west].idname == "mesh.subdivide"
+    count = len(storage.pies)
+    assert bpy.ops.kompass.slot_group() == {"FINISHED"}
+    assert len(storage.pies) == count + 1
+    assert editor.shown().slots[west].pie == storage.pies[-1].id == "sub-pie"
+    assert bpy.ops.kompass.slot_fill(found="operator mesh.subdivide") == {"FINISHED"}
 
     # Every context the editor offers is a keymap of Blender's.
     default = bpy.context.window_manager.keyconfigs.default.keymaps
@@ -184,8 +223,6 @@ def steps():
 
     # The next key press becomes the shortcut and is bound at once. Esc
     # keeps the old one.
-    here = {"window": editor_window, "area": editor_area, "region": canvas}
-
     def press(key, **held):
         with bpy.context.temp_override(**here):
             bpy.ops.kompass.pie_shortcut("INVOKE_DEFAULT")
@@ -210,36 +247,6 @@ def steps():
     yield from press("Q", shift=True, alt=True)
     assert editor.shown().shortcut == select.shortcut
 
-    # A search result is carried to a slot by a click. What the slot held is
-    # carried next, here into the empty south-east slot. Esc drops the rest.
-    slots = importlib.import_module(addon + ".blender.slots")
-    slots._find()
-    kinds = {found[0].partition(" ")[0] for found in slots._found}
-    assert kinds == {"tool", "operator", "pie"}, kinds
-    assert "tool VIEW_3D builtin.select_box" in {found[0] for found in slots._found}
-    with bpy.context.temp_override(window=editor_window, area=editor_area):
-        result = bpy.ops.kompass.slot_fill(found="operator mesh.subdivide")
-    assert result == {"FINISHED"}
-    yield PAUSE / 2
-    held = editor.shown().slots[east]
-    yield from click(x + 2 * FLICK, y)
-    assert editor.shown().slots[east].idname == "mesh.subdivide"
-    assert editor.carried == held and editor.selected() == east
-    south_east = layout.BEARINGS.index(135)
-    corner = layout.slot_corner(south_east, 8)
-    yield from click(x + int(corner[0]) + 60, y + int(corner[1]) + 10)
-    assert editor.shown().slots[south_east] == held and editor.carried is None
-    with bpy.context.temp_override(window=editor_window, area=editor_area):
-        bpy.ops.kompass.slot_fill(found="pie mesh")
-    yield PAUSE / 2
-    assert editor.carried is not None
-    editor_window.event_simulate(type="ESC", value="PRESS", x=x, y=y)
-    editor_window.event_simulate(type="ESC", value="RELEASE", x=x, y=y)
-    yield PAUSE / 2
-    assert editor.carried is None
-    yield from click(x + 2 * FLICK, y)
-    assert editor.shown().slots[east].idname == "mesh.subdivide"
-
     # In preview a click selects nothing. A click on a tool slot changes
     # nothing, a click far below Mesh does nothing, a click just below its
     # box opens it.
@@ -257,7 +264,7 @@ def steps():
 
     # Resting on the Mesh slot opens it without a click. Mesh has a sub-pie
     # in the same slot, which stays shut until the pointer has left it.
-    south = x + int(left) + layout.SLOT_WIDTH // 2, y + int(bottom) + 10
+    south = at(x + int(left) + layout.SLOT_WIDTH // 2, y + int(bottom) + 10)
     editor_window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
     yield PAUSE / 2
     editor_window.event_simulate(

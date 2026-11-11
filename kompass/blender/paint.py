@@ -14,6 +14,8 @@ from ..core import layout, model
 from . import pie, storage, tools
 
 # The colours of docs/brand/README.md and docs/design/README.md.
+# The editor's canvas, and a slot on it or over a viewport.
+BLACK = (0, 0, 0, 1)
 GROUND = (0.055, 0.055, 0.055, 1)
 LINE = (0.173, 0.173, 0.173, 1)
 STONE = (0.561, 0.553, 0.533, 1)
@@ -46,7 +48,7 @@ class Look:
     slide: dict[int, float]
     # The slot the editor's panel acts on.
     selected: int | None
-    # The label of what is carried to a slot.
+    # The label of the slot being dragged to another.
     carried: str | None
 
     @property
@@ -274,8 +276,8 @@ def _draw_slot(canvas, look, slot, content, pull):
 
 
 def draw_carried(canvas, look):
-    """Draw what is carried beside the pointer and outline the slot a click
-    would put it in."""
+    """Draw the dragged slot beside the pointer and outline the slot a
+    release would swap it with."""
     widths = [width for _, _, width in look.labels]
     target = layout.slot_clicked(*look.pointer, widths)
     if target is not None:

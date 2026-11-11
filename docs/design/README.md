@@ -60,9 +60,10 @@ It differs from the table above in the font, which is Blender's interface font w
 | Reduced motion | every change is immediate |
 
 The editor's canvas shows this behaviour while Preview is on.
-With it off a click selects a slot, drawn with a 2 px white outline, a second click opens its sub-pie, and nothing opens on hover.
-What Add to Pie finds is carried: its box follows 12 px below and right of the pointer, and the slot a click would put it in has a 2 px signal-red outline.
-A click within 24 px of a slot places it there and carries what the slot held; Esc or a right-click drops what is carried.
+With it off nothing opens on hover.
+A click selects a slot, drawn with a 2 px white outline, and opens its menu: Add or Replace from a search, New Sub-Pie, Open, Swap With and Remove.
+A filled slot that is pressed and moved more than 6 px is dragged: its box follows 12 px below and right of the pointer, the slot a release would swap it with has a 2 px signal-red outline, and a release anywhere else changes nothing.
+The canvas is black (Sandro, 11 Nov 2026); slots keep their ground.
 On the canvas today: the highlight and the selection by bearing, the centre hover state, slot width and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
 A sub-pie left through its centre fades out as the disc.
 The needle and arrow follow the pointer without easing.
