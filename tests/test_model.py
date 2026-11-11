@@ -96,14 +96,14 @@ def test_a_pie_of_twelve_slots_round_trips():
     assert model.loads(model.dumps(pies)) == pies
 
 
-def test_slots_of_twelve_are_named_by_bearing():
+def test_slots_of_twelve_are_named_by_number():
     def change(data):
         slots = data["pies"][0]["slots"]
         slots += [None] * 4
         slots[2] = {"type": "sub_pie", "pie": "gone"}
 
     assert rejected(change) == (
-        'pie "select" slot 60° opens the pie "gone", which does not exist'
+        'pie "select" slot 3 opens the pie "gone", which does not exist'
     )
 
 

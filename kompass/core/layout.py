@@ -12,8 +12,11 @@ import math
 from .model import NATIVE_SLOTS, SLOT_DIRECTIONS
 
 PIE_RADIUS = 150
-# The radius of a pie of 12 slots.
-WIDE_RADIUS = 190
+# The radius of a pie of 12 slots, and their bearings. With these every two
+# neighbours of SLOT_WIDTH are 37 apart; at equal angles the slots near
+# north and south would nearly touch.
+WIDE_RADIUS = 170
+WIDE_BEARINGS = (0, 42, 68, 90, 112, 138, 180, 222, 248, 270, 292, 318)
 # A slot grows from SLOT_WIDTH to fit its label, up to SLOT_MAX_WIDTH.
 SLOT_WIDTH = 120
 SLOT_MAX_WIDTH = 180
@@ -58,9 +61,7 @@ BEARINGS = tuple(_BEARINGS[direction] for direction in SLOT_DIRECTIONS)
 
 def bearings(count):
     """Return the bearing of each slot of a pie of that many slots."""
-    if count == NATIVE_SLOTS:
-        return BEARINGS
-    return tuple(range(0, 360, 360 // count))
+    return BEARINGS if count == NATIVE_SLOTS else WIDE_BEARINGS
 
 
 def radius(count):
@@ -88,21 +89,17 @@ def slot_width(label):
 def slot_corner(slot, count, width=SLOT_WIDTH, pull=1.0):
     """Return the left and bottom of slot n of a pie of count slots.
 
-    pull is the share of its distance from the centre the slot has reached
-    while the pie opens.
+    The slot sits on the pie's ring at its bearing and moves out by half its
+    width times the bearing's sine and half its height times its cosine:
+    east and west start at the ring, north and south lie beyond it. pull is
+    the share of its distance from the centre the slot has reached while the
+    pie opens.
     """
     bearing = bearings(count)[slot]
     x, y = point(radius(count) * pull, bearing)
-    left = x - width / 2
-    if bearing in {90, 270}:
-        # East and west start at the pie's radius instead of straddling it.
-        left += math.copysign(width / 2 - 4, x)
-    elif bearing % 90:
-        # The slots between move outwards to clear the ones above and below.
-        left += math.copysign(SLOT_WIDTH * 0.2, x)
-    bottom = y - SLOT_HEIGHT / 2
-    if bearing in {0, 180}:
-        bottom += math.copysign(SLOT_HEIGHT / 2, y)
+    out_x, out_y = point(1, bearing)
+    left = x - width / 2 + out_x * width / 2
+    bottom = y - SLOT_HEIGHT / 2 + out_y * SLOT_HEIGHT / 2
     return left, bottom
 
 
@@ -134,16 +131,12 @@ def filled(slot, count, amount):
     """Return the part of a sub-pie slot that is filled, as shares of its box.
 
     The result is left, bottom, right, top, each from 0 to 1. The fill grows
-    away from the centre: north upward, south downward, the others sideways.
+    away from the centre along the stronger axis of the slot's bearing.
     """
-    bearing = bearings(count)[slot]
-    if bearing == 0:
-        return 0.0, 0.0, 1.0, amount
-    if bearing == 180:
-        return 0.0, 1 - amount, 1.0, 1.0
-    if bearing > 180:
-        return 1 - amount, 0.0, 1.0, 1.0
-    return 0.0, 0.0, amount, 1.0
+    x, y = point(1, bearings(count)[slot])
+    if abs(y) > abs(x) + 1e-9:
+        return (0.0, 0.0, 1.0, amount) if y > 0 else (0.0, 1 - amount, 1.0, 1.0)
+    return (0.0, 0.0, amount, 1.0) if x > 0 else (1 - amount, 0.0, 1.0, 1.0)
 
 
 def bearing_to(x, y):
@@ -176,18 +169,26 @@ def highlight(x, y, slot, count, ring=RING_RADIUS):
     return near * near * radial * 0.55
 
 
-def ticks(count, dial=DIAL_RADIUS, hover=0.0):
+def ticks(dial=DIAL_RADIUS, hover=0.0):
     """Return (bearing, inner radius, outer radius, is major) for each tick.
 
-    The ticks that point at the slots of a pie of count slots are major.
-    hover, 0 to 1, shortens them to the length of the others.
+    hover, 0 to 1, shortens the major ticks to the length of the others.
     """
-    slots = bearings(count)
     major = MAJOR_TICK + (TICK - MAJOR_TICK) * hover
     return [
-        (bearing, dial - (major if bearing in slots else TICK), dial, bearing in slots)
+        (
+            bearing,
+            dial - (major if bearing % 45 == 0 else TICK),
+            dial,
+            bearing % 45 == 0,
+        )
         for bearing in range(0, 360, 5)
     ]
+
+
+def tick_at(bearing):
+    """Return the bearing of the tick nearest to that bearing."""
+    return round(bearing / 5) * 5 % 360
 
 
 def ease_out(share):

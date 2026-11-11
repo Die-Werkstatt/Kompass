@@ -13,8 +13,7 @@ SCHEMA_VERSION = 1
 # Blender fills a pie menu in this order (radial_dir_order in interface.cc),
 # so slot index n of a pie is direction n of this tuple.
 SLOT_DIRECTIONS = ("W", "E", "S", "N", "NW", "NE", "SW", "SE")
-# A pie has as many slots as Blender's pie menu, or 12: one every 30 degrees,
-# clockwise from north. Only a pie that Kompass draws can show those.
+# A pie has as many slots as Blender's pie menu, or 12, clockwise from north. Only a pie that Kompass draws can show those.
 NATIVE_SLOTS = len(SLOT_DIRECTIONS)
 WIDE_SLOTS = 12
 
@@ -109,7 +108,8 @@ def _validate_pie(pie, ids):
 def _slot_name(pie, index):
     if len(pie.slots) == NATIVE_SLOTS:
         return SLOT_DIRECTIONS[index]
-    return f"{index * 360 // WIDE_SLOTS}°"
+    # Numbered clockwise from north, which is 1.
+    return str(index + 1)
 
 
 def _validate_shortcut(shortcut, where):

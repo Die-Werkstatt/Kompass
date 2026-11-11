@@ -74,7 +74,7 @@ def test_highlight_follows_distance_and_bearing():
 
 
 def test_ticks_every_five_degrees_with_eight_long_ones():
-    ticks = layout.ticks(8)
+    ticks = layout.ticks()
     assert len(ticks) == 72
     assert [bearing for bearing, _, _, major in ticks if major] == list(
         range(0, 360, 45)
@@ -121,14 +121,16 @@ def test_slot_width_follows_the_label():
 
 def test_wider_slots_grow_away_from_the_centre():
     wide = layout.SLOT_MAX_WIDTH
-    # East keeps its left side, west its right, the others their middle.
-    assert layout.slot_corner(E, 8, wide) == layout.slot_corner(E, 8)
-    assert layout.slot_corner(W, 8, wide)[0] + wide == pytest.approx(
-        layout.slot_corner(W, 8)[0] + layout.SLOT_WIDTH
+    # East keeps its left side on the ring, west its right, north its middle.
+    assert layout.slot_corner(E, 8, wide)[0] == pytest.approx(layout.PIE_RADIUS)
+    assert layout.slot_corner(W, 8, wide)[0] + wide == pytest.approx(-layout.PIE_RADIUS)
+    assert layout.slot_corner(N, 8, wide)[0] == pytest.approx(-wide / 2)
+    # A slot between them keeps the corner that faces the centre in place.
+    narrow = layout.slot_corner(NE, 8)
+    assert (
+        layout.slot_corner(NE, 8, wide)[0] > narrow[0] - (wide - layout.SLOT_WIDTH) / 2
     )
-    for slot in (N, S, NE, SW):
-        middle = layout.slot_corner(slot, 8)[0] + layout.SLOT_WIDTH / 2
-        assert layout.slot_corner(slot, 8, wide)[0] + wide / 2 == pytest.approx(middle)
+    assert layout.slot_corner(NE, 8, wide)[1] == narrow[1]
 
 
 def test_long_label_slides_after_a_wait():
@@ -155,13 +157,11 @@ def test_fill_grows_away_from_the_centre():
 def test_hover_shortens_the_major_ticks():
     for hover, length in ((0, layout.MAJOR_TICK), (1, layout.TICK)):
         lengths = {
-            outer - inner
-            for _, inner, outer, major in layout.ticks(8, 50, hover)
-            if major
+            outer - inner for _, inner, outer, major in layout.ticks(50, hover) if major
         }
         assert lengths == {length}
     minor = {
-        outer - inner for _, inner, outer, major in layout.ticks(8, 50, 1) if not major
+        outer - inner for _, inner, outer, major in layout.ticks(50, 1) if not major
     }
     assert minor == {layout.TICK}
 
@@ -184,27 +184,61 @@ def test_toward_stops_at_the_target():
 
 
 def test_twelve_slots_run_clockwise_from_north():
-    assert layout.bearings(12) == tuple(range(0, 360, 30))
+    assert layout.bearings(12) == layout.WIDE_BEARINGS
+    assert list(layout.WIDE_BEARINGS) == sorted(layout.WIDE_BEARINGS)
     assert layout.slot_at(0, 100, 12) == 0
     assert layout.slot_at(100, 0, 12) == 3
-    # 40 degrees is nearer to 30 than to 60; in a pie of 8 it is north-east.
-    x, y = layout.point(100, 40)
+    # 30 degrees is nearer to 42 than to north; in a pie of 8 it is north-east.
+    x, y = layout.point(100, 30)
     assert layout.slot_at(x, y, 12) == 1
     assert layout.slot_at(x, y, 8) == NE
 
 
-def test_twelve_slots_do_not_overlap():
-    # Each at its widest.
+def test_twelve_slots_mirror_left_to_right():
+    for slot in range(1, 6):
+        rx, ry = layout.slot_corner(slot, 12)
+        lx, ly = layout.slot_corner(12 - slot, 12)
+        assert lx + layout.SLOT_WIDTH == pytest.approx(-rx)
+        assert ly == pytest.approx(ry)
+
+
+def test_twelve_slots_keep_equal_gaps():
+    corners = [layout.slot_corner(slot, 12) for slot in range(12)]
+    for slot, (ax, ay) in enumerate(corners):
+        bx, by = corners[(slot + 1) % 12]
+        gap_x = abs(ax - bx) - layout.SLOT_WIDTH
+        gap_y = abs(ay - by) - layout.SLOT_HEIGHT
+        # The shortest way from one box to the next.
+        gap = math.hypot(max(gap_x, 0), max(gap_y, 0))
+        assert gap == pytest.approx(37, abs=1)
+
+
+def test_twelve_slots_do_not_overlap_at_any_width():
     wide = layout.SLOT_MAX_WIDTH
-    corners = [layout.slot_corner(slot, 12, wide) for slot in range(12)]
-    for i, (ax, ay) in enumerate(corners):
-        for bx, by in corners[i + 1 :]:
-            assert abs(ax - bx) >= wide or abs(ay - by) >= layout.SLOT_HEIGHT
+    for widths in ([wide] * 12, [wide, layout.SLOT_WIDTH] * 6):
+        boxes = [
+            (*layout.slot_corner(slot, 12, width), width)
+            for slot, width in enumerate(widths)
+        ]
+        for i, (ax, ay, aw) in enumerate(boxes):
+            for bx, by, bw in boxes[i + 1 :]:
+                apart_x = bx >= ax + aw or ax >= bx + bw
+                assert apart_x or abs(ay - by) >= layout.SLOT_HEIGHT
 
 
-def test_twelve_slots_have_a_major_tick_each():
-    major = [bearing for bearing, _, _, is_major in layout.ticks(12) if is_major]
-    assert major == list(range(0, 360, 30))
+def test_fill_follows_the_stronger_axis():
+    # 42 degrees fills upward, 68 degrees sideways.
+    assert layout.filled(1, 12, 0.25) == (0, 0, 1, 0.25)
+    assert layout.filled(2, 12, 0.25) == (0, 0, 0.25, 1)
+    assert layout.filled(7, 12, 0.25) == (0, 0.75, 1, 1)
+    assert layout.filled(10, 12, 0.25) == (0.75, 0, 1, 1)
+
+
+def test_highlighted_tick_is_the_nearest():
+    assert layout.tick_at(42) == 40
+    assert layout.tick_at(68) == 70
+    assert layout.tick_at(358) == 0
+    assert layout.tick_at(45) == 45
 
 
 def test_a_pie_of_twelve_needs_more_room():

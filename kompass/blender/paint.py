@@ -180,9 +180,12 @@ def _draw_dial(canvas, look, opened):
     selected = None
     if look.pointer is not None:
         selected = layout.slot_at(*look.pointer, count, ring)
+    lit = None
+    if selected is not None:
+        lit = layout.tick_at(layout.bearings(count)[selected])
     canvas.line(_circle(ring), LINE, 1.5)
-    for bearing, inner, outer, major in layout.ticks(count, dial, hover):
-        on = selected is not None and bearing == layout.bearings(count)[selected]
+    for bearing, inner, outer, major in layout.ticks(dial, hover):
+        on = bearing == lit
         colour = SIGNAL if on else INK if major else (*STONE[:3], 0.55)
         tick = [layout.point(inner, bearing), layout.point(outer, bearing)]
         canvas.line(tick, colour, 3 if on else 2 if major else 1)

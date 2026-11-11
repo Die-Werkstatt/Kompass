@@ -199,11 +199,11 @@ def steps():
     yield PAUSE
     assert editor.shown().id == "mesh", editor.shown().id
 
-    # A pie of 12 slots: 20 degrees from north is its second slot, a sub-pie.
-    # In a pie of 8 that bearing is north, where Wide has a tool.
+    # A pie of 12 slots: 30 degrees from north is its second slot, a sub-pie.
+    # In a pie of 8 that bearing is north-east, where Wide has nothing.
     assert bpy.ops.kompass.editor_show(pie="wide") == {"FINISHED"}
     yield PAUSE / 2
-    dx, dy = layout.point(2 * FLICK, 20)
+    dx, dy = layout.point(2 * FLICK, 30)
     yield from click(x + int(dx), y + int(dy))
     assert editor.shown().id == "broken" and editor.depth() == 2, editor.shown().id
 
