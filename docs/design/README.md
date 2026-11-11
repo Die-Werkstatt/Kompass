@@ -21,6 +21,9 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 | Dial label | BACK in a sub-pie, CLOSE at the root, below the dial |
 | Colours | see [`../brand/README.md`](../brand/README.md) |
 
+The canvas (`kompass/blender/canvas.py`) draws the slots, the dial, the needle, the outer arrow, the sub-pie title and the dial label.
+It differs from the table above in the font, which is Blender's interface font without tracking, because `blf` has no letter spacing and the font is undecided (#10).
+
 ## Behaviour
 
 | Event | Result |
@@ -36,6 +39,10 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 | Click on the dial, Esc or right-click | back one level; closes the pie at the root |
 | Return from a sub-pie | the slot that opened it does not reopen until the pointer leaves it |
 | Opening a sub-pie | the needle keeps its heading; it does not reset to north |
+
+On the canvas today: the needle and arrow follow the pointer without easing, the highlight and the selection by bearing work as above, a click on a sub-pie slot opens it and a click on the dial goes back.
+Not on the canvas: opening a sub-pie on hover, press-drag-release, Esc and right-click, and the hold after returning from a sub-pie.
+A click on a tool or operator slot does nothing.
 
 ## Editor host
 
@@ -58,6 +65,9 @@ It hosted the editor in a `NodeTree` subclass named Kompass, with the slots as g
 | Do node shortcuts still work? | Yes. Shift+A opens the node Add menu, which is empty apart from Search. |
 | Can `GIZMO_GT_button_2d` be a slot? | It can be placed and sized freely and shows a Blender icon, but it is a circle with no label. |
 | Can a slot be drawn by Kompass? | Yes. A `Gizmo` subclass with `draw` and `test_select` draws a square slot with a `blf` label, highlights on hover and runs its target operator on a click. |
+| Does a gizmo need an operator for a click? | No. Without a target operator it gets `invoke` on press and `exit` on release. With one, Blender shows the operator's tooltip over the canvas. |
+| Which sidebar tab is open first? | Blender's Group tab, not Kompass. |
+| Does the sidebar take space from the canvas? | No, it lies over it. The canvas subtracts its width to centre the pie. |
 | What draws above what? | `BACKDROP`, then gizmos, then `POST_PIXEL`. The dial belongs in `BACKDROP`. |
 | Does a draw handler fire in other node editors? | It is registered for the space type, so it returns early unless `space_data.tree_type` is Kompass. |
 | Is a modal operator needed? | Only while a tool is carried. A modal started from the canvas receives pointer moves and ends on the next click, and that click does not also reach the gizmo under it. |

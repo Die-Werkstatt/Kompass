@@ -3,7 +3,7 @@
 
 import bpy
 
-from . import ADDON, files, keymaps, storage
+from . import ADDON, editor, files, keymaps, storage
 
 
 class KompassPreferences(bpy.types.AddonPreferences):
@@ -13,6 +13,7 @@ class KompassPreferences(bpy.types.AddonPreferences):
         layout = self.layout
         row = layout.row()
         row.label(text=f"Pies: {len(storage.pies)}")
+        row.operator(editor.KOMPASS_OT_editor_open.bl_idname)
         row.operator(files.KOMPASS_OT_pies_import.bl_idname, text="Import")
         row.operator(files.KOMPASS_OT_pies_export.bl_idname, text="Export All")
         for stored in storage.pies:

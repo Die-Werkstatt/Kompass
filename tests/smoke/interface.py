@@ -24,6 +24,7 @@ names = bpy.context.preferences.addons.keys()
 (addon,) = [name for name in names if "kompass" in name]
 storage = importlib.import_module(addon + ".blender.storage")
 keymaps = importlib.import_module(addon + ".blender.keymaps")
+editor = importlib.import_module(addon + ".blender.editor")
 
 
 def view3d():
@@ -70,7 +71,7 @@ def steps():
         'Pie "Broken key" has no shortcut: Blender has no key "NOT_A_KEY"'
     ], keymaps.problems
 
-    select, mesh = storage.pies[:2]
+    select = storage.pies[0]
     assert keymaps.text(select.shortcut) == "Shift Alt Q"
     assert keymaps.taken_by(select.shortcut) is None
     frame_all = replace(select.shortcut, key="C", modifiers=frozenset({"shift"}))
@@ -122,7 +123,41 @@ def steps():
     cube.update_from_editmode()
     assert len(cube.data.vertices) == 56, len(cube.data.vertices)
 
+    # The editor opens in a window of its own and shows the first pie.
+    assert bpy.ops.kompass.editor_open() == {"FINISHED"}
+    yield PAUSE
+    editor_window = bpy.context.window_manager.windows[-1]
+    editor_area = editor_window.screen.areas[0]
+    assert editor_area.ui_type == "KompassTree", editor_area.ui_type
+    assert editor.shown().id == "select"
+    canvas = next(r for r in editor_area.regions if r.type == "WINDOW")
+    # The pie is centred in what the sidebar leaves of the canvas.
+    sidebar = next(r for r in editor_area.regions if r.type == "UI")
+    x = canvas.x + (canvas.width - sidebar.width) // 2
+    y = canvas.y + canvas.height // 2
+
+    def click(x, y):
+        editor_window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x - 3, y=y)
+        yield PAUSE / 2
+        editor_window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
+        yield PAUSE / 2
+        editor_window.event_simulate(type="LEFTMOUSE", value="PRESS", x=x, y=y)
+        yield PAUSE / 2
+        editor_window.event_simulate(type="LEFTMOUSE", value="RELEASE", x=x, y=y)
+        yield PAUSE / 2
+
+    # A click on a tool slot changes nothing; south is the Mesh sub-pie.
+    yield from click(x + 2 * FLICK, y)
+    assert editor.shown().id == "select"
+    yield from click(x, y - 2 * FLICK)
+    assert editor.shown().id == "mesh" and editor.in_sub_pie()
+    # A click on the dial goes back.
+    yield from click(x, y)
+    assert editor.shown().id == "select" and not editor.in_sub_pie()
+
+    # Disabling with the editor open leaves nothing registered.
     addon_utils.disable(addon)
+    assert not editor.KompassTree.is_registered
     left = [
         item.idname
         for keymap in bpy.context.window_manager.keyconfigs.addon.keymaps

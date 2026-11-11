@@ -8,13 +8,20 @@ import bpy
 ADDON = __package__.rpartition(".")[0]
 
 # These read ADDON while they load.
-from . import files, keymaps, pie, preferences, storage
+from . import canvas, editor, files, keymaps, pie, preferences, storage
 
 _CLASSES = (
     preferences.KompassPreferences,
     pie.KOMPASS_OT_pie_open,
     files.KOMPASS_OT_pies_export,
     files.KOMPASS_OT_pies_import,
+    editor.KompassTree,
+    editor.KOMPASS_OT_editor_open,
+    editor.KOMPASS_OT_editor_show,
+    editor.KOMPASS_PT_pies,
+    canvas.KOMPASS_GT_slot,
+    canvas.KOMPASS_GT_dial,
+    canvas.KOMPASS_GGT_canvas,
 )
 
 
@@ -23,9 +30,11 @@ def register():
         bpy.utils.register_class(cls)
     storage.load()
     keymaps.register()
+    canvas.register()
 
 
 def unregister():
+    canvas.unregister()
     keymaps.unregister()
     for cls in reversed(_CLASSES):
         bpy.utils.unregister_class(cls)

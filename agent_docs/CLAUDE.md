@@ -13,12 +13,13 @@ on its own shortcut. Pies are still made by editing the pie file.
 
 - `kompass/`: the extension; everything in it ships in the `.zip`.
   - `core/`: the pie model, validation and JSON format (`model.py`), reading
-    and writing a pie file on disk (`store.py`), and choosing pies for export
-    and merging imported ones (`transfer.py`).
+    and writing a pie file on disk (`store.py`), choosing pies for export and
+    merging imported ones (`transfer.py`), canvas geometry (`layout.py`).
   - `blender/`: everything that needs `bpy`. `storage.py` holds the pies
     loaded from `pies.json`, `pie.py` opens one as a native pie menu,
     `keymaps.py` gives each its shortcut, `tools.py` reads Blender's tool
-    list, `files.py` exports and imports, `preferences.py` lists the pies.
+    list, `files.py` exports and imports, `preferences.py` lists the pies,
+    `editor.py` is the Kompass editor type, `canvas.py` draws a pie in it.
 - `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
   pie file. `tests/smoke/` runs inside Blender: `checks.py` without a window,
   `interface.py` with one, pressing shortcuts through simulated events.
@@ -44,6 +45,8 @@ on its own shortcut. Pies are still made by editing the pie file.
 - `wm.keyconfigs.addon` is `None` in background mode; check before use.
 - `bl_ui` is not documented API: only `blender/tools.py` imports it.
 - A slot whose tool or operator is missing draws disabled and never raises.
+- Canvas lengths live in `core/layout.py`, in pixels at UI scale 1. Only
+  `canvas.py` turns them into a region's pixels.
 - No `eval` or `exec`.
 - Bundled images, icons and fonts must be CC0 (extensions.blender.org terms
   1.2). The files in `docs/brand/` stay out of `kompass/`.
