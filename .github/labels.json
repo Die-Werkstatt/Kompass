@@ -42,6 +42,11 @@
       "description": "CI, health checks, schema and drift validation."
     },
     {
+      "name": "area:core",
+      "color": "d4c5f9",
+      "description": "Pie data model, storage and keymaps."
+    },
+    {
       "name": "area:docs",
       "color": "bfdadc",
       "description": "README, agent_docs and other documentation."

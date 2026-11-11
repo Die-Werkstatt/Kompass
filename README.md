@@ -1,5 +1,7 @@
 # Kompass
 
+A Blender add-on for building your own pie menus, each on its own shortcut.
+In development: the extension installs and does nothing yet.
 
 
 ## Development

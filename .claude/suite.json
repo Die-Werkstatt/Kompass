@@ -11,6 +11,14 @@
         "run": "npx --yes aislop@0.16.0 ci"
       },
       {
+        "name": "unit tests",
+        "run": "pytest -q"
+      },
+      {
+        "name": "extension build",
+        "run": "blender --command extension build --source-dir kompass"
+      },
+      {
         "name": "template conflicts",
         "run": "! git grep -nE '^(<<<<<<< before updating|>>>>>>> after updating)$'"
       }
