@@ -4,6 +4,7 @@
 
 import bpy
 
+from ..core.model import MODIFIERS
 from . import pie, storage
 
 _KEYS = frozenset(bpy.types.KeyMapItem.bl_rna.properties["type"].enum_items.keys())
@@ -48,6 +49,38 @@ def _unknown(shortcut):
         return f'Blender has no key "{shortcut.key}"'
     if shortcut.space_type not in _SPACE_TYPES:
         return f'Blender has no editor type "{shortcut.space_type}"'
+    return None
+
+
+def text(shortcut):
+    """Return the shortcut as Blender names it, such as "Shift Alt Q"."""
+    keys = bpy.types.KeyMapItem.bl_rna.properties["type"].enum_items
+    key = keys[shortcut.key].name if shortcut.key in keys else shortcut.key
+    held = [name.title() for name in MODIFIERS if name in shortcut.modifiers]
+    return " ".join([*held, key])
+
+
+def taken_by(shortcut):
+    """Return the name of what Blender runs on the shortcut in its keymap.
+
+    None when the keymap has nothing else on it. Keymaps that are active at
+    the same time, such as "Object Mode" beside "3D View", are not searched.
+    """
+    keymap = bpy.context.window_manager.keyconfigs.user.keymaps.get(shortcut.keymap)
+    if keymap is None:
+        return None
+    for item in keymap.keymap_items:
+        if (
+            item.active
+            and item.type == shortcut.key
+            and item.idname != pie.KOMPASS_OT_pie_open.bl_idname
+            # -1 is a modifier that may be held or not.
+            and all(
+                getattr(item, name) in {-1, name in shortcut.modifiers}
+                for name in MODIFIERS
+            )
+        ):
+            return item.name
     return None
 
 

@@ -33,6 +33,31 @@ reenable()
 assert [pie.name for pie in storage.pies] == ["Select", "Mesh"]
 assert storage.problem is None
 
+# Export all pies, or one pie with the pies it opens.
+exported = path.with_name("exported.json")
+assert bpy.ops.kompass.pies_export(filepath=str(exported)) == {"FINISHED"}
+assert exported.read_bytes() == EXAMPLE.read_bytes()
+assert bpy.ops.kompass.pies_export(filepath=str(exported), pie="mesh") == {"FINISHED"}
+assert '"select"' not in exported.read_text(encoding="utf-8")
+
+# Importing keeps both pies with one id unless told to replace.
+assert bpy.ops.kompass.pies_import(filepath=str(EXAMPLE)) == {"FINISHED"}
+assert [pie.id for pie in storage.pies] == ["select", "mesh", "select-2", "mesh-2"]
+assert bpy.ops.kompass.pies_import(filepath=str(EXAMPLE), replace=True) == {"FINISHED"}
+assert len(storage.pies) == 4
+reenable()
+assert len(storage.pies) == 4
+
+# A file that is not a pie file changes nothing and says why.
+exported.write_text('{"schema_version": 2, "pies": []}', encoding="utf-8")
+try:
+    bpy.ops.kompass.pies_import(filepath=str(exported))
+except RuntimeError as error:
+    assert "newer Kompass" in str(error), error
+else:
+    raise AssertionError("an unreadable file was imported")
+assert len(storage.pies) == 4
+
 path.write_text("{", encoding="utf-8")
 reenable()
 assert storage.pies == ()

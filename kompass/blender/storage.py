@@ -23,3 +23,9 @@ def path():
 def load():
     global pies, problem
     pies, problem = store.load(path())
+
+
+def save(new):
+    global pies
+    store.save(path(), new)
+    pies = new

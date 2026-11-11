@@ -8,9 +8,14 @@ import bpy
 ADDON = __package__.rpartition(".")[0]
 
 # These read ADDON while they load.
-from . import keymaps, pie, preferences, storage
+from . import files, keymaps, pie, preferences, storage
 
-_CLASSES = (preferences.KompassPreferences, pie.KOMPASS_OT_pie_open)
+_CLASSES = (
+    preferences.KompassPreferences,
+    pie.KOMPASS_OT_pie_open,
+    files.KOMPASS_OT_pies_export,
+    files.KOMPASS_OT_pies_import,
+)
 
 
 def register():
