@@ -31,6 +31,6 @@ Milestone 1, pies open from shortcuts (#5).
       input as the spike found workable (`docs/design/README.md`, Editor
       host): a Kompass node tree type, slots as Kompass-drawn gizmos, the
       dial in a backdrop draw handler, a modal operator only while a tool is
-      carried. Sandro has not confirmed this choice.
+      carried. Sandro chose this host on 11 Nov 2026.
 - [ ] Milestone 3, release Lite (#7)
 - [ ] Milestone 4, Kompass-drawn pie, only if its spike says so (#8, #22)

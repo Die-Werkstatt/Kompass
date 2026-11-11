@@ -33,6 +33,14 @@ reenable()
 assert [pie.name for pie in storage.pies] == ["Select", "Mesh"]
 assert storage.problem is None
 
+# Every operator setting in the example file is one this Blender has.
+for pie in storage.pies:
+    for slot in pie.slots:
+        for name in getattr(slot, "properties", {}):
+            module, _, operator = slot.idname.partition(".")
+            known = getattr(getattr(bpy.ops, module), operator).get_rna_type()
+            assert name in known.properties, (slot.idname, name)
+
 # Export all pies, or one pie with the pies it opens.
 exported = path.with_name("exported.json")
 assert bpy.ops.kompass.pies_export(filepath=str(exported)) == {"FINISHED"}

@@ -65,6 +65,8 @@ It hosted the editor in a `NodeTree` subclass named Kompass, with the slots as g
 | What does `wm.window_new()` give? | A window of 1216 by 720 px from a 1280 by 800 px parent, showing a copy of the area it was called from. |
 | Is the Kompass window saved in the `.blend`? | Yes. Save and reopen brings the window back with the Kompass editor and its tree. A new file has neither. |
 
+Sandro chose this host on 11 Nov 2026.
+
 Not checked: a `.blend` saved with the Kompass window, opened without Kompass installed; trackpad gestures; a real mouse; macOS and Windows.
 
 ## Open questions
