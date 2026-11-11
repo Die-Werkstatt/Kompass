@@ -20,7 +20,7 @@ pie of 12 only shows in the editor so far. Slots are filled in the pie file.
     loaded from `pies.json`, `pie.py` opens one as a native pie menu,
     `keymaps.py` gives each its shortcut, `tools.py` reads the tool list,
     `files.py` exports and imports, `preferences.py` lists the pies, `editor.py`
-    is the Kompass editor type, `canvas.py` animates a pie in it with `paint.py`.
+    is the Kompass editor, `slots.py` its slot panel, `canvas.py` its pie.
 - `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
   pie file. `tests/smoke/` runs inside Blender: `checks.py` without a window,
   `interface.py` with one, pressing shortcuts through simulated events.

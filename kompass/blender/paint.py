@@ -44,6 +44,8 @@ class Look:
     # What labels() gave for the pie, and how far each long label has slid.
     labels: tuple[tuple[str, float, float], ...]
     slide: dict[int, float]
+    # The slot the editor's menu acts on.
+    selected: int | None
 
     @property
     def dial(self):
@@ -257,6 +259,8 @@ def _draw_slot(canvas, look, slot, content, pull):
     else:
         canvas.fill(box, _mix(GROUND, SIGNAL, amount))
         canvas.line([*box, box[0]], _mix(LINE, SIGNAL, amount), 1)
+    if slot == look.selected:
+        canvas.line([*box, box[0]], WHITE, 2)
     colour = WHITE if fill > 0 else _mix(INK, WHITE, amount)
     baseline = bottom + layout.SLOT_HEIGHT / 2 - 4
     pad = layout.LABEL_PAD

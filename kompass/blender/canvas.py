@@ -160,6 +160,7 @@ def _draw():
         filling,
         labels,
         dict(state.slide),
+        editor.selected(),
     )
     opened = _share(state.opened, now, context)
     if state.ghost is not None and opened < 1:
@@ -239,7 +240,8 @@ def _rest(pointer):
     if under != state.held:
         state.held = None
     opens = (
-        shown is not None
+        editor.preview
+        and shown is not None
         and under is not None
         and under != state.held
         and isinstance(shown.slots[under], model.SubPieSlot)
@@ -274,9 +276,8 @@ class _Part:
             # Blender picks the gizmo by bearing at any distance; a click
             # counts only close to a slot.
             slot = layout.slot_clicked(*_state.pointer, _widths(editor.shown()))
-        if slot is not None:
-            editor.click(slot)
-            context.region.tag_redraw()
+        editor.click(slot)
+        editor.redraw(context)
 
 
 class KOMPASS_GT_slot(_Part, bpy.types.Gizmo):
