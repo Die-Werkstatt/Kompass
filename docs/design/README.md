@@ -55,11 +55,13 @@ It differs from the table above in the font, which is Blender's interface font w
 | Back from a sub-pie | the sub-pie fades and shrinks to 88% around its centre while the parent opens |
 | Reduced motion | every change is immediate |
 
-On the canvas today: the highlight and the selection by bearing, the centre hover state, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
+On the canvas today: the highlight and the selection by bearing, the centre hover state, slot width and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
+A sub-pie left through its centre fades out as the disc.
 The needle and arrow follow the pointer without easing.
 A sub-pie opens in the middle of the canvas, not on the pointer.
 A slot that is under the pointer when its pie arrives does not open until the pointer has left it.
 Reduced motion is Blender's Preferences > Interface > Reduce Motion; the 100 ms before a sub-pie opens stay.
+With it a long label jumps to its end after the 400 ms.
 Not on the canvas: the closing motion, since nothing closes a pie there, press-drag-release, Esc and right-click.
 A click on a tool or operator slot does nothing.
 

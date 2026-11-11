@@ -116,9 +116,11 @@ class Canvas:
         blf.position(FONT, middle - blf.dimensions(FONT, text)[0] / 2, bottom, 0)
         blf.draw(FONT, text)
 
-    def clipped(self, text, left, right, y, size, colour, offset):
-        """Draw text from left, slid left by offset and cut at left and right."""
-        height = size * self.zoom * self.scale
+    def label(self, text, span, y, colour, offset):
+        """Draw a slot's label from the left of span, slid left by offset and
+        cut at both ends of span."""
+        left, right = span
+        height = LABEL_SIZE * self.zoom * self.scale
         blf.size(FONT, height)
         blf.color(FONT, *self._colour(colour))
         (start, bottom), (low, _), (high, _) = self.pixels(
@@ -253,9 +255,7 @@ def _draw_slot(canvas, look, slot, content, pull):
     pad = layout.LABEL_PAD
     if text_width > width - 2 * pad:
         offset = look.slide.get(slot, 0.0)
-        canvas.clipped(
-            text, left + pad, right - pad, baseline, LABEL_SIZE, colour, offset
-        )
+        canvas.label(text, (left + pad, right - pad), baseline, colour, offset)
     else:
         canvas.text(text, (left + right) / 2, baseline, LABEL_SIZE, colour)
 

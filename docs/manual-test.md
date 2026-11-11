@@ -50,6 +50,10 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       on it: red fills it downward and the Mesh pie opens, with a smaller
       dial and BACK below. Select fades and shrinks while Mesh fades in.
 - [ ] Click the dial: Mesh shrinks away and Select is back.
+- [ ] Rename a pie that is a sub-pie to a name of 40 letters and show its
+      parent: the slot is wider than the others and the name is cut off.
+      Point at it from the dial's edge: after a moment the name slides left
+      to its end. Point elsewhere: it slides back.
 - [ ] Move onto MESH and straight off the canvas onto the sidebar: Select
       stays.
 - [ ] Preferences > Interface > Reduce Motion on: the same steps work

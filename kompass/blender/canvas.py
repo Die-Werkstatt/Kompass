@@ -34,6 +34,9 @@ class _State:
     hover_from: float = 0.0
     hover_target: float = 0.0
     hover_since: float = 0.0
+    # A pie can arrive under the pointer. Its centre takes the hover state
+    # only once the pointer has been outside the ring.
+    armed: bool = False
     # The sub-pie slot the pointer rests on, and since when.
     rest: tuple[int, float] | None = None
     # The slot under the pointer when the pie came onto the canvas. It does
@@ -105,6 +108,8 @@ def _arrive(shown, depth, now):
         return
     state.opened = now
     state.rest = None
+    state.armed = False
+    state.hover_from = state.hover_target = 0.0
     state.held = layout.slot_under(*state.pointer, _widths(shown))
     # The pie being left keeps the old one.
     state.slide = {}
@@ -138,7 +143,9 @@ def _draw():
     _arrive(shown, editor.depth(), now)
     pointer = state.pointer if any(state.lit.values()) else None
     inside = pointer is not None and math.hypot(*pointer) <= _ring()
-    hover = _hover(inside, now, context)
+    # Blender drops the highlight during a click, which is not leaving.
+    state.armed = state.armed or (pointer is not None and not inside)
+    hover = _hover(inside and state.armed, now, context)
     filling = None
     if state.rest is not None:
         slot, since = state.rest
