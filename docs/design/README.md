@@ -24,7 +24,7 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 | Dial label | BACK in a sub-pie, CLOSE at the root, below the dial |
 | Colours | see [`../brand/README.md`](../brand/README.md) |
 
-The canvas (`kompass/blender/canvas.py`) draws the slots, the dial, the needle, the outer arrow, the sub-pie title and the dial label.
+`kompass/blender/paint.py` draws the slots, the dial, the needle, the outer arrow, the sub-pie title and the dial label.
 It differs from the table above in the font, which is Blender's interface font without tracking, because `blf` has no letter spacing and the font is undecided (#10).
 
 ## Behaviour
