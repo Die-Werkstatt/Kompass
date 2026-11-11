@@ -66,7 +66,7 @@ def _content(found):
 
 
 class KOMPASS_OT_slot_fill(editor.Edit, bpy.types.Operator):
-    """Search a tool, an operator or a pie and put it in the selected slot"""
+    """Search for a tool, operator or pie to put in the selected slot"""
 
     bl_idname = "kompass.slot_fill"
     bl_label = "Fill Slot"
@@ -88,7 +88,7 @@ class KOMPASS_OT_slot_fill(editor.Edit, bpy.types.Operator):
 
 
 class KOMPASS_OT_slot_group(editor.Edit, bpy.types.Operator):
-    """Add a pie and let the selected slot open it as a sub-pie"""
+    """Add a pie that the selected slot opens as a sub-pie"""
 
     bl_idname = "kompass.slot_group"
     bl_label = "New Sub-Pie"
@@ -124,7 +124,7 @@ class KOMPASS_OT_slot_open(bpy.types.Operator):
 
 
 class KOMPASS_OT_slot_swap(editor.Edit, bpy.types.Operator):
-    """Exchange what the selected slot and this slot hold"""
+    """Exchange the contents of the selected slot and this slot"""
 
     bl_idname = "kompass.slot_swap"
     bl_label = "Swap Slots"

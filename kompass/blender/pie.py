@@ -15,7 +15,7 @@ _ICONS = frozenset(
 class KOMPASS_OT_pie_open(bpy.types.Operator):
     bl_idname = "kompass.pie_open"
     bl_label = "Open Pie"
-    bl_description = "Open a Kompass pie menu"
+    bl_description = "Open a pie made in Kompass"
     # Not in operator search: it is useless without a pie id. Blender wants a
     # plain set here.
     bl_options = {"INTERNAL"}  # noqa: RUF012

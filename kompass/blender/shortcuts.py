@@ -25,7 +25,7 @@ _HELD = frozenset(
 
 
 class KOMPASS_OT_pie_shortcut(editor.Edit, bpy.types.Operator):
-    """Press the keys that open this pie. Esc or a click keeps the old ones"""
+    """Press the keys that open this pie, or Esc to keep the current ones"""
 
     bl_idname = "kompass.pie_shortcut"
     bl_label = "Set Shortcut"
@@ -61,7 +61,7 @@ class KOMPASS_OT_pie_shortcut(editor.Edit, bpy.types.Operator):
 
 
 class KOMPASS_OT_pie_unbind(editor.Edit, bpy.types.Operator):
-    """Take the shortcut off this pie"""
+    """Remove the shortcut from this pie"""
 
     bl_idname = "kompass.pie_unbind"
     bl_label = "Remove Shortcut"

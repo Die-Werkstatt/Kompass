@@ -150,7 +150,7 @@ def click(slot):
 
 
 class KOMPASS_OT_editor_preview(bpy.types.Operator):
-    """Try the pie: sub-pies open on hover and a click selects nothing"""
+    """Open sub-pies on hover instead of selecting slots"""
 
     bl_idname = "kompass.editor_preview"
     bl_label = "Preview"
@@ -201,7 +201,7 @@ class KOMPASS_OT_pie_add(Edit, bpy.types.Operator):
 
 
 class KOMPASS_OT_pie_rename(Edit, bpy.types.Operator):
-    """Give the pie on the canvas another name"""
+    """Change the name of the pie on the canvas"""
 
     bl_idname = "kompass.pie_rename"
     bl_label = "Rename Pie"
@@ -217,7 +217,7 @@ class KOMPASS_OT_pie_rename(Edit, bpy.types.Operator):
 
 
 class KOMPASS_OT_pie_duplicate(Edit, bpy.types.Operator):
-    """Copy the pie on the canvas. The copy has no shortcut"""
+    """Copy the pie on the canvas without its shortcut"""
 
     bl_idname = "kompass.pie_duplicate"
     bl_label = "Duplicate Pie"
@@ -229,7 +229,7 @@ class KOMPASS_OT_pie_duplicate(Edit, bpy.types.Operator):
 
 
 class KOMPASS_OT_pie_delete(Edit, bpy.types.Operator):
-    """Delete the pie on the canvas. Slots that open it become empty"""
+    """Delete the pie on the canvas and empty the slots that open it"""
 
     bl_idname = "kompass.pie_delete"
     bl_label = "Delete Pie"
