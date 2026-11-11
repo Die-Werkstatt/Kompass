@@ -4,7 +4,7 @@
 
 import bpy
 
-from ..core.model import MODIFIERS
+from ..core.model import MODIFIERS, NATIVE_SLOTS
 from . import pie, storage
 
 _KEYS = frozenset(bpy.types.KeyMapItem.bl_rna.properties["type"].enum_items.keys())
@@ -28,6 +28,11 @@ def register():
         if shortcut is None:
             continue
         unknown = _unknown(shortcut)
+        if len(stored.slots) > NATIVE_SLOTS:
+            unknown = (
+                f"Blender's pie menu holds {NATIVE_SLOTS} slots, "
+                f"it has {len(stored.slots)}"
+            )
         if unknown:
             problems.append(f'Pie "{stored.name}" has no shortcut: {unknown}')
             continue

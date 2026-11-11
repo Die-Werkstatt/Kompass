@@ -63,6 +63,18 @@ input[type=range] { accent-color: var(--signal); width: 160px }
       <button class="opt" data-dur="300" aria-pressed="false">300 ms</button>
       <button class="opt" data-dur="1200" aria-pressed="false">Slow 1.2 s</button>
     </div>
+    <div class="group" role="group" aria-label="Slots"><span>Slots</span>
+      <button class="opt" data-slots="8" aria-pressed="false">8</button>
+      <button class="opt" data-slots="12" aria-pressed="true">12</button>
+    </div>
+    <div class="group" role="group" aria-label="Spacing"><span>12-slot spacing</span>
+      <button class="opt" data-gaps="1" aria-pressed="true">Equal gaps</button>
+      <button class="opt" data-gaps="0" aria-pressed="false">Equal angles</button>
+    </div>
+    <div class="group" role="group" aria-label="Placement"><span>Placement</span>
+      <button class="opt" data-place="even" aria-pressed="true">One rule</button>
+      <button class="opt" data-place="old" aria-pressed="false">Current</button>
+    </div>
     <div class="group" role="group" aria-label="Sub-pie delay"><span>Sub-pie delay</span>
       <button class="opt" data-delay="100" aria-pressed="true">100 ms</button>
       <button class="opt" data-delay="200" aria-pressed="false">200 ms</button>
@@ -90,10 +102,12 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     <dt>Between</dt><dd>The needle shrinks into the centre and fades while the disc grows out of it and the white ticks shorten. 120 ms, eased in and out; leaving mid-way reverses from where it is.</dd>
     <dt>Open, close</dt><dd>Every element fades. Slots and labels travel out from 12% further in, the dial grows from 92%. 120 ms each way, ease-out. </dd>
     <dt>Slot width</dt><dd>At least 120 px; grows to fit its label with 12 px padding each side, up to 180 px. A longer label is clipped at the padding. On hover it waits 400 ms, then slides left at 40 px/s until its end shows, and eases back when the pointer leaves. Knife Project From View tests this.</dd>
+    <dt>Placement</dt><dd>One rule for any number of slots: the box sits on the ring at its bearing and moves out by half its width times the bearing's sine and half its height times its cosine. East and west boxes start at the ring, north and south sit above and below it, and diagonals clear their neighbours. Twelve slots use a ring 1.4 times wider. Current shows the 8-slot special cases for comparison.</dd>
+    <dt>12-slot spacing</dt><dd>Boxes are wide and short. With equal angles, neighbours near north and south sit side by side and their gap is their distance minus 120 px; near east and west they stack and the gap is their distance minus 32 px. Equal gaps moves the bearings to 0, 42, 68, 90, 112, 138, 180 and their mirrors, on a 170 px ring, so each pair of neighbours is 37 px apart.</dd>
     <dt>Sub-pie slot</dt><dd>Stone outline, grey proximity highlight. Resting on it wipes signal orange across it, away from the centre (east slots left to right, west right to left, north upward, south downward), over the sub-pie delay; the sub-pie opens when it is full.</dd>
     <dt>Sub-pie</dt><dd>The parent pie fades and shrinks to 90% toward the pointer while the sub-pie opens there, both in the same 120 ms. Back reverses it: the sub-pie shrinks to 88% around its own centre and fades as the parent opens.</dd>
-    <dt>Opening</dt><dd>A pie or sub-pie opens under the pointer with the needle showing. The centre hover arms only after the pointer has left the dial ring once.</dd>
     <dt>Closing</dt><dd>The dial keeps the state it had when closing began: closed from the centre, it fades out as the disc, and the needle does not return.</dd>
+    <dt>Far click</dt><dd>A click that is neither on the dial nor within 24 px of a slot closes the pie. Native Blender pies pick by direction at any distance instead.</dd>
     <dt>Hit area</dt><dd>The dial's outer ring, the same area that already runs back or close.</dd>
   </dl>
 </div>
@@ -109,11 +123,19 @@ input[type=range] { accent-color: var(--signal); width: 160px }
       0: { label: "Extrude", sub: "extrude" }, 45: { label: "Inset" }, 90: { label: "Bevel", sub: "bevel" }, 135: { label: "Knife Project From View" },
       180: { label: "Loop Cut" }, 225: { label: "Merge" }, 270: { label: "Subdivide" }, 315: { label: "Dissolve" } } },
     extrude: { name: "Extrude", items: { 270: { label: "Region" }, 90: { label: "Along Normals" }, 180: { label: "Individual Faces" }, 0: { label: "Manifold" } } },
-    bevel: { name: "Bevel", items: { 270: { label: "Edges" }, 90: { label: "Vertices" } } }
+    bevel: { name: "Bevel", items: { 270: { label: "Edges" }, 90: { label: "Vertices" } } },
+    root12: { name: "Modeling", items: {
+      0: { label: "Extrude", sub: "extrude" }, 30: { label: "Inset" }, 60: { label: "Bevel", sub: "bevel" }, 90: { label: "Knife Project From View" },
+      120: { label: "Loop Cut" }, 150: { label: "Merge" }, 180: { label: "Subdivide" }, 210: { label: "Dissolve" },
+      240: { label: "Bridge Edge Loops" }, 270: { label: "Spin" }, 300: { label: "Poke Faces" }, 330: { label: "Triangulate" } } }
   };
 
   var state = { open: false, stack: [], centres: [], cx: 0, cy: 0, angle: null, shown: null, dir: null, px: 0, py: 0,
-    size: 0.75, dur: 120, t: 0, scrub: null, o: 0, closing: false, hand: true, ghost: null, delay: 100, offs: {} };
+    size: 0.75, dur: 120, t: 0, scrub: null, o: 0, closing: false, hand: true, ghost: null, delay: 100, offs: {}, slots: 12, place: "even", gaps: true };
+  // Equal angles leave narrow gaps near north and south, where wide boxes sit side by side, and wide gaps near east and west, where they stack.
+  // These bearings give every pair of 120 px neighbours the same 37 px gap on a 170 px ring.
+  var GAP_BEARINGS = { 0: 0, 30: 42, 60: 68, 90: 90, 120: 112, 150: 138, 180: 180, 210: 222, 240: 248, 270: 270, 300: 292, 330: 318 };
+  (function () { var src = PIES.root12.items, out = {}; Object.keys(src).forEach(function (k) { out[GAP_BEARINGS[k]] = src[k]; }); PIES.root12g = { name: "Modeling", items: out }; })();
   var layer = null; // group the current frame draws into
   var stage = document.getElementById("stage"), svg = document.getElementById("svg");
   var scrub = document.getElementById("scrub"), scrubval = document.getElementById("scrubval");
@@ -130,7 +152,7 @@ input[type=range] { accent-color: var(--signal); width: 160px }
   function out(t) { return 1 - Math.pow(1 - t, 3); } // ease-out cubic
   function smooth(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; } // ease-in-out cubic
   function P(cx, cy, r, deg) { var a = deg * Math.PI / 180; return [cx + Math.sin(a) * r, cy - Math.cos(a) * r]; }
-  function pie() { return PIES[state.stack[state.stack.length - 1] || "root"]; }
+  function pie() { return PIES[state.stack[state.stack.length - 1] || (state.slots === 12 ? (state.gaps ? "root12g" : "root12") : "root")]; }
   function nearestDir(items, ang) {
     if (ang === null) return null;
     var best = null, bd = 999;
@@ -148,7 +170,7 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     // Bearing ring, ticks and outer arrow stay; only the white ticks get shorter.
     el("circle", { cx: cx, cy: cy, r: R0 + 3, fill: "none", stroke: C.line, "stroke-width": 1.5 });
     for (var t = 0; t < 72; t++) {
-      var deg = t * 5, major = t % 9 === 0, on = dir !== null && deg === dir;
+      var deg = t * 5, major = t % 9 === 0, on = dir !== null && deg === Math.round(dir / 5) * 5;
       var a1 = P(cx, cy, R0 - (major ? lerp(12, 5, e) : 5), deg), a2 = P(cx, cy, R0, deg); // on hover the white ticks shrink to the grey ticks' length
       el("line", { x1: a1[0], y1: a1[1], x2: a2[0], y2: a2[1], stroke: on ? C.signal : major ? C.ink : C.stone, "stroke-width": on ? 3 : major ? 2 : 1, opacity: major || on ? 1 : .55 });
     }
@@ -179,6 +201,9 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     var w = stage.clientWidth, h = stage.clientHeight;
     var R = Math.max(95, Math.min(150, Math.min(w, h) * 0.3));
     var bw = w < 520 ? 84 : 120, bwMax = w < 520 ? 120 : 180, bh = 32;
+    // Twelve slots need a wider ring so neighbours near north and south clear each other.
+    if (pie().items[30] !== undefined) R = Math.min(R * 1.4, h / 2 - bh - 34);
+    else if (pie().items[42] !== undefined) R = Math.min(R * 170 / 150, h / 2 - bh - 34);
     R = Math.min(R, w / 2 - bwMax - 2);
     var cx = Math.min(Math.max(state.cx, R + bwMax + 8), w - R - bwMax - 8);
     var cy = Math.min(Math.max(state.cy, R + bh + 30), h - R - bh - 36);
@@ -208,10 +233,16 @@ input[type=range] { accent-color: var(--signal); width: 160px }
       // The box grows to fit its label between the minimum and maximum width; a longer label is clipped.
       var label = it.label.toUpperCase(), tw = textWidth(label, fs), pad = 12;
       var sw = Math.min(bwMax, Math.max(bw, Math.ceil(tw) + 2 * pad)), over = tw - (sw - 2 * pad);
-      var x = p[0] - sw / 2 + (deg === 45 || deg === 135 ? bw * 0.2 : deg === 225 || deg === 315 ? -bw * 0.2 : 0);
-      var y = p[1] - bh / 2 + (deg === 0 ? -bh * 0.5 : deg === 180 ? bh * 0.5 : 0);
-      if (deg === 90) x = p[0] - 4; if (deg === 270) x = p[0] - sw + 4;
-      state.rects.push({ x: x, y: y, w: sw, h: bh, sub: it.sub });
+      var sn = Math.sin(deg * Math.PI / 180), cs = Math.cos(deg * Math.PI / 180), x, y;
+      if (state.place === "even") {
+        // One rule for any slot count: the box's edge facing the centre sits on the ring, pushed out by its own size along the bearing.
+        x = p[0] - sw / 2 + sn * sw / 2; y = p[1] - bh / 2 - cs * bh / 2;
+      } else {
+        x = p[0] - sw / 2 + (deg % 90 ? Math.sign(sn) * bw * 0.2 : 0);
+        y = p[1] - bh / 2 + (deg === 0 ? -bh * 0.5 : deg === 180 ? bh * 0.5 : 0);
+        if (deg === 90) x = p[0] - 4; if (deg === 270) x = p[0] - sw + 4;
+      }
+      state.rects.push({ x: x, y: y, w: sw, h: bh, sub: it.sub, deg: deg });
       var hot = deg === dir;
       var near = state.shown === null ? 0 : Math.max(0, 1 - Math.abs(((state.shown - deg) % 360 + 540) % 360 - 180) / (360 / Math.max(n, 2)));
       var amt = near * near * radial * (hot ? 1 : 0.55);
@@ -223,9 +254,9 @@ input[type=range] { accent-color: var(--signal); width: 160px }
         var f = state.pending === it.sub ? clamp((performance.now() - state.pendingAt) / holdMs()) : 0;
         if (f > 0) {
           var fx = x, fy = y, fw = sw, fh = bh;
-          if (deg === 0) { fh = bh * f; fy = y + bh - fh; }
-          else if (deg === 180) fh = bh * f;
-          else if (deg > 180) { fw = sw * f; fx = x + sw - fw; }
+          // Fill along the bearing's stronger axis, away from the centre.
+          if (Math.abs(cs) > Math.abs(sn) + 1e-9) { fh = bh * f; if (cs > 0) fy = y + bh - fh; }
+          else if (sn < 0) { fw = sw * f; fx = x + sw - fw; }
           else fw = sw * f;
           el("rect", { x: fx, y: fy, width: fw, height: fh, fill: C.signal });
           txt = C.white;
@@ -271,8 +302,7 @@ input[type=range] { accent-color: var(--signal); width: 160px }
   function holdMs() { return state.delay * state.dur / 120; } // the Slow setting stretches the delay too
   var measure = document.createElement("canvas").getContext("2d");
   function textWidth(s, fs) { measure.font = "600 " + fs + "px Barlow, 'IBM Plex Sans', sans-serif"; return measure.measureText(s).width + s.length * fs * 0.08; }
-  // A pie opens under the pointer, so the centre hover arms only once the pointer has left the dial ring.
-  function inCentre() { return state.open && !state.closing && state.armed && Math.hypot(state.px - state.ccx, state.py - state.ccy) <= state.innerR; }
+  function inCentre() { return state.open && !state.closing && Math.hypot(state.px - state.ccx, state.py - state.ccy) <= state.innerR; }
 
   // One loop eases the needle angle and the hover morph; it stops when both have settled.
   var raf = 0, last = 0;
@@ -315,7 +345,6 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     state.px = x; state.py = y;
     if (!state.open || state.closing) return;
     var dx = x - state.ccx, dy = y - state.ccy, dist = Math.hypot(dx, dy);
-    if (dist > state.innerR) state.armed = true;
     state.angle = dist < 8 ? state.angle : (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
     var nd = dist > state.innerR ? nearestDir(pie().items, state.angle) : null;
     if (nd !== state.dir) state.hotSince = performance.now();
@@ -328,8 +357,8 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     if (!hit) state.suppress = null;
     kick();
   }
-  function openSub(key, x, y) { clearTimeout(state.timer); state.pending = null; snapshot(x, y, 0.9); state.centres.push([state.ccx, state.ccy]); state.stack.push(key); state.cx = x; state.cy = y; state.dir = null; state.t = 0; state.o = 0; state.armed = false; render(); track(x, y); }
-  function openAt(x, y) { state.ghost = null; state.open = true; state.stack = []; state.centres = []; state.suppress = null; state.cx = x; state.cy = y; state.angle = null; state.shown = null; state.dir = null; state.t = 0; state.o = 0; state.closing = false; state.armed = false; render(); track(x, y); }
+  function openSub(key, x, y) { clearTimeout(state.timer); state.pending = null; snapshot(x, y, 0.9); state.centres.push([state.ccx, state.ccy]); state.stack.push(key); state.cx = x; state.cy = y; state.dir = null; state.t = 0; state.o = 0; render(); track(x, y); }
+  function openAt(x, y) { state.ghost = null; state.open = true; state.stack = []; state.centres = []; state.suppress = null; state.cx = x; state.cy = y; state.angle = null; state.shown = null; state.dir = null; state.t = 0; state.o = 0; state.closing = false; render(); track(x, y); }
   function close() { clearTimeout(state.timer); state.pending = null; state.closing = true; state.dir = null; kick(); }
   function back() {
     if (!state.open) return;
@@ -348,7 +377,12 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     var p = local(e); stage.focus();
     if (!state.open || state.closing) { openAt(p[0], p[1]); return; }
     track(p[0], p[1]);
-    if (!choose()) back();
+    // On the dial: back or close. Within 24 px of a slot: that slot. Anywhere else: the pie closes.
+    if (Math.hypot(p[0] - state.ccx, p[1] - state.ccy) <= state.innerR) { back(); return; }
+    var near = null, nd = 24;
+    (state.rects || []).forEach(function (r) { var d = Math.hypot(Math.max(r.x - p[0], 0, p[0] - r.x - r.w), Math.max(r.y - p[1], 0, p[1] - r.y - r.h)); if (d <= nd) { nd = d; near = r; } });
+    if (!near) { close(); return; }
+    state.dir = near.deg; choose();
   });
   stage.addEventListener("pointermove", function (e) {
     if (state.scrub !== null) { state.scrub = null; state.t = scrub.value / 100; }
@@ -379,6 +413,9 @@ input[type=range] { accent-color: var(--signal); width: 160px }
   wire("dur", function (v) { state.dur = +v; });
   wire("hand", function (v) { state.hand = v === "1"; });
   wire("delay", function (v) { state.delay = +v; });
+  wire("slots", function (v) { state.slots = +v; openAt(state.cx || stage.clientWidth / 2, state.cy || stage.clientHeight / 2); });
+  wire("place", function (v) { state.place = v; });
+  wire("gaps", function (v) { state.gaps = v === "1"; if (state.slots === 12) openAt(state.cx || stage.clientWidth / 2, state.cy || stage.clientHeight / 2); });
 
   // Open in a working state: pie centred, needle pointing north-east, pointer just outside the dial.
   function boot() { var w = stage.clientWidth, h = stage.clientHeight; openAt(w / 2, h / 2); track(w / 2 + 80, h / 2 - 80); }

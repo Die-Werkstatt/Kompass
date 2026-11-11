@@ -34,9 +34,6 @@ class _State:
     hover_from: float = 0.0
     hover_target: float = 0.0
     hover_since: float = 0.0
-    # A pie can arrive under the pointer. Its centre takes the hover state
-    # only once the pointer has been outside the ring.
-    armed: bool = False
     # The sub-pie slot the pointer rests on, and since when.
     rest: tuple[int, float] | None = None
     # The slot under the pointer when the pie came onto the canvas. It does
@@ -71,6 +68,12 @@ def unregister():
     bpy.types.SpaceNodeEditor.draw_handler_remove(_handle, "WINDOW")
     if bpy.app.timers.is_registered(_tick):
         bpy.app.timers.unregister(_tick)
+
+
+def _count():
+    """Return how many slots the pie on the canvas has."""
+    shown = editor.shown()
+    return model.NATIVE_SLOTS if shown is None else len(shown.slots)
 
 
 def _ring():
@@ -108,8 +111,6 @@ def _arrive(shown, depth, now):
         return
     state.opened = now
     state.rest = None
-    state.armed = False
-    state.hover_from = state.hover_target = 0.0
     state.held = layout.slot_under(*state.pointer, _widths(shown))
     # The pie being left keeps the old one.
     state.slide = {}
@@ -128,7 +129,7 @@ def _draw():
         return
     state = _state
     now = time.perf_counter()
-    canvas = paint.Canvas(context)
+    canvas = paint.Canvas(context, _count())
     gpu.state.blend_set("ALPHA")
     # The whole region, which the pie's centre is not the middle of.
     left, bottom = canvas.units((0, 0))
@@ -143,9 +144,7 @@ def _draw():
     _arrive(shown, editor.depth(), now)
     pointer = state.pointer if any(state.lit.values()) else None
     inside = pointer is not None and math.hypot(*pointer) <= _ring()
-    # Blender drops the highlight during a click, which is not leaving.
-    state.armed = state.armed or (pointer is not None and not inside)
-    hover = _hover(inside and state.armed, now, context)
+    hover = _hover(inside, now, context)
     filling = None
     if state.rest is not None:
         slot, since = state.rest
@@ -181,7 +180,10 @@ def _draw():
 def _slide(labels, pointer, now, context):
     """Move the labels that are too long. Return whether one is not at rest."""
     state = _state
-    selected = None if pointer is None else layout.slot_at(*pointer, _ring())
+    selected = None
+    if pointer is not None:
+        widths = [width for _, _, width in labels]
+        selected = layout.slot_clicked(*pointer, widths)
     if selected != state.selected:
         state.selected, state.selected_since = selected, now
     # A draw after a long rest is not a long step.
@@ -219,7 +221,7 @@ def _tick():
 def _follow(context, location):
     """Record where the pointer is and return it in canvas units."""
     state = _state
-    pointer = paint.Canvas(context).units(location)
+    pointer = paint.Canvas(context, _count()).units(location)
     if pointer != state.pointer:
         state.pointer = pointer
         if math.hypot(*pointer) >= layout.NEEDLE_REST:
@@ -265,8 +267,15 @@ class _Part:
         return {"RUNNING_MODAL"}
 
     def exit(self, context, cancel):
-        if not cancel:
-            editor.click(self.slot)
+        if cancel:
+            return
+        slot = self.slot
+        if slot >= 0:
+            # Blender picks the gizmo by bearing at any distance; a click
+            # counts only close to a slot.
+            slot = layout.slot_clicked(*_state.pointer, _widths(editor.shown()))
+        if slot is not None:
+            editor.click(slot)
             context.region.tag_redraw()
 
 
@@ -277,7 +286,7 @@ class KOMPASS_GT_slot(_Part, bpy.types.Gizmo):
 
     def test_select(self, context, location):
         pointer = _follow(context, location)
-        return 0 if layout.slot_at(*pointer, _ring()) == self.slot else -1
+        return 0 if layout.slot_at(*pointer, _count(), _ring()) == self.slot else -1
 
 
 class KOMPASS_GT_dial(_Part, bpy.types.Gizmo):
@@ -305,6 +314,6 @@ class KOMPASS_GGT_canvas(bpy.types.GizmoGroup):
         return context.space_data.tree_type == editor.KompassTree.bl_idname
 
     def setup(self, _context):
-        for slot in range(len(model.SLOT_DIRECTIONS)):
+        for slot in range(model.WIDE_SLOTS):
             self.gizmos.new(KOMPASS_GT_slot.bl_idname).slot = slot
         self.gizmos.new(KOMPASS_GT_dial.bl_idname)

@@ -50,6 +50,9 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       on it: red fills it downward and the Mesh pie opens, with a smaller
       dial and BACK below. Select fades and shrinks while Mesh fades in.
 - [ ] Click the dial: Mesh shrinks away and Select is back.
+- [ ] Move the pointer from the dial toward MESH: the slot stays dark until
+      the pointer is close to it. Click far from it: nothing happens. Click
+      just beside the slot, without resting on it: Mesh opens.
 - [ ] Rename a pie that is a sub-pie to a name of 40 letters and show its
       parent: the slot is wider than the others and the name is cut off.
       Point at it from the dial's edge: after a moment the name slides left

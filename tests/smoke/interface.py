@@ -69,7 +69,8 @@ def steps():
     # Importing binds the shortcuts at once, without a restart.
     assert bpy.ops.kompass.pies_import(filepath=str(PIES)) == {"FINISHED"}
     assert keymaps.problems == [
-        'Pie "Broken key" has no shortcut: Blender has no key "NOT_A_KEY"'
+        'Pie "Broken key" has no shortcut: Blender has no key "NOT_A_KEY"',
+        'Pie "Wide" has no shortcut: Blender\'s pie menu holds 8 slots, it has 12',
     ], keymaps.problems
 
     select = storage.pies[0]
@@ -147,10 +148,14 @@ def steps():
         editor_window.event_simulate(type="LEFTMOUSE", value="RELEASE", x=x, y=y)
         yield PAUSE / 2
 
-    # A click on a tool slot changes nothing; south is the Mesh sub-pie.
+    # A click on a tool slot changes nothing. South is the Mesh sub-pie: a
+    # click far below it does nothing, a click just below its box opens it.
+    left, bottom = layout.slot_corner(layout.BEARINGS.index(180), 8)
     yield from click(x + 2 * FLICK, y)
     assert editor.shown().id == "select"
     yield from click(x, y - 2 * FLICK)
+    assert editor.shown().id == "select"
+    yield from click(x, y + int(bottom) - 12)
     assert editor.shown().id == "mesh" and editor.in_sub_pie()
     # A click on the dial goes back.
     yield from click(x, y)
@@ -158,7 +163,6 @@ def steps():
 
     # Resting on the Mesh slot opens it without a click. Mesh has a sub-pie
     # in the same slot, which stays shut until the pointer has left it.
-    left, bottom = layout.slot_corner(layout.BEARINGS.index(180))
     south = x + int(left) + layout.SLOT_WIDTH // 2, y + int(bottom) + 10
     editor_window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
     yield PAUSE / 2
@@ -197,6 +201,14 @@ def steps():
     )
     yield PAUSE
     assert editor.shown().id == "mesh", editor.shown().id
+
+    # A pie of 12 slots: its second slot, a sub-pie, lies at 42 degrees. A
+    # pie of 8 has nothing there. The click is just above the slot's box.
+    assert bpy.ops.kompass.editor_show(pie="wide") == {"FINISHED"}
+    yield PAUSE / 2
+    left, bottom = layout.slot_corner(1, 12)
+    yield from click(x + int(left) + 60, y + int(bottom) + layout.SLOT_HEIGHT + 10)
+    assert editor.shown().id == "broken" and editor.depth() == 2, editor.shown().id
 
     # Disabling with the editor open leaves nothing registered.
     addon_utils.disable(addon)

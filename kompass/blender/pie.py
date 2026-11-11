@@ -63,6 +63,10 @@ def _draw_slot(row, context, slot):
         _draw_operator(row, slot, icon)
     else:
         target = _find(slot.pie)
+        if len(target.slots) > model.NATIVE_SLOTS:
+            # Blender's pie menu cannot hold it.
+            _draw_unavailable(row, slot.label or target.name)
+            return
         button = row.operator(
             KOMPASS_OT_pie_open.bl_idname, text=slot.label or target.name, icon=icon
         )
