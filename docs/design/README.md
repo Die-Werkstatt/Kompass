@@ -58,6 +58,7 @@ It differs from the table above in the font, which is Blender's interface font w
 
 On the canvas today: the highlight and the selection by bearing, the centre hover state, slot width and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
 A sub-pie left through its centre fades out as the disc.
+The pie that arrives shows the needle until the pointer has been outside its ring.
 The needle and arrow follow the pointer without easing.
 A sub-pie opens in the middle of the canvas, not on the pointer.
 A slot that is under the pointer when its pie arrives does not open until the pointer has left it.
