@@ -41,7 +41,7 @@ It differs from the table above in the font, which is Blender's interface font w
 | Pointer outside the dial ring | the slot with the nearest bearing is selected; with 12 slots the slices near east and west are narrower |
 | Pointer inside the dial ring | no slot is selected; the dial turns to its hover state in 120 ms, ease-in-out cubic |
 | Pointer leaves the dial ring | the hover state reverses from wherever it is |
-| Highlight on a tool slot | signal red, strength rises with distance past the ring and closeness to the needle; the selected slot keeps at least 30% |
+| Highlight on a tool slot | signal red, strength rises with distance past the ring and closeness to the needle; the selected slot keeps at least 30%; off the slot's box it fades with the distance and is gone at 24 px, where a click stops counting for the slot (Sandro, 11 Nov 2026) |
 | Highlight on a sub-pie slot | the same strength in grey |
 | Pointer rests on a sub-pie slot | signal red fills the slot away from the centre over 100 ms and its outline turns red: east slots fill left to right, west right to left, north upward, south downward, other slots along the stronger axis of their bearing, so 42° fills upward and 45° and 68° sideways |
 | The fill completes | the sub-pie opens, centred on the pointer |
@@ -68,6 +68,7 @@ Reduced motion is Blender's Preferences > Interface > Reduce Motion; the 100 ms 
 With it a long label jumps to its end after the 400 ms.
 Not on the canvas: the closing motion, since nothing closes a pie there, press-drag-release, Esc and right-click.
 A click on a tool or operator slot does nothing, and so does a click further than 24 px from every slot, since nothing closes a pie there.
+A long label slides while the pointer is within 24 px of its slot.
 
 Sandro decided on 11 Nov 2026 that the pie Kompass draws holds 12 slots (#8).
 Blender's own pie menu holds 8, so a pie of 12 gets no shortcut and a slot that leads to one is disabled there until Kompass draws the live pie (#22).

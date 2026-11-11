@@ -117,15 +117,20 @@ def slot_under(x, y, widths):
     return None
 
 
+def _gap(x, y, slot, count, width):
+    """Return how far x, y is from the box of slot, 0 on it."""
+    left, bottom = slot_corner(slot, count, width)
+    return math.hypot(
+        max(left - x, 0, x - left - width),
+        max(bottom - y, 0, y - bottom - SLOT_HEIGHT),
+    )
+
+
 def slot_clicked(x, y, widths):
     """Return the slot nearest to a click, or None beyond CLICK_REACH of all."""
     nearest, reach = None, CLICK_REACH
     for slot, width in enumerate(widths):
-        left, bottom = slot_corner(slot, len(widths), width)
-        distance = math.hypot(
-            max(left - x, 0, x - left - width),
-            max(bottom - y, 0, y - bottom - SLOT_HEIGHT),
-        )
+        distance = _gap(x, y, slot, len(widths), width)
         if distance <= reach:
             nearest, reach = slot, distance
     return nearest
@@ -167,22 +172,26 @@ def slot_at(x, y, count, ring=RING_RADIUS):
     return min(range(count), key=lambda slot: _apart(heading, bearings(count)[slot]))
 
 
-def highlight(x, y, slot, count, ring=RING_RADIUS):
+def highlight(x, y, slot, widths, ring=RING_RADIUS):
     """Return how strongly slot is lit, 0 to 1, for a pointer at x, y.
 
     It rises with the distance past the ring and with how close the pointer's
-    bearing is to the slot's. The selected slot keeps at least 0.3.
+    bearing is to the slot's. The selected slot keeps at least 0.3. Off the
+    slot's box all of it fades, to nothing at CLICK_REACH, where a click stops
+    counting for the slot.
     """
+    count = len(widths)
     distance = math.hypot(x, y)
-    if distance <= ring:
+    close = 1 - _gap(x, y, slot, count, widths[slot]) / CLICK_REACH
+    if distance <= ring or close <= 0:
         return 0.0
     reach = max(20, (radius(count) - ring) * 0.6)
     radial = min(1.0, (distance - ring) / reach)
     apart = _apart(bearing_to(x, y), bearings(count)[slot])
     near = max(0.0, 1 - apart / (360 / count))
     if slot_at(x, y, count, ring) == slot:
-        return max(0.3, near * near * radial)
-    return near * near * radial * 0.55
+        return max(0.3, near * near * radial) * close
+    return near * near * radial * 0.55 * close
 
 
 def ticks(dial=DIAL_RADIUS, hover=0.0):

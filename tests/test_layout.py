@@ -61,16 +61,25 @@ def test_the_nearest_slot_is_selected_outside_the_ring():
 
 
 def test_highlight_follows_distance_and_bearing():
-    assert layout.highlight(0, 10, N, 8) == 0
-    far = layout.highlight(0, 200, N, 8)
-    assert far == pytest.approx(1)
-    assert layout.highlight(0, 70, N, 8) < far
-    # The selected slot keeps 0.3 just past the ring and near its edge.
-    assert layout.highlight(0, 56, N, 8) == pytest.approx(0.3)
-    assert layout.highlight(75, 190, N, 8) == pytest.approx(0.3)
-    # A neighbour is lit less, and a slot across the pie not at all.
-    assert 0 < layout.highlight(75, 190, NE, 8) < 0.3
-    assert layout.highlight(0, 200, S, 8) == 0
+    widths = [layout.SLOT_WIDTH] * 8
+    assert layout.highlight(0, 10, N, widths) == 0
+    # North's box spans y 150 to 182.
+    assert layout.highlight(0, 160, N, widths) == pytest.approx(1)
+    # The selected slot keeps 0.3 near the edge of its slice.
+    assert layout.highlight(60, 160, N, widths) == pytest.approx(0.3)
+    # Between two slots both are lit a little, and a slot across the pie not.
+    assert 0 < layout.highlight(72, 148, NE, widths) < 0.3
+    assert 0 < layout.highlight(72, 148, N, widths) < 0.3
+    assert layout.highlight(0, 160, S, widths) == 0
+
+
+def test_highlight_fades_out_at_the_click_reach():
+    widths = [layout.SLOT_WIDTH] * 8
+    assert layout.highlight(0, 138, N, widths) == pytest.approx(0.5)
+    assert layout.highlight(0, 182 + 12, N, widths) == pytest.approx(0.5)
+    for y in (125, 100, 60, 207, 400):
+        assert layout.highlight(0, y, N, widths) == 0
+        assert layout.slot_clicked(0, y, widths) is None
 
 
 def test_ticks_every_five_degrees_with_eight_long_ones():

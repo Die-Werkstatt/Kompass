@@ -228,7 +228,8 @@ def _draw_slot(canvas, look, slot, content, pull):
     amount = 0.0
     if look.pointer is not None:
         ring = layout.RING_RADIUS * look.dial
-        amount = layout.highlight(*look.pointer, slot, count, ring)
+        widths = [width for _, _, width in look.labels]
+        amount = layout.highlight(*look.pointer, slot, widths, ring)
     text, text_width, width = look.labels[slot]
     left, bottom = layout.slot_corner(slot, count, width, pull)
     right, top = left + width, bottom + layout.SLOT_HEIGHT

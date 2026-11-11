@@ -182,7 +182,8 @@ def _slide(labels, pointer, now, context):
     state = _state
     selected = None
     if pointer is not None:
-        selected = layout.slot_at(*pointer, _count(), _ring())
+        widths = [width for _, _, width in labels]
+        selected = layout.slot_clicked(*pointer, widths)
     if selected != state.selected:
         state.selected, state.selected_since = selected, now
     # A draw after a long rest is not a long step.
