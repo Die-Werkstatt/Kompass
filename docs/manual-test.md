@@ -45,6 +45,10 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       follow it, and the nearest slot lights up red, stronger further out.
 - [ ] Click MESH: the Mesh pie replaces it, with a smaller dial and BACK
       below. Click the dial: Select is back.
+- [ ] In the Kompass tab, New adds a pie named Pie and shows it. Rename it,
+      duplicate it, delete the copy: the list follows each step, and Delete
+      asks first.
+- [ ] Delete Mesh, then show Select: its south slot is empty.
 - [ ] Make the window small: the pie shrinks to fit and stays clickable.
 - [ ] Scroll and middle-drag on the canvas: nothing moves.
 - [ ] Save the `.blend`, reopen it: the editor window is back and works.

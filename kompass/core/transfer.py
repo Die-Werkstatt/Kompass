@@ -3,6 +3,7 @@
 
 from dataclasses import replace
 
+from .edit import free_id
 from .model import SubPieSlot
 
 
@@ -35,7 +36,8 @@ def merge(own, incoming, replace_own):
     if not replace_own:
         taken = set(merged) | incoming_ids
         for pie_id in incoming_ids & set(merged):
-            new_ids[pie_id] = _free_id(pie_id, taken)
+            new_ids[pie_id] = free_id(pie_id, taken)
+            taken.add(new_ids[pie_id])
     used = {
         pie.shortcut
         for pie in own
@@ -58,11 +60,3 @@ def merge(own, incoming, replace_own):
         pie_id = new_ids.get(pie.id, pie.id)
         merged[pie_id] = replace(pie, id=pie_id, slots=slots, shortcut=shortcut)
     return tuple(merged.values()), tuple(unbound)
-
-
-def _free_id(pie_id, taken):
-    number = 2
-    while f"{pie_id}-{number}" in taken:
-        number += 1
-    taken.add(f"{pie_id}-{number}")
-    return f"{pie_id}-{number}"

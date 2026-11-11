@@ -125,8 +125,10 @@ def _draw_dial():
         return
     canvas = _Canvas(context)
     gpu.state.blend_set("ALPHA")
-    width, height = (side / canvas.scale / 2 for side in canvas.size)
-    corners = [(-width, -height), (width, -height), (width, height), (-width, height)]
+    # The whole region, which the pie's centre is not the middle of.
+    left, bottom = canvas.units((0, 0))
+    right, top = canvas.units(canvas.size)
+    corners = [(left, bottom), (right, bottom), (right, top), (left, top)]
     canvas.fill(corners, GROUND)
     shown = editor.shown()
     if shown is None:

@@ -2,7 +2,7 @@
 
 Kompass is a Blender extension (GPL-3.0-or-later) for artists who want their
 own pie menus: each pie holds up to 8 tools, operators or sub-pies and opens
-on its own shortcut. Pies are still made by editing the pie file.
+on its own shortcut. Slots are still filled by editing the pie file.
 
 ## Stack
 - Blender 5.2 LTS is the minimum version. It ships Python 3.13.
@@ -14,7 +14,8 @@ on its own shortcut. Pies are still made by editing the pie file.
 - `kompass/`: the extension; everything in it ships in the `.zip`.
   - `core/`: the pie model, validation and JSON format (`model.py`), reading
     and writing a pie file on disk (`store.py`), choosing pies for export and
-    merging imported ones (`transfer.py`), canvas geometry (`layout.py`).
+    merging imported ones (`transfer.py`), canvas geometry (`layout.py`),
+    changes to the pies (`edit.py`).
   - `blender/`: everything that needs `bpy`. `storage.py` holds the pies
     loaded from `pies.json`, `pie.py` opens one as a native pie menu,
     `keymaps.py` gives each its shortcut, `tools.py` reads Blender's tool
