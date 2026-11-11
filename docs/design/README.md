@@ -45,7 +45,7 @@ It differs from the table above in the font, which is Blender's interface font w
 | Pointer rests on a slot with a clipped label | after 400 ms the label slides left at 40 px/s until its end shows |
 | Pointer leaves that slot | the label eases back, time constant 60 ms |
 | Pie opens | every part fades in over 120 ms, ease-out cubic; slots and labels move out from 88% of their distance to the centre; the dial grows from 92% |
-| Pie closes | the same, reversed |
+| Pie closes | the same, reversed; the dial keeps its state, so a pie closed from the centre fades out as the disc and the needle does not return |
 | Click on a tool slot | runs the tool and closes the pie |
 | Press, drag over 250 ms, release on a slot | same as a click |
 | Click on the dial, Esc or right-click | back one level; closes the pie at the root |

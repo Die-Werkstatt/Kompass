@@ -92,6 +92,7 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     <dt>Slot width</dt><dd>At least 120 px; grows to fit its label with 12 px padding each side, up to 180 px. A longer label is clipped at the padding. On hover it waits 400 ms, then slides left at 40 px/s until its end shows, and eases back when the pointer leaves. Knife Project From View tests this.</dd>
     <dt>Sub-pie slot</dt><dd>Stone outline, grey proximity highlight. Resting on it wipes signal orange across it, away from the centre (east slots left to right, west right to left, north upward, south downward), over the sub-pie delay; the sub-pie opens when it is full.</dd>
     <dt>Sub-pie</dt><dd>The parent pie fades and shrinks to 90% toward the pointer while the sub-pie opens there, both in the same 120 ms. Back reverses it: the sub-pie shrinks to 88% around its own centre and fades as the parent opens.</dd>
+    <dt>Closing</dt><dd>The dial keeps the state it had when closing began: closed from the centre, it fades out as the disc, and the needle does not return.</dd>
     <dt>Hit area</dt><dd>The dial's outer ring, the same area that already runs back or close.</dd>
   </dl>
 </div>
@@ -285,7 +286,7 @@ input[type=range] { accent-color: var(--signal); width: 160px }
         else { state.shown = (state.shown + diff * (1 - Math.exp(-dt / 45)) + 360) % 360; busy = true; }
       }
     }
-    var target = inCentre() ? 1 : 0;
+    var target = state.closing ? state.t : inCentre() ? 1 : 0; // a closing pie keeps its dial as it was, so closing from the centre never brings the needle back
     if (state.t !== target) {
       if (reduce) state.t = target;
       else { var step = dt / state.dur; state.t = target > state.t ? Math.min(1, state.t + step) : Math.max(0, state.t - step); busy = busy || state.t !== target; }
