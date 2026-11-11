@@ -16,8 +16,8 @@ Milestone 0, foundations (#4).
 - [ ] Pie file in the extension user directory, with atomic writes and a kept
       copy of a corrupt file; headless smoke test script (#13, #21)
 
-Decisions the scaffold assumes until Sandro confirms them: Blender 5.2 LTS as
-the minimum (#9), Blender's own UI font on the canvas and CC0 icons (#10).
+Still to decide in #10: the canvas font and the icon licence. Until then the
+plan assumes Blender's own UI font and CC0 icons.
 
 ## Next
 
