@@ -38,7 +38,7 @@ jobs:
             libgl1 libice6 libsm6 libx11-6 libxext6 libxfixes3 libxi6 libxkbcommon0 libxrender1 \
             libgl1-mesa-dri xvfb
           archive="blender-${BLENDER_VERSION}-linux-x64.tar.xz"
-          curl -sSfL -o "$archive" "https://download.blender.org/release/Blender${BLENDER_VERSION%.*}/$archive"
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 10 -o "$archive" "https://download.blender.org/release/Blender${BLENDER_VERSION%.*}/$archive"
           echo "${BLENDER_SHA256}  $archive" | sha256sum -c -
           mkdir "$RUNNER_TEMP/blender"
           tar -xf "$archive" -C "$RUNNER_TEMP/blender" --strip-components=1
