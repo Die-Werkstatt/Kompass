@@ -3,8 +3,8 @@
 Kompass is a Blender add-on for artists who want their own pie menus: each pie
 holds up to 8 tools, operators or sub-pies and opens on its own shortcut. It is
 distributed as a Blender extension under GPL-3.0-or-later. The repo holds the
-installable extension and the pie data model; nothing opens a pie yet (see
-`ROADMAP.md`).
+installable extension, the pie data model and the stored pie file; nothing
+opens a pie yet (see `ROADMAP.md`).
 
 ## Stack
 - Blender 5.2 LTS is the minimum version (`blender_version_min` in the
@@ -14,27 +14,33 @@ installable extension and the pie data model; nothing opens a pie yet (see
 
 ## Project structure
 
-- `kompass/`: the extension. `blender_manifest.toml` and the add-on package.
-  Everything in here ships in the `.zip`.
-- `kompass/core/`: the pie model, its validation and the JSON file format
-  (`model.py`). `tests/data/example.json` is a file in that format.
-- `tests/`: unit tests, run without Blender.
-- `docs/brand/`, `docs/design/`: logo files, brand notes and the pie design
-  with its playground. Not shipped in the extension.
+- `kompass/`: the extension; everything in it ships in the `.zip`.
+  - `core/`: the pie model, validation and JSON format (`model.py`), and
+    reading and writing a pie file on disk (`store.py`).
+  - `blender/`: everything that needs `bpy`. `storage.py` holds the pies
+    loaded from `pies.json`; `preferences.py` shows their count, the file path
+    and any load problem.
+- `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
+  pie file. `tests/smoke/` runs inside Blender.
+- `docs/brand/`, `docs/design/`: logo, brand notes and the pie design. Not
+  shipped in the extension.
 - `agent_docs/`: these instructions, the roadmap and the dependency inventory.
 
 ## Architecture rules
 
 - `kompass/core/` never imports `bpy`. A unit test enforces it.
-- Every pie file goes through `core.model.loads` and `dumps`. Both validate,
-  and neither accepts a key or slot type the model does not know.
-- `import kompass` works without Blender. Modules that need `bpy` are imported
-  inside `register()`, never at the top of `kompass/__init__.py`.
-- Use `__package__` for the add-on identifier. Never write the literal `bl_ext`
-  or a repository name in add-on code.
-- Write files only under `bpy.utils.extension_path_user(__package__)`. Never
-  build a write path from `__file__`: the extension directory is cleared on
-  every upgrade.
+- Only files in `kompass/blender/` import Blender's modules. Each carries the
+  `aislop-ignore-file hallucinated-import` line: aislop cannot see modules
+  that Blender provides.
+- `import kompass` works without Blender: `kompass/__init__.py` imports
+  `kompass.blender` inside `register()`, never at the top.
+- Every pie file is read by `core.model.loads` and written by
+  `core.store.save`. Both validate and refuse unknown keys and slot types.
+- `kompass.blender.ADDON` is the add-on identifier. Never write the literal
+  `bl_ext` or a repository name in add-on code.
+- Write files only under `bpy.utils.extension_path_user`, never beside
+  `__file__`. Blender keeps that directory across upgrades and deletes it,
+  with `pies.json`, on uninstall.
 - `wm.keyconfigs.addon` is `None` in background mode; check before use.
 - No `eval` or `exec`.
 - Bundled images, icons and fonts must be CC0 (extensions.blender.org terms
@@ -45,12 +51,13 @@ installable extension and the pie data model; nothing opens a pie yet (see
 ```sh
 python3 .claude/suite-check.py   # every health check in .claude/suite.json
 pytest -q                        # unit tests
+python3 tests/smoke/run.py       # build, install and check in Blender
 blender --command extension build --source-dir kompass   # kompass-<version>.zip
 ```
 
-The build check is skipped where `blender` is not on `PATH`. CI
-(`.github/workflows/checks.yml`) downloads Blender 5.2, builds the extension,
-installs it and enables it.
+The smoke test installs into a temporary Blender profile, never the real one.
+It is skipped where `blender` is not on `PATH`. CI
+(`.github/workflows/checks.yml`) downloads Blender 5.2 and runs it.
 
 ## Task tracking
 Work is tracked in GitHub Issues. Every issue carries a `type:`, an `area:` and
