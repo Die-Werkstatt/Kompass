@@ -1,0 +1,9 @@
+// The website: static files in public/, served by Cloudflare Workers with no Worker script.
+{
+  "$schema": "https://unpkg.com/wrangler@4.154.0/config-schema.json",
+  "name": "kompass-site",
+  "compatibility_date": "2026-10-27",
+  "assets": {
+    "directory": "./public"
+  }
+}
