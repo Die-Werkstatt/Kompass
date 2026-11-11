@@ -1,0 +1,19 @@
+schema_version = "1.0.0"
+
+id = "kompass"
+version = "0.1.0"
+name = "Kompass"
+tagline = "Build pie menus and open them from your own shortcuts"
+maintainer = "Die Werkstatt"
+type = "add-on"
+
+tags = ["User Interface"]
+
+blender_version_min = "5.2.0"
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+
+[permissions]
+files = "Save, import and export pie menus as JSON files"

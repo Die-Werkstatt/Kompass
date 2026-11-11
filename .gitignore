@@ -19,3 +19,7 @@ CLAUDE.local.md
 
 # Bytecode from the .claude/ health runner, which every project runs
 __pycache__/
+
+# Extension package from `blender --command extension build`
+/kompass-*.zip
+.pytest_cache/

@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# `kompass` is not installed anywhere; the tests import it from the repo root.
+pythonpath = ["."]
