@@ -65,82 +65,66 @@ def _content(found):
     return model.SubPieSlot(rest)
 
 
-class KOMPASS_OT_slot_fill(bpy.types.Operator):
-    """Search a tool, an operator or a pie and carry it to a slot"""
+class KOMPASS_OT_slot_fill(editor.Edit, bpy.types.Operator):
+    """Search for a tool, operator or pie to put in the selected slot"""
 
     bl_idname = "kompass.slot_fill"
-    bl_label = "Add to Pie"
-    bl_options = {"INTERNAL"}  # noqa: RUF012
+    bl_label = "Fill Slot"
     bl_property = "found"
 
     found: bpy.props.EnumProperty(items=lambda _self, _context: _found)
 
     @classmethod
     def poll(cls, _context):
-        return editor.shown() is not None and not editor.preview
+        return editor.selected() is not None
 
     def invoke(self, context, _event):
         _find()
         context.window_manager.invoke_search_popup(self)
         return {"FINISHED"}
 
-    def execute(self, context):
-        carrying = editor.carried is not None
-        editor.carried = _content(self.found)
-        editor.redraw(context)
-        if not carrying:
-            bpy.ops.kompass.slot_carry("INVOKE_DEFAULT")
-        return {"FINISHED"}
+    def edited(self, pies, pie):
+        return edit.place(pies, pie.id, editor.selected(), _content(self.found))
 
 
-class KOMPASS_OT_slot_carry(bpy.types.Operator):
-    """Runs while something is carried, to let Esc and a right-click drop it"""
+class KOMPASS_OT_slot_group(editor.Edit, bpy.types.Operator):
+    """Add a pie that the selected slot opens as a sub-pie"""
 
-    bl_idname = "kompass.slot_carry"
-    bl_label = "Carry to Slot"
-    bl_options = {"INTERNAL"}  # noqa: RUF012
-
-    def invoke(self, context, _event):
-        context.window_manager.modal_handler_add(self)
-        return {"RUNNING_MODAL"}
-
-    def modal(self, context, event):
-        if editor.carried is None:
-            return {"FINISHED"}
-        if event.type in {"ESC", "RIGHTMOUSE"} and event.value == "PRESS":
-            editor.carried = None
-            editor.redraw(context)
-            return {"CANCELLED"}
-        # The canvas follows the pointer and takes the click that places.
-        return {"PASS_THROUGH"}
-
-
-class KOMPASS_OT_slot_place(editor.Edit, bpy.types.Operator):
-    """Put what is carried into the slot and carry what the slot held"""
-
-    bl_idname = "kompass.slot_place"
-    bl_label = "Place in Slot"
-
-    slot: bpy.props.IntProperty()
+    bl_idname = "kompass.slot_group"
+    bl_label = "New Sub-Pie"
 
     @classmethod
     def poll(cls, _context):
-        return editor.carried is not None
+        return editor.selected() is not None
 
     def edited(self, pies, pie):
-        return edit.place(pies, pie.id, self.slot, editor.carried)
+        pies = edit.add(pies, "Sub-Pie")
+        content = model.SubPieSlot(pies[-1].id)
+        return edit.place(pies, pie.id, editor.selected(), content)
+
+
+class KOMPASS_OT_slot_open(bpy.types.Operator):
+    """Show the sub-pie of the selected slot"""
+
+    bl_idname = "kompass.slot_open"
+    bl_label = "Open Sub-Pie"
+    bl_options = {"INTERNAL"}  # noqa: RUF012
+
+    @classmethod
+    def poll(cls, _context):
+        slot = editor.selected()
+        if slot is None:
+            return False
+        return isinstance(editor.shown().slots[slot], model.SubPieSlot)
 
     def execute(self, context):
-        held = editor.shown().slots[self.slot]
-        result = super().execute(context)
-        if result == {"FINISHED"}:
-            editor.carried = held
-            editor.select(self.slot)
-        return result
+        editor.enter(editor.selected())
+        editor.redraw(context)
+        return {"FINISHED"}
 
 
 class KOMPASS_OT_slot_swap(editor.Edit, bpy.types.Operator):
-    """Exchange what the selected slot and this slot hold"""
+    """Exchange the contents of the selected slot and this slot"""
 
     bl_idname = "kompass.slot_swap"
     bl_label = "Swap Slots"
@@ -169,24 +153,18 @@ class KOMPASS_MT_slot_swap(bpy.types.Menu):
                 button.other = slot
 
 
-class KOMPASS_PT_slot(bpy.types.Panel):
+class KOMPASS_MT_slot(bpy.types.Menu):
+    bl_idname = "KOMPASS_MT_slot"
     bl_label = "Slot"
-    bl_space_type = "NODE_EDITOR"
-    bl_region_type = "UI"
-    bl_category = "Kompass"
-
-    @classmethod
-    def poll(cls, context):
-        space = context.space_data
-        return space.tree_type == editor.KompassTree.bl_idname and not editor.preview
 
     def draw(self, _context):
-        self.layout.operator(KOMPASS_OT_slot_fill.bl_idname, icon="ADD")
-        slot = editor.selected()
-        if slot is None:
-            self.layout.label(text="No slot selected")
-            return
-        self.layout.label(text=_names(editor.shown())[slot])
-        row = self.layout.row(align=True)
-        row.operator(KOMPASS_OT_slot_clear.bl_idname, text="Clear", icon="X")
-        row.menu(KOMPASS_MT_slot_swap.bl_idname)
+        filled = editor.shown().slots[editor.selected()] is not None
+        self.layout.operator(
+            KOMPASS_OT_slot_fill.bl_idname,
+            text="Replace" if filled else "Add",
+            icon="VIEWZOOM",
+        )
+        self.layout.operator(KOMPASS_OT_slot_group.bl_idname, icon="ADD")
+        self.layout.operator(KOMPASS_OT_slot_open.bl_idname, text="Open")
+        self.layout.menu(KOMPASS_MT_slot_swap.bl_idname)
+        self.layout.operator(KOMPASS_OT_slot_clear.bl_idname, text="Remove", icon="X")

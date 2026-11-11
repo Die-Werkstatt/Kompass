@@ -23,6 +23,8 @@ SLOT_MAX_WIDTH = 180
 SLOT_HEIGHT = 32
 # A click this close to a slot counts for it.
 CLICK_REACH = 24
+# How far a pressed slot is moved before it counts as dragged.
+DRAG_START = 6
 # The room between a slot's side and its label.
 LABEL_PAD = 12
 # The tips of the dial's ticks, and the ring drawn around them.

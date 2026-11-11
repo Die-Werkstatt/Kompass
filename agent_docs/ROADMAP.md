@@ -27,12 +27,12 @@ Milestone 1, pies open from shortcuts (#5).
 ## Later
 
 - [ ] Milestone 2, editor. The canvas shows a pie (#18) and the sidebar
-      adds, renames, duplicates and deletes pies, and fills, swaps and
-      clears slots (#19). Left in #18: needle easing, the closing motion, the
-      canvas font (#10), tool icons. Left in #19, in this order: shortcut and
-      context, slot label and settings, choosing 8 or 12 slots for a pie,
-      carrying into a sub-pie, preview of the real pie. Then starter pies
-      (#20, second half).
+      adds, renames, duplicates and deletes pies and sets their shortcut and
+      context; a slot's menu fills and clears it and a drag swaps two (#19).
+      Left in #18: needle easing, the closing motion, the canvas font (#10),
+      tool icons. Left in #19, in this order: slot label and settings,
+      choosing 8 or 12 slots for a pie, dragging into a sub-pie, preview of
+      the real pie. Then starter pies (#20, second half).
 - [ ] Milestone 3, release Native, the edition that opens Blender's own pie
       menu (#7)
 - [ ] Milestone 4, the Kompass edition: a pie drawn by Kompass with 12 slots,

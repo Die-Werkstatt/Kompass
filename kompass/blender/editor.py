@@ -14,8 +14,6 @@ _trail = []
 _selected = None
 # In preview a click selects nothing and the pie behaves as it will when open.
 preview = False
-# What a slot would hold, while it follows the pointer on its way to a slot.
-carried = None
 
 
 class KompassTree(bpy.types.NodeTree):
@@ -65,9 +63,10 @@ class KOMPASS_OT_editor_open(bpy.types.Operator):
 
     def execute(self, context):
         manager = context.window_manager
-        # From the Preferences window Blender would copy that window.
+        # wm.window_new() gives a window as large as the main one and takes
+        # no size. The Info Log opens in a small window of its own.
         with context.temp_override(window=manager.windows[0]):
-            bpy.ops.wm.window_new()
+            bpy.ops.screen.info_log_show()
         area = manager.windows[-1].screen.areas[0]
         area.ui_type = KompassTree.bl_idname
         space = area.spaces.active
@@ -75,7 +74,23 @@ class KOMPASS_OT_editor_open(bpy.types.Operator):
         space.node_tree = _tree()
         space.show_region_header = False
         space.show_region_ui = True
+        bpy.app.timers.register(_show_tab, first_interval=0.1)
         return {"FINISHED"}
+
+
+def _show_tab():
+    """Bring the Kompass tab to the front of each editor's sidebar."""
+    for window in bpy.context.window_manager.windows:
+        for area in window.screen.areas:
+            if area.ui_type != KompassTree.bl_idname:
+                continue
+            sidebar = next(region for region in area.regions if region.type == "UI")
+            try:
+                sidebar.active_panel_category = KOMPASS_PT_pies.bl_category
+            except AttributeError:
+                # Blender lets it be set once the sidebar has been drawn.
+                return 0.1
+    return None
 
 
 def _tree():
@@ -108,11 +123,17 @@ class KOMPASS_OT_editor_show(bpy.types.Operator):
         return {"FINISHED"}
 
 
+def enter(slot):
+    """Show the sub-pie in that slot of the pie on the canvas."""
+    pie = shown()
+    _trail[:] = [*(_trail or [pie.id]), pie.slots[slot].pie]
+
+
 def click(slot):
     """Take a click on a slot, on the dial for -1, or on neither for None.
 
-    The dial goes back. A slot takes what is carried. Otherwise it is
-    selected, and opens its sub-pie once it is selected or in preview.
+    The dial goes back. In preview a slot opens its sub-pie. Otherwise it is
+    selected and shows its menu.
     """
     pie = shown()
     if pie is None:
@@ -120,30 +141,24 @@ def click(slot):
     if slot is not None and slot < 0:
         if in_sub_pie():
             _trail.pop()
-        return
-    if carried is not None:
-        if slot is not None:
-            # An operator, since it saves and reports what goes wrong.
-            bpy.ops.kompass.slot_place(slot=slot)
-        return
-    opens = slot is not None and isinstance(pie.slots[slot], model.SubPieSlot)
-    if opens and (preview or slot == selected()):
-        _trail[:] = [*(_trail or [pie.id]), pie.slots[slot].pie]
     elif not preview:
         select(slot)
+        if slot is not None:
+            bpy.ops.wm.call_menu(name="KOMPASS_MT_slot")
+    elif slot is not None and isinstance(pie.slots[slot], model.SubPieSlot):
+        enter(slot)
 
 
 class KOMPASS_OT_editor_preview(bpy.types.Operator):
-    """Try the pie: sub-pies open on hover and a click selects nothing"""
+    """Open sub-pies on hover instead of selecting slots"""
 
     bl_idname = "kompass.editor_preview"
     bl_label = "Preview"
     bl_options = {"INTERNAL"}  # noqa: RUF012
 
     def execute(self, context):
-        global preview, carried
+        global preview
         preview = not preview
-        carried = None
         select(None)
         redraw(context)
         return {"FINISHED"}
@@ -186,7 +201,7 @@ class KOMPASS_OT_pie_add(Edit, bpy.types.Operator):
 
 
 class KOMPASS_OT_pie_rename(Edit, bpy.types.Operator):
-    """Give the pie on the canvas another name"""
+    """Change the name of the pie on the canvas"""
 
     bl_idname = "kompass.pie_rename"
     bl_label = "Rename Pie"
@@ -202,7 +217,7 @@ class KOMPASS_OT_pie_rename(Edit, bpy.types.Operator):
 
 
 class KOMPASS_OT_pie_duplicate(Edit, bpy.types.Operator):
-    """Copy the pie on the canvas. The copy has no shortcut"""
+    """Copy the pie on the canvas without its shortcut"""
 
     bl_idname = "kompass.pie_duplicate"
     bl_label = "Duplicate Pie"
@@ -214,7 +229,7 @@ class KOMPASS_OT_pie_duplicate(Edit, bpy.types.Operator):
 
 
 class KOMPASS_OT_pie_delete(Edit, bpy.types.Operator):
-    """Delete the pie on the canvas. Slots that open it become empty"""
+    """Delete the pie on the canvas and empty the slots that open it"""
 
     bl_idname = "kompass.pie_delete"
     bl_label = "Delete Pie"

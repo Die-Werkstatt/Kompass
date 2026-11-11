@@ -12,7 +12,7 @@ from . import keymaps, storage
 
 
 class KOMPASS_OT_pies_export(bpy.types.Operator, ExportHelper):
-    """Save pies to a file that Kompass can import"""
+    """Save pies to a file for Kompass to import"""
 
     bl_idname = "kompass.pies_export"
     bl_label = "Export Pies"
@@ -45,7 +45,7 @@ class KOMPASS_OT_pies_export(bpy.types.Operator, ExportHelper):
 
 
 class KOMPASS_OT_pies_import(bpy.types.Operator, ImportHelper):
-    """Add the pies of an exported file to your own"""
+    """Add the pies of a file exported from Kompass"""
 
     bl_idname = "kompass.pies_import"
     bl_label = "Import Pies"
@@ -54,10 +54,7 @@ class KOMPASS_OT_pies_import(bpy.types.Operator, ImportHelper):
     # Not remembered: the next import must not replace pies unasked.
     replace: bpy.props.BoolProperty(
         name="Replace My Pies",
-        description=(
-            "Replace each pie of mine that has the id of a pie in the file. "
-            "When off, both are kept"
-        ),
+        description="Replace stored pies that are also in the file instead of keeping both",
         options={"SKIP_SAVE"},
     )
 

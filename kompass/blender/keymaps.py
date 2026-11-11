@@ -12,6 +12,26 @@ _SPACE_TYPES = frozenset(
     bpy.types.KeyMap.bl_rna.properties["space_type"].enum_items.keys()
 )
 
+# Where a shortcut can open a pie: a keymap of Blender's, the space type
+# KeyMaps.new() needs for it, and what the editor calls it.
+CONTEXTS = (
+    ("3D View", "VIEW_3D", "3D Viewport"),
+    ("Object Mode", "EMPTY", "Object Mode"),
+    ("Mesh", "EMPTY", "Mesh Edit Mode"),
+    ("Curve", "EMPTY", "Curve Edit Mode"),
+    ("Armature", "EMPTY", "Armature Edit Mode"),
+    ("Pose", "EMPTY", "Pose Mode"),
+    ("Sculpt", "EMPTY", "Sculpt Mode"),
+    ("Vertex Paint", "EMPTY", "Vertex Paint"),
+    ("Weight Paint", "EMPTY", "Weight Paint"),
+    ("Image Paint", "EMPTY", "Texture Paint"),
+    ("UV Editor", "EMPTY", "UV Editor"),
+    ("Image", "IMAGE_EDITOR", "Image Editor"),
+    ("Node Editor", "NODE_EDITOR", "Node Editor"),
+    ("Sequencer", "SEQUENCE_EDITOR", "Video Sequencer"),
+    ("Window", "EMPTY", "Everywhere"),
+)
+
 _items = []
 # One line per shortcut that could not be set.
 problems = []
@@ -94,6 +114,22 @@ def taken_by(shortcut):
         ):
             return item.name
     return None
+
+
+def warnings(stored):
+    """Return what keeps the pie's shortcut from opening it, or from being
+    the only thing on its keys."""
+    found = [line for line in problems if line.startswith(f'Pie "{stored.name}" ')]
+    shortcut = stored.shortcut
+    if shortcut is None:
+        return found
+    taken = taken_by(shortcut)
+    if taken:
+        found.append(f'Blender also has "{taken}" on it')
+    for other in storage.pies:
+        if other is not stored and other.shortcut == shortcut:
+            found.append(f'Pie "{other.name}" has the same shortcut')
+    return found
 
 
 def unregister():

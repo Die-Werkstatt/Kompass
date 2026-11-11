@@ -30,6 +30,9 @@ class _State:
     # Whether Blender highlights each gizmo, by slot. It highlights none
     # while the pointer is off the canvas, which sends no other sign.
     lit: dict[int, bool] = field(default_factory=dict)
+    # The slot a press began on and where, and that slot once it is dragged.
+    pressed: tuple | None = None
+    dragged: int | None = None
     # The centre's hover state runs from hover_from to hover_target.
     hover_from: float = 0.0
     hover_target: float = 0.0
@@ -135,7 +138,7 @@ def _draw():
     left, bottom = canvas.units((0, 0))
     right, top = canvas.units(canvas.size)
     corners = [(left, bottom), (right, bottom), (right, top), (left, top)]
-    canvas.fill(corners, paint.GROUND)
+    canvas.fill(corners, paint.BLACK)
     shown = editor.shown()
     if shown is None:
         canvas.text("NO PIES", 0, 0, 12, paint.STONE)
@@ -151,8 +154,8 @@ def _draw():
         filling = slot, min(1.0, (now - since) / layout.HOVER_DELAY)
     labels = paint.labels(shown)
     carried = None
-    if editor.carried is not None:
-        carried = paint.label(context, editor.carried).upper()
+    if state.dragged is not None:
+        carried = labels[state.dragged][0]
     sliding = _slide(labels, pointer, now, context)
     look = paint.Look(
         shown,
@@ -268,21 +271,43 @@ class _Part:
     def draw(self, _context):
         _state.lit[self.slot] = self.is_highlight
 
+    def _near(self):
+        """Return the slot the pointer is close to, -1 on the dial."""
+        if self.slot < 0:
+            return -1
+        # Blender picks the gizmo by bearing at any distance; a click
+        # counts only close to a slot.
+        return layout.slot_clicked(*_state.pointer, _widths(editor.shown()))
+
     def invoke(self, _context, _event):
+        state = _state
+        slot = self._near()
+        state.pressed = None
+        held = slot is not None and slot >= 0 and editor.shown().slots[slot]
+        if held and not editor.preview:
+            state.pressed = slot, state.pointer
         return {"RUNNING_MODAL"}
 
-    def modal(self, _context, _event, _tweak):
+    def modal(self, context, event, _tweak):
+        state = _state
+        pointer = _follow(context, (event.mouse_region_x, event.mouse_region_y))
+        if state.pressed is not None:
+            slot, start = state.pressed
+            if math.dist(pointer, start) > layout.DRAG_START:
+                state.dragged = slot
         return {"RUNNING_MODAL"}
 
     def exit(self, context, cancel):
+        state = _state
+        dragged, state.dragged, state.pressed = state.dragged, None, None
         if cancel:
             return
-        slot = self.slot
-        if slot >= 0:
-            # Blender picks the gizmo by bearing at any distance; a click
-            # counts only close to a slot.
-            slot = layout.slot_clicked(*_state.pointer, _widths(editor.shown()))
-        editor.click(slot)
+        slot = self._near()
+        if dragged is None:
+            editor.click(slot)
+        elif slot is not None and slot >= 0 and slot != dragged:
+            editor.select(dragged)
+            bpy.ops.kompass.slot_swap(other=slot)
         editor.redraw(context)
 
 
