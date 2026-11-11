@@ -47,3 +47,20 @@ def test_delete_empties_the_slots_that_opened_the_pie():
     assert left.slots[2] is None
     assert left.slots[:2] == SELECT.slots[:2]
     model.validate((left,))
+
+
+def test_clear_empties_one_slot():
+    pies = edit.clear(EXAMPLE, "select", 0)
+    assert pies[0].slots == (None, *SELECT.slots[1:])
+    assert pies[1] is MESH
+    model.validate(pies)
+
+
+def test_swap_exchanges_two_slots():
+    pies = edit.swap(EXAMPLE, "select", 0, 5)
+    assert pies[0].slots[0] == SELECT.slots[5]
+    assert pies[0].slots[5] == SELECT.slots[0]
+    assert [pies[0].slots[n] for n in (1, 2, 3, 4, 6, 7)] == [
+        SELECT.slots[n] for n in (1, 2, 3, 4, 6, 7)
+    ]
+    assert edit.swap(pies, "select", 5, 0) == EXAMPLE

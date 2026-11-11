@@ -10,6 +10,10 @@ from . import keymaps, storage
 # The pie on the canvas is the last of these ids; before it, the pies whose
 # sub-pie slots led there.
 _trail = []
+# The id of a pie and the index of its selected slot.
+_selected = None
+# In preview a click selects nothing and the pie behaves as it will when open.
+preview = False
 
 
 class KompassTree(bpy.types.NodeTree):
@@ -35,6 +39,20 @@ def depth():
 
 def in_sub_pie():
     return depth() > 1
+
+
+def selected():
+    """Return the selected slot of the pie on the canvas, or None."""
+    pie = shown()
+    if pie is None or _selected is None or _selected[0] != pie.id:
+        return None
+    return _selected[1]
+
+
+def select(slot):
+    """Select that slot of the pie on the canvas, or none for None."""
+    global _selected
+    _selected = None if slot is None else (shown().id, slot)
 
 
 class KOMPASS_OT_editor_open(bpy.types.Operator):
@@ -89,18 +107,41 @@ class KOMPASS_OT_editor_show(bpy.types.Operator):
 
 
 def click(slot):
-    """Open the sub-pie in the slot, or go back for -1, the dial."""
+    """Take a click on a slot, on the dial for -1, or on neither for None.
+
+    The dial goes back. A slot is selected, and opens its sub-pie once it is
+    selected or in preview.
+    """
     pie = shown()
     if pie is None:
         return
-    if slot < 0:
+    if slot is not None and slot < 0:
         if in_sub_pie():
             _trail.pop()
-    elif isinstance(pie.slots[slot], model.SubPieSlot):
+        return
+    opens = slot is not None and isinstance(pie.slots[slot], model.SubPieSlot)
+    if opens and (preview or slot == selected()):
         _trail[:] = [*(_trail or [pie.id]), pie.slots[slot].pie]
+    elif not preview:
+        select(slot)
 
 
-class _Edit:
+class KOMPASS_OT_editor_preview(bpy.types.Operator):
+    """Try the pie: sub-pies open on hover and a click selects nothing"""
+
+    bl_idname = "kompass.editor_preview"
+    bl_label = "Preview"
+    bl_options = {"INTERNAL"}  # noqa: RUF012
+
+    def execute(self, context):
+        global preview
+        preview = not preview
+        select(None)
+        redraw(context)
+        return {"FINISHED"}
+
+
+class Edit:
     """An operator that changes the stored pies."""
 
     bl_options = {"INTERNAL"}  # noqa: RUF012
@@ -120,7 +161,7 @@ class _Edit:
         return {"FINISHED"}
 
 
-class KOMPASS_OT_pie_add(_Edit, bpy.types.Operator):
+class KOMPASS_OT_pie_add(Edit, bpy.types.Operator):
     """Add an empty pie"""
 
     bl_idname = "kompass.pie_add"
@@ -136,7 +177,7 @@ class KOMPASS_OT_pie_add(_Edit, bpy.types.Operator):
         return pies
 
 
-class KOMPASS_OT_pie_rename(_Edit, bpy.types.Operator):
+class KOMPASS_OT_pie_rename(Edit, bpy.types.Operator):
     """Give the pie on the canvas another name"""
 
     bl_idname = "kompass.pie_rename"
@@ -152,7 +193,7 @@ class KOMPASS_OT_pie_rename(_Edit, bpy.types.Operator):
         return edit.rename(pies, pie.id, self.name.strip())
 
 
-class KOMPASS_OT_pie_duplicate(_Edit, bpy.types.Operator):
+class KOMPASS_OT_pie_duplicate(Edit, bpy.types.Operator):
     """Copy the pie on the canvas. The copy has no shortcut"""
 
     bl_idname = "kompass.pie_duplicate"
@@ -164,7 +205,7 @@ class KOMPASS_OT_pie_duplicate(_Edit, bpy.types.Operator):
         return pies
 
 
-class KOMPASS_OT_pie_delete(_Edit, bpy.types.Operator):
+class KOMPASS_OT_pie_delete(Edit, bpy.types.Operator):
     """Delete the pie on the canvas. Slots that open it become empty"""
 
     bl_idname = "kompass.pie_delete"
@@ -188,6 +229,9 @@ class KOMPASS_PT_pies(bpy.types.Panel):
         return context.space_data.tree_type == KompassTree.bl_idname
 
     def draw(self, _context):
+        self.layout.operator(
+            KOMPASS_OT_editor_preview.bl_idname, icon="PLAY", depress=preview
+        )
         row = self.layout.row(align=True)
         row.operator(KOMPASS_OT_pie_add.bl_idname, text="New", icon="ADD")
         row.operator(KOMPASS_OT_pie_duplicate.bl_idname, text="", icon="DUPLICATE")

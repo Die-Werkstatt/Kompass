@@ -57,3 +57,28 @@ def delete(pies, pie_id):
         for pie in pies
         if pie.id != pie_id
     )
+
+
+def clear(pies, pie_id, slot):
+    """Return the pies with that slot of the pie empty."""
+    return _placed(pies, pie_id, {slot: None})
+
+
+def swap(pies, pie_id, slot, other):
+    """Return the pies with the contents of two slots of the pie exchanged."""
+    slots = next(pie.slots for pie in pies if pie.id == pie_id)
+    return _placed(pies, pie_id, {slot: slots[other], other: slots[slot]})
+
+
+def _placed(pies, pie_id, contents):
+    return tuple(
+        replace(
+            pie,
+            slots=tuple(
+                contents.get(index, slot) for index, slot in enumerate(pie.slots)
+            ),
+        )
+        if pie.id == pie_id
+        else pie
+        for pie in pies
+    )

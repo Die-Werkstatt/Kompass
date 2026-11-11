@@ -46,6 +46,15 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
 - [ ] Move the pointer into the dial: the needle turns into a red disc with
       a white border, the long ticks shorten and the outer arrow fades. Move
       out: it turns back.
+- [ ] Click LASSO: it gets a white outline and the Slot panel in the Kompass
+      tab names it. Click far from every slot: the outline is gone.
+- [ ] Rest the pointer on MESH: nothing opens. Click it, then click it again:
+      the Mesh pie opens. Click the dial: Select is back, MESH still outlined.
+- [ ] With MESH selected, Slot > Swap With > N: MESH and the north slot
+      change places and the outline follows MESH. Clear: the slot is empty.
+      Close and reopen Blender: both changes are still there.
+- [ ] Turn on Preview in the Kompass tab for the steps up to Reduce Motion:
+      the Slot panel is gone and a click outlines nothing.
 - [ ] MESH has a grey outline and lights up grey, not red. Rest the pointer
       on it: red fills it downward and the Mesh pie opens, with a smaller
       dial and BACK below. Select fades and shrinks while Mesh fades in.

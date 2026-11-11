@@ -2,7 +2,8 @@
 
 A Blender add-on for building your own pie menus, each on its own shortcut.
 In development: pies open from their shortcuts. The editor shows a pie and
-adds, renames, duplicates and deletes pies; it cannot fill a slot yet.
+adds, renames, duplicates and deletes pies. It clears and swaps slots; it
+cannot fill one yet.
 
 ## Install from source
 

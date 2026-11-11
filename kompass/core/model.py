@@ -102,10 +102,10 @@ def _validate_pie(pie, ids):
         _validate_shortcut(pie.shortcut, where)
     for index, slot in enumerate(pie.slots):
         if slot is not None:
-            _validate_slot(slot, f"{where} slot {_slot_name(pie, index)}", ids)
+            _validate_slot(slot, f"{where} slot {slot_name(pie, index)}", ids)
 
 
-def _slot_name(pie, index):
+def slot_name(pie, index):
     if len(pie.slots) == NATIVE_SLOTS:
         return SLOT_DIRECTIONS[index]
     # Numbered clockwise from north, which is 1.

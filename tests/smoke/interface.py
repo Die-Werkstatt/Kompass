@@ -148,11 +148,42 @@ def steps():
         editor_window.event_simulate(type="LEFTMOUSE", value="RELEASE", x=x, y=y)
         yield PAUSE / 2
 
-    # A click on a tool slot changes nothing. South is the Mesh sub-pie: a
-    # click far below it does nothing, a click just below its box opens it.
-    left, bottom = layout.slot_corner(layout.BEARINGS.index(180), 8)
+    # A click selects a slot and a click far from every slot selects none.
+    # South is the Mesh sub-pie: resting on it opens nothing, the first click
+    # selects it and the second opens it.
+    east, west = layout.BEARINGS.index(90), layout.BEARINGS.index(270)
+    mesh = layout.BEARINGS.index(180)
+    left, bottom = layout.slot_corner(mesh, 8)
     yield from click(x + 2 * FLICK, y)
-    assert editor.shown().id == "select"
+    assert editor.selected() == east, editor.selected()
+    yield from click(x + 5 * FLICK // 2, y + 2 * FLICK)
+    assert editor.selected() is None, editor.selected()
+    yield from click(x, y + int(bottom) + 10)
+    assert editor.shown().id == "select" and editor.selected() == mesh
+    yield from click(x, y + int(bottom) + 10)
+    assert editor.shown().id == "mesh" and editor.selected() is None
+    yield from click(x, y)
+    assert editor.shown().id == "select" and editor.selected() == mesh
+
+    # The selected slot is swapped with another and cleared.
+    before = editor.shown().slots
+    yield from click(x + 2 * FLICK, y)
+    assert bpy.ops.kompass.slot_swap(other=west) == {"FINISHED"}
+    after = editor.shown().slots
+    assert (after[west], after[east]) == (before[east], before[west])
+    assert editor.selected() == west
+    assert bpy.ops.kompass.slot_clear() == {"FINISHED"}
+    assert editor.shown().slots[west] is None
+    assert not bpy.ops.kompass.slot_clear.poll()
+    assert editor.shown().slots[east] == before[west]
+
+    # In preview a click selects nothing. A click on a tool slot changes
+    # nothing, a click far below Mesh does nothing, a click just below its
+    # box opens it.
+    assert bpy.ops.kompass.editor_preview() == {"FINISHED"}
+    assert editor.selected() is None
+    yield from click(x + 2 * FLICK, y)
+    assert editor.shown().id == "select" and editor.selected() is None
     yield from click(x, y - 2 * FLICK)
     assert editor.shown().id == "select"
     yield from click(x, y + int(bottom) - 12)
