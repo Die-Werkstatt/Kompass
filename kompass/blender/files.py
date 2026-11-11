@@ -66,13 +66,11 @@ class KOMPASS_OT_pies_import(bpy.types.Operator, ImportHelper):
             text = Path(self.filepath).read_text(encoding="utf-8")
             incoming = model.loads(text)
             pies, unbound = transfer.merge(storage.pies, incoming, self.replace)
-            storage.save(pies)
+            keymaps.store(pies)
         # InvalidPieFile and a file that is not UTF-8 are both ValueError.
         except (OSError, ValueError) as error:
             self.report({"ERROR"}, f"Nothing was imported: {error}")
             return {"CANCELLED"}
-        keymaps.unregister()
-        keymaps.register()
         if unbound:
             names = ", ".join(f'"{pie.name}"' for pie in unbound)
             self.report(

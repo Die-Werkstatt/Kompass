@@ -44,6 +44,13 @@ def register():
         _items.append((keymap, item))
 
 
+def store(pies):
+    """Save the pies and bind their shortcuts."""
+    storage.save(pies)
+    unregister()
+    register()
+
+
 def _unknown(shortcut):
     if shortcut.key not in _KEYS:
         return f'Blender has no key "{shortcut.key}"'

@@ -2,23 +2,27 @@
 
 A Blender add-on for building your own pie menus, each on its own shortcut.
 In development: pies open from their shortcuts. The editor shows a pie and
-cannot change it yet.
+adds, renames, duplicates and deletes pies; it cannot fill a slot yet.
 
 ## Install from source
 
-Needs Blender 5.2 or newer. Where `blender` is not on your `PATH`, as on
-Windows, write the full path instead, for example
-`"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe"`.
+Needs Blender 5.2 or newer.
 
 ```sh
 git clone https://github.com/Die-Werkstatt/Kompass.git
 cd Kompass
-blender --command extension build --source-dir kompass
-blender --command extension install-file -r user_default --enable kompass-0.1.0.zip
+./build.sh        # Windows: build.bat
 ```
 
-Or install the `.zip` from inside Blender: Preferences > Get Extensions >
-the arrow menu at the top right > Install from Disk.
+The script finds Blender and writes `kompass-0.1.0.zip` into the folder.
+Where it finds none, set `BLENDER` to the path of the Blender program first.
+
+Install the `.zip` in Blender: Preferences > Get Extensions > the arrow menu
+at the top right > Install from Disk. Or from the command line:
+
+```sh
+blender --command extension install-file -r user_default --enable kompass-0.1.0.zip
+```
 
 Kompass starts with no pies. Preferences > Add-ons > Kompass > Import and
 pick `tests/data/example.json`, then hold Shift+Alt+Q in the 3D Viewport.

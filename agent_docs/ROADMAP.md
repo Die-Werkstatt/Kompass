@@ -26,9 +26,12 @@ Milestone 1, pies open from shortcuts (#5).
 
 ## Later
 
-- [ ] Milestone 2, editor. The canvas shows a pie (#18). Left in #18: needle
-      easing, sub-pie on hover, the canvas font (#10), tool icons. Then pie
-      list, search and pick-and-place with a modal operator only while a
-      tool is carried (#19), then starter pies (#20, second half).
+- [ ] Milestone 2, editor. The canvas shows a pie (#18) and the sidebar
+      adds, renames, duplicates and deletes pies (#19). Left in #18: needle
+      easing, the closing motion, the canvas font (#10), tool icons. Left in
+      #19, in this order: clear and swap slots, search and pick-and-place
+      with a modal operator only while a tool is carried, shortcut and
+      context, slot label and settings, preview. Then starter pies (#20,
+      second half).
 - [ ] Milestone 3, release Lite (#7)
 - [ ] Milestone 4, Kompass-drawn pie, only if its spike says so (#8, #22)

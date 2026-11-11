@@ -2,7 +2,7 @@
 
 Kompass is a Blender extension (GPL-3.0-or-later) for artists who want their
 own pie menus: each pie holds up to 8 tools, operators or sub-pies and opens
-on its own shortcut. Pies are still made by editing the pie file.
+on its own shortcut. Slots are still filled by editing the pie file.
 
 ## Stack
 - Blender 5.2 LTS is the minimum version. It ships Python 3.13.
@@ -14,12 +14,13 @@ on its own shortcut. Pies are still made by editing the pie file.
 - `kompass/`: the extension; everything in it ships in the `.zip`.
   - `core/`: the pie model, validation and JSON format (`model.py`), reading
     and writing a pie file on disk (`store.py`), choosing pies for export and
-    merging imported ones (`transfer.py`), canvas geometry (`layout.py`).
+    merging imported ones (`transfer.py`), canvas geometry and motion
+    (`layout.py`), changes to the pies (`edit.py`).
   - `blender/`: everything that needs `bpy`. `storage.py` holds the pies
     loaded from `pies.json`, `pie.py` opens one as a native pie menu,
-    `keymaps.py` gives each its shortcut, `tools.py` reads Blender's tool
-    list, `files.py` exports and imports, `preferences.py` lists the pies,
-    `editor.py` is the Kompass editor type, `canvas.py` draws a pie in it.
+    `keymaps.py` gives each its shortcut, `tools.py` reads the tool list,
+    `files.py` exports and imports, `preferences.py` lists the pies, `editor.py`
+    is the Kompass editor type, `canvas.py` animates a pie in it with `paint.py`.
 - `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
   pie file. `tests/smoke/` runs inside Blender: `checks.py` without a window,
   `interface.py` with one, pressing shortcuts through simulated events.
@@ -46,7 +47,7 @@ on its own shortcut. Pies are still made by editing the pie file.
 - `bl_ui` is not documented API: only `blender/tools.py` imports it.
 - A slot whose tool or operator is missing draws disabled and never raises.
 - Canvas lengths live in `core/layout.py`, in pixels at UI scale 1. Only
-  `canvas.py` turns them into a region's pixels.
+  `paint.py` turns them into a region's pixels.
 - No `eval` or `exec`.
 - Bundled images, icons and fonts must be CC0 (extensions.blender.org terms
   1.2). The files in `docs/brand/` stay out of `kompass/`.

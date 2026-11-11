@@ -3,6 +3,7 @@
 How the pie looks and behaves on the Kompass editor canvas.
 [`pie-playground.html`](pie-playground.html) is a working mock-up: open it in a browser.
 Variant **G · Bearing needle** is the chosen design; D, E and F stay in the file for comparison.
+[`pie-motion.html`](pie-motion.html) adds the centre hover state and the motion below to variant G.
 
 Blender draws the live pie menu itself, in the user's theme.
 Everything below applies to the editor canvas, which Kompass draws with `gpu` and `blf`.
@@ -13,15 +14,19 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 |---|---|
 | Slot labels | Barlow SemiBold, capitals, tracking 0.08 em |
 | Slots | square corners; ground `#0E0E0E`, outline `#2C2C2C` |
+| Slot width | at least 120 px; grows to fit the label plus 12 px padding each side, up to 180 px |
+| Long label | clipped at the padding |
 | Sub-pie marker | signal-red triangle in a slot's top-right corner |
+| Sub-pie slot | outline `#5A5955`; grey highlight `#4A4946` instead of signal red |
 | Centre dial | ring with a tick every 5°, longer every 45°, and the split compass needle |
 | Outer arrow | signal-red triangle outside the ring; turns with the needle |
+| Centre hover | the needle becomes a signal-red disc with a 3 px white border, radius 75% of the needle length; the 45° ticks shorten to the length of the 5° ticks; the outer arrow slides in onto the ring, shrinks and fades; the ring stays |
 | Sub-pie dial | 72% of the main dial |
 | Sub-pie title | pie name in capitals above the dial |
 | Dial label | BACK in a sub-pie, CLOSE at the root, below the dial |
 | Colours | see [`../brand/README.md`](../brand/README.md) |
 
-The canvas (`kompass/blender/canvas.py`) draws the slots, the dial, the needle, the outer arrow, the sub-pie title and the dial label.
+`kompass/blender/paint.py` draws the slots, the dial, the needle, the outer arrow, the sub-pie title and the dial label.
 It differs from the table above in the font, which is Blender's interface font without tracking, because `blf` has no letter spacing and the font is undecided (#10).
 
 ## Behaviour
@@ -31,17 +36,35 @@ It differs from the table above in the font, which is Blender's interface font w
 | Pointer moves | needle and outer arrow follow it; easing time constant 45 ms, shortest arc |
 | Pointer within 8 px of the centre | needle holds its last heading |
 | Pointer outside the dial ring | the nearest slot is selected |
-| Pointer inside the dial ring | no slot is selected |
-| Highlight | signal red, strength rises with distance past the ring and closeness to the needle; the selected slot keeps at least 30% |
-| Pointer rests on a sub-pie slot for 100 ms | the sub-pie opens, centred on the pointer |
+| Pointer inside the dial ring | no slot is selected; the dial turns to its hover state in 120 ms, ease-in-out cubic |
+| Pointer leaves the dial ring | the hover state reverses from wherever it is |
+| A pie or sub-pie opens under the pointer | the needle shows; the hover state arms only after the pointer has left the dial ring once |
+| Highlight on a tool slot | signal red, strength rises with distance past the ring and closeness to the needle; the selected slot keeps at least 30% |
+| Highlight on a sub-pie slot | the same strength in grey |
+| Pointer rests on a sub-pie slot | signal red fills the slot away from the centre over 100 ms and its outline turns red: east slots fill left to right, west right to left, north upward, south downward, diagonals like their side |
+| The fill completes | the sub-pie opens, centred on the pointer |
+| Pointer rests on a slot with a clipped label | after 400 ms the label slides left at 40 px/s until its end shows |
+| Pointer leaves that slot | the label eases back, time constant 60 ms |
+| Pie opens | every part fades in over 120 ms, ease-out cubic; slots and labels move out from 88% of their distance to the centre; the dial grows from 92% |
+| Pie closes | the same, reversed; the dial keeps its state, so a pie closed from the centre fades out as the disc and the needle does not return |
 | Click on a tool slot | runs the tool and closes the pie |
 | Press, drag over 250 ms, release on a slot | same as a click |
 | Click on the dial, Esc or right-click | back one level; closes the pie at the root |
 | Return from a sub-pie | the slot that opened it does not reopen until the pointer leaves it |
 | Opening a sub-pie | the needle keeps its heading; it does not reset to north |
+| Opening a sub-pie | the parent pie fades and shrinks to 90% around the pointer while the sub-pie opens, both in 120 ms |
+| Back from a sub-pie | the sub-pie fades and shrinks to 88% around its centre while the parent opens |
+| Reduced motion | every change is immediate |
 
-On the canvas today: the needle and arrow follow the pointer without easing, the highlight and the selection by bearing work as above, a click on a sub-pie slot opens it and a click on the dial goes back.
-Not on the canvas: opening a sub-pie on hover, press-drag-release, Esc and right-click, and the hold after returning from a sub-pie.
+On the canvas today: the highlight and the selection by bearing, the centre hover state, slot width and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
+A sub-pie left through its centre fades out as the disc.
+The pie that arrives shows the needle until the pointer has been outside its ring.
+The needle and arrow follow the pointer without easing.
+A sub-pie opens in the middle of the canvas, not on the pointer.
+A slot that is under the pointer when its pie arrives does not open until the pointer has left it.
+Reduced motion is Blender's Preferences > Interface > Reduce Motion; the 100 ms before a sub-pie opens stay.
+With it a long label jumps to its end after the 400 ms.
+Not on the canvas: the closing motion, since nothing closes a pie there, press-drag-release, Esc and right-click.
 A click on a tool or operator slot does nothing.
 
 ## Editor host

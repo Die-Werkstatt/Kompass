@@ -4,8 +4,8 @@
 
 import bpy
 
-from ..core import model
-from . import storage
+from ..core import edit, model
+from . import keymaps, storage
 
 # The pie on the canvas is the last of these ids; before it, the pies whose
 # sub-pie slots led there.
@@ -28,8 +28,13 @@ def shown():
     return storage.pies[0] if storage.pies else None
 
 
+def depth():
+    """Return how many pies deep the canvas is: 1 for a pie, 2 for its sub-pie."""
+    return len(_trail) if _trail and shown().id == _trail[-1] else 1
+
+
 def in_sub_pie():
-    return len(_trail) > 1 and shown().id == _trail[-1]
+    return depth() > 1
 
 
 class KOMPASS_OT_editor_open(bpy.types.Operator):
@@ -60,6 +65,14 @@ def _tree():
     return bpy.data.node_groups.new(KompassTree.bl_label, KompassTree.bl_idname)
 
 
+def redraw(context):
+    """Redraw every Kompass editor. The pie list is drawn in each."""
+    for window in context.window_manager.windows:
+        for area in window.screen.areas:
+            if area.ui_type == KompassTree.bl_idname:
+                area.tag_redraw()
+
+
 class KOMPASS_OT_editor_show(bpy.types.Operator):
     """Show this pie on the canvas"""
 
@@ -71,7 +84,7 @@ class KOMPASS_OT_editor_show(bpy.types.Operator):
 
     def execute(self, context):
         _trail[:] = [self.pie]
-        context.area.tag_redraw()
+        redraw(context)
         return {"FINISHED"}
 
 
@@ -87,6 +100,83 @@ def click(slot):
         _trail[:] = [*(_trail or [pie.id]), pie.slots[slot].pie]
 
 
+class _Edit:
+    """An operator that changes the stored pies."""
+
+    bl_options = {"INTERNAL"}  # noqa: RUF012
+
+    @classmethod
+    def poll(cls, _context):
+        return shown() is not None
+
+    def execute(self, context):
+        try:
+            keymaps.store(self.edited(storage.pies, shown()))
+        # InvalidPieFile, for an empty name, is a ValueError.
+        except (OSError, ValueError) as error:
+            self.report({"ERROR"}, f"Nothing was changed: {error}")
+            return {"CANCELLED"}
+        redraw(context)
+        return {"FINISHED"}
+
+
+class KOMPASS_OT_pie_add(_Edit, bpy.types.Operator):
+    """Add an empty pie"""
+
+    bl_idname = "kompass.pie_add"
+    bl_label = "New Pie"
+
+    @classmethod
+    def poll(cls, _context):
+        return True
+
+    def edited(self, pies, _pie):
+        pies = edit.add(pies, "Pie")
+        _trail[:] = [pies[-1].id]
+        return pies
+
+
+class KOMPASS_OT_pie_rename(_Edit, bpy.types.Operator):
+    """Give the pie on the canvas another name"""
+
+    bl_idname = "kompass.pie_rename"
+    bl_label = "Rename Pie"
+
+    name: bpy.props.StringProperty(name="Name")
+
+    def invoke(self, context, _event):
+        self.name = shown().name
+        return context.window_manager.invoke_props_dialog(self)
+
+    def edited(self, pies, pie):
+        return edit.rename(pies, pie.id, self.name.strip())
+
+
+class KOMPASS_OT_pie_duplicate(_Edit, bpy.types.Operator):
+    """Copy the pie on the canvas. The copy has no shortcut"""
+
+    bl_idname = "kompass.pie_duplicate"
+    bl_label = "Duplicate Pie"
+
+    def edited(self, pies, pie):
+        pies = edit.duplicate(pies, pie.id)
+        _trail[:] = [pies[pies.index(pie) + 1].id]
+        return pies
+
+
+class KOMPASS_OT_pie_delete(_Edit, bpy.types.Operator):
+    """Delete the pie on the canvas. Slots that open it become empty"""
+
+    bl_idname = "kompass.pie_delete"
+    bl_label = "Delete Pie"
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
+    def edited(self, pies, pie):
+        return edit.delete(pies, pie.id)
+
+
 class KOMPASS_PT_pies(bpy.types.Panel):
     bl_label = "Pies"
     bl_space_type = "NODE_EDITOR"
@@ -98,6 +188,11 @@ class KOMPASS_PT_pies(bpy.types.Panel):
         return context.space_data.tree_type == KompassTree.bl_idname
 
     def draw(self, _context):
+        row = self.layout.row(align=True)
+        row.operator(KOMPASS_OT_pie_add.bl_idname, text="New", icon="ADD")
+        row.operator(KOMPASS_OT_pie_duplicate.bl_idname, text="", icon="DUPLICATE")
+        row.operator(KOMPASS_OT_pie_rename.bl_idname, text="", icon="GREASEPENCIL")
+        row.operator(KOMPASS_OT_pie_delete.bl_idname, text="", icon="TRASH")
         column = self.layout.column(align=True)
         on_canvas = shown()
         for pie in storage.pies:

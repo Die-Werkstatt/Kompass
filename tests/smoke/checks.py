@@ -56,6 +56,27 @@ assert len(storage.pies) == 4
 reenable()
 assert len(storage.pies) == 4
 
+# The editor's pie operators change the pie on the canvas and the file.
+editor = importlib.import_module(addon + ".blender.editor")
+assert bpy.ops.kompass.pie_add() == {"FINISHED"}
+assert editor.shown().id == "pie"
+assert bpy.ops.kompass.pie_rename(name=" Edges ") == {"FINISHED"}
+assert bpy.ops.kompass.pie_duplicate() == {"FINISHED"}
+assert (editor.shown().id, editor.shown().name) == ("pie-2", "Edges Copy")
+assert bpy.ops.kompass.pie_delete() == {"FINISHED"}
+assert [pie.name for pie in storage.pies][-1] == "Edges"
+try:
+    bpy.ops.kompass.pie_rename(name=" ")
+except RuntimeError as error:
+    assert "empty name" in str(error), error
+else:
+    raise AssertionError("a pie was given an empty name")
+bpy.ops.kompass.editor_show(pie="pie")
+assert bpy.ops.kompass.pie_delete() == {"FINISHED"}
+assert len(storage.pies) == 4
+reenable()
+assert len(storage.pies) == 4
+
 # A file that is not a pie file changes nothing and says why.
 exported.write_text('{"schema_version": 2, "pies": []}', encoding="utf-8")
 try:

@@ -25,6 +25,7 @@ names = bpy.context.preferences.addons.keys()
 storage = importlib.import_module(addon + ".blender.storage")
 keymaps = importlib.import_module(addon + ".blender.keymaps")
 editor = importlib.import_module(addon + ".blender.editor")
+layout = importlib.import_module(addon + ".core.layout")
 
 
 def view3d():
@@ -154,6 +155,48 @@ def steps():
     # A click on the dial goes back.
     yield from click(x, y)
     assert editor.shown().id == "select" and not editor.in_sub_pie()
+
+    # Resting on the Mesh slot opens it without a click. Mesh has a sub-pie
+    # in the same slot, which stays shut until the pointer has left it.
+    left, bottom = layout.slot_corner(layout.BEARINGS.index(180))
+    south = x + int(left) + layout.SLOT_WIDTH // 2, y + int(bottom) + 10
+    editor_window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
+    yield PAUSE / 2
+    editor_window.event_simulate(
+        type="MOUSEMOVE", value="NOTHING", **dict(zip("xy", south))
+    )
+    yield PAUSE
+    assert editor.shown().id == "mesh" and editor.depth() == 2, editor.shown().id
+    editor_window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
+    yield PAUSE / 2
+    editor_window.event_simulate(
+        type="MOUSEMOVE", value="NOTHING", **dict(zip("xy", south))
+    )
+    yield PAUSE
+    assert editor.shown().id == "broken" and editor.depth() == 3, editor.shown().id
+    yield from click(x, y)
+    yield from click(x, y)
+    assert editor.shown().id == "select" and editor.depth() == 1
+
+    # A pointer that leaves the canvas before the delay is over opens nothing.
+    editor_window.event_simulate(
+        type="MOUSEMOVE", value="NOTHING", **dict(zip("xy", south))
+    )
+    editor_window.event_simulate(
+        type="MOUSEMOVE", value="NOTHING", x=sidebar.x + sidebar.width // 2, y=y
+    )
+    yield PAUSE
+    assert editor.shown().id == "select", editor.shown().id
+
+    # With Blender's Reduce Motion the pie still opens after the delay.
+    bpy.context.preferences.view.use_reduce_motion = True
+    editor_window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
+    yield PAUSE / 2
+    editor_window.event_simulate(
+        type="MOUSEMOVE", value="NOTHING", **dict(zip("xy", south))
+    )
+    yield PAUSE
+    assert editor.shown().id == "mesh", editor.shown().id
 
     # Disabling with the editor open leaves nothing registered.
     addon_utils.disable(addon)

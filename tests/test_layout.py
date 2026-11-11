@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from kompass.core import layout
@@ -82,5 +84,98 @@ def test_ticks_every_five_degrees_with_eight_long_ones():
 
 def test_fit_shrinks_the_pie_to_the_smaller_side():
     assert layout.fit(2000, 2000) == 1
-    assert layout.fit(282, 2000) == pytest.approx(0.5)
+    assert layout.fit(342, 2000) == pytest.approx(0.5)
     assert layout.fit(2000, 105) == pytest.approx(0.25)
+
+
+def test_slots_open_from_closer_to_the_centre():
+    for slot in range(8):
+        near, far = (
+            layout.slot_corner(slot, pull=layout.OPEN_PULL),
+            layout.slot_corner(slot),
+        )
+        x, y = layout.point(1, layout.BEARINGS[slot])
+        # The slot has moved outwards along its bearing.
+        moved = (far[0] - near[0]) * x + (far[1] - near[1]) * y
+        assert moved == pytest.approx(layout.PIE_RADIUS * (1 - layout.OPEN_PULL))
+
+
+def test_slot_under_is_the_box_not_the_bearing():
+    widths = [layout.SLOT_WIDTH] * 8
+    left, bottom = layout.slot_corner(E)
+    assert layout.slot_under(left + 1, bottom + 1, widths) == E
+    assert layout.slot_under(left - 1, bottom + 1, widths) is None
+    # Selected by bearing, but past the end of the box.
+    assert layout.slot_at(left + layout.SLOT_WIDTH + 5, 0) == E
+    assert layout.slot_under(left + layout.SLOT_WIDTH + 5, 0, widths) is None
+    # A wider slot reaches further.
+    widths[E] = layout.SLOT_MAX_WIDTH
+    assert layout.slot_under(left + layout.SLOT_WIDTH + 5, 0, widths) == E
+
+
+def test_slot_width_follows_the_label():
+    assert layout.slot_width(40) == layout.SLOT_WIDTH
+    assert layout.slot_width(110.2) == 111 + 2 * layout.LABEL_PAD
+    assert layout.slot_width(400) == layout.SLOT_MAX_WIDTH
+
+
+def test_wider_slots_grow_away_from_the_centre():
+    wide = layout.SLOT_MAX_WIDTH
+    # East keeps its left side, west its right, the others their middle.
+    assert layout.slot_corner(E, wide) == layout.slot_corner(E)
+    assert layout.slot_corner(W, wide)[0] + wide == pytest.approx(
+        layout.slot_corner(W)[0] + layout.SLOT_WIDTH
+    )
+    for slot in (N, S, NE, SW):
+        middle = layout.slot_corner(slot)[0] + layout.SLOT_WIDTH / 2
+        assert layout.slot_corner(slot, wide)[0] + wide / 2 == pytest.approx(middle)
+
+
+def test_long_label_slides_after_a_wait():
+    assert layout.slide(0, 30, 0.2, 0.1) == 0
+    assert layout.slide(0, 30, 0.5, 0.1) == pytest.approx(4)
+    assert layout.slide(28, 30, 2, 0.1) == 30
+
+
+def test_long_label_eases_back():
+    back = layout.slide(30, 30, None, 0.06)
+    assert back == pytest.approx(30 / math.e)
+    assert layout.slide(0.2, 30, None, 0.01) == 0
+
+
+def test_fill_grows_away_from_the_centre():
+    assert layout.filled(N, 0.25) == (0, 0, 1, 0.25)
+    assert layout.filled(S, 0.25) == (0, 0.75, 1, 1)
+    for slot in (E, NE, SE):
+        assert layout.filled(slot, 0.25) == (0, 0, 0.25, 1)
+    for slot in (W, NW, SW):
+        assert layout.filled(slot, 0.25) == (0.75, 0, 1, 1)
+
+
+def test_hover_shortens_the_major_ticks():
+    for hover, length in ((0, layout.MAJOR_TICK), (1, layout.TICK)):
+        lengths = {
+            outer - inner for _, inner, outer, major in layout.ticks(50, hover) if major
+        }
+        assert lengths == {length}
+    minor = {
+        outer - inner for _, inner, outer, major in layout.ticks(50, 1) if not major
+    }
+    assert minor == {layout.TICK}
+
+
+def test_easing_starts_and_ends_at_rest():
+    for ease in (layout.ease_out, layout.ease_in_out):
+        assert ease(0) == 0 and ease(1) == 1
+        assert [ease(n / 10) for n in range(11)] == sorted(
+            ease(n / 10) for n in range(11)
+        )
+    assert layout.ease_in_out(0.5) == pytest.approx(0.5)
+    assert layout.ease_out(0.5) == pytest.approx(0.875)
+
+
+def test_toward_stops_at_the_target():
+    assert layout.toward(0.2, 1, 0.5) == pytest.approx(0.7)
+    assert layout.toward(0.8, 1, 0.5) == 1
+    assert layout.toward(0.8, 0, 0.5) == pytest.approx(0.3)
+    assert layout.toward(0.3, 0, 0.5) == 0
