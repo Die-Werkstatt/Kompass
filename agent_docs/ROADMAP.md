@@ -10,7 +10,8 @@ list unless it says otherwise.
 
 Milestone 0, foundations (#4).
 
-- [ ] Manual test checklist in `docs/` for what only a person can judge (#21)
+- [ ] Run `docs/manual-test.md` by hand in Blender 5.2 for the first time
+      (Sandro)
 
 Still to decide in #10: the canvas font and the icon licence. Until then the
 plan assumes Blender's own UI font and CC0 icons.
