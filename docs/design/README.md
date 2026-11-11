@@ -14,6 +14,9 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 |---|---|
 | Slot labels | Barlow SemiBold, capitals, tracking 0.08 em |
 | Slots | square corners; ground `#0E0E0E`, outline `#2C2C2C` |
+| Slot placement | one rule for every slot count and width: the box sits on the ring at its bearing, then moves out by half its width times the bearing's sine and half its height times its cosine |
+| 8 slots | bearings every 45°, ring 150 px |
+| 12 slots | bearings 0°, 42°, 68°, 90°, 112°, 138°, 180°, 222°, 248°, 270°, 292°, 318°, ring 170 px: every pair of 120 px neighbours is 37 px apart. Equal 30° steps would leave about 15 px near north and south and 81 px near east and west, because wide boxes sit side by side there and stack here |
 | Slot width | at least 120 px; grows to fit the label plus 12 px padding each side, up to 180 px |
 | Long label | clipped at the padding |
 | Sub-pie marker | signal-red triangle in a slot's top-right corner |
@@ -35,13 +38,13 @@ It differs from the table above in the font, which is Blender's interface font w
 |---|---|
 | Pointer moves | needle and outer arrow follow it; easing time constant 45 ms, shortest arc |
 | Pointer within 8 px of the centre | needle holds its last heading |
-| Pointer outside the dial ring | the nearest slot is selected |
+| Pointer outside the dial ring | the slot with the nearest bearing is selected; with 12 slots the slices near east and west are narrower |
 | Pointer inside the dial ring | no slot is selected; the dial turns to its hover state in 120 ms, ease-in-out cubic |
 | Pointer leaves the dial ring | the hover state reverses from wherever it is |
 | A pie or sub-pie opens under the pointer | the needle shows; the hover state arms only after the pointer has left the dial ring once |
 | Highlight on a tool slot | signal red, strength rises with distance past the ring and closeness to the needle; the selected slot keeps at least 30% |
 | Highlight on a sub-pie slot | the same strength in grey |
-| Pointer rests on a sub-pie slot | signal red fills the slot away from the centre over 100 ms and its outline turns red: east slots fill left to right, west right to left, north upward, south downward, diagonals like their side |
+| Pointer rests on a sub-pie slot | signal red fills the slot away from the centre over 100 ms and its outline turns red: east slots fill left to right, west right to left, north upward, south downward, other slots along the stronger axis of their bearing, so 42° fills upward and 45° and 68° sideways |
 | The fill completes | the sub-pie opens, centred on the pointer |
 | Pointer rests on a slot with a clipped label | after 400 ms the label slides left at 40 px/s until its end shows |
 | Pointer leaves that slot | the label eases back, time constant 60 ms |
