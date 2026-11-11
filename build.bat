@@ -1,5 +1,6 @@
 @echo off
-rem Builds kompass-<version>.zip in this folder. Does not install it.
+rem Builds kompass-<version>.zip in this folder.
+rem With "install" it also installs and enables it in the user_default repository.
 setlocal
 cd /d "%~dp0"
 
@@ -19,3 +20,15 @@ exit /b 1
 :build
 echo Building with "%BLENDER%"
 "%BLENDER%" --command extension build --source-dir kompass
+if errorlevel 1 exit /b 1
+if /i not "%~1"=="install" exit /b 0
+
+rem An open Blender drops the new extension from the preferences it saves.
+tasklist /fi "imagename eq blender.exe" | find /i "blender.exe" >nul
+if not errorlevel 1 (
+    echo Close Blender and run this again.
+    exit /b 1
+)
+
+for /f "tokens=3" %%V in ('findstr /b "version" kompass\blender_manifest.toml') do set "VERSION=%%~V"
+"%BLENDER%" --command extension install-file -r user_default --enable "kompass-%VERSION%.zip"
