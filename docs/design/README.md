@@ -41,4 +41,6 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 
 - Signal red for the selected slot differs from Blender, where selection follows the user's theme.
   Sandro chose red on 10 Nov 2026.
-- Whether the native pie can open sub-pies on hover is not yet checked against Blender's source.
+- The native pie cannot open sub-pies on hover: Blender's pie handler has no hover timer.
+  In Lite a sub-pie opens when its slot is chosen, centred on the pointer, and then waits for a click.
+  Checked in Blender 5.2.4 on 11 Nov 2026.

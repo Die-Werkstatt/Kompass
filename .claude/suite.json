@@ -19,6 +19,10 @@
         "run": "python3 tests/smoke/run.py"
       },
       {
+        "name": "Blender interface test",
+        "run": "xvfb-run -a python3 tests/smoke/run.py --interface"
+      },
+      {
         "name": "template conflicts",
         "run": "! git grep -nE '^(<<<<<<< before updating|>>>>>>> after updating)$'"
       }

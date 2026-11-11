@@ -1,5 +1,5 @@
-# Project-owned. Unit tests, then the smoke test in the minimum supported
-# Blender.
+# Project-owned. Unit tests, then the smoke test and the interface test in the
+# minimum supported Blender.
 name: checks
 
 on:
@@ -35,7 +35,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libgl1 libice6 libsm6 libx11-6 libxext6 libxfixes3 libxi6 libxkbcommon0 libxrender1
+            libgl1 libice6 libsm6 libx11-6 libxext6 libxfixes3 libxi6 libxkbcommon0 libxrender1 \
+            libgl1-mesa-dri xvfb
           archive="blender-${BLENDER_VERSION}-linux-x64.tar.xz"
           curl -sSfL -o "$archive" "https://download.blender.org/release/Blender${BLENDER_VERSION%.*}/$archive"
           echo "${BLENDER_SHA256}  $archive" | sha256sum -c -
@@ -45,3 +46,6 @@ jobs:
           echo "$RUNNER_TEMP/blender" >> "$GITHUB_PATH"
 
       - run: python3 tests/smoke/run.py
+
+      # Blender's window on a virtual display, drawn by Mesa in software.
+      - run: xvfb-run -a python3 tests/smoke/run.py --interface

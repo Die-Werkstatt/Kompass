@@ -1,14 +1,11 @@
 # Kompass
 
-Kompass is a Blender add-on for artists who want their own pie menus: each pie
-holds up to 8 tools, operators or sub-pies and opens on its own shortcut. It is
-distributed as a Blender extension under GPL-3.0-or-later. The repo holds the
-installable extension, the pie data model and the stored pie file; nothing
-opens a pie yet (see `ROADMAP.md`).
+Kompass is a Blender extension (GPL-3.0-or-later) for artists who want their
+own pie menus: each pie holds up to 8 tools, operators or sub-pies and opens
+on its own shortcut. Pies are still made by editing the pie file.
 
 ## Stack
-- Blender 5.2 LTS is the minimum version (`blender_version_min` in the
-  manifest). It ships Python 3.13, so add-on code may use 3.13 syntax.
+- Blender 5.2 LTS is the minimum version. It ships Python 3.13.
 - Python standard library only inside the add-on. No bundled wheels.
 - pytest for unit tests, ruff through aislop for lint.
 
@@ -18,10 +15,12 @@ opens a pie yet (see `ROADMAP.md`).
   - `core/`: the pie model, validation and JSON format (`model.py`), and
     reading and writing a pie file on disk (`store.py`).
   - `blender/`: everything that needs `bpy`. `storage.py` holds the pies
-    loaded from `pies.json`; `preferences.py` shows their count, the file path
-    and any load problem.
+    loaded from `pies.json`, `pie.py` opens one as a native pie menu,
+    `keymaps.py` gives each its shortcut, `tools.py` reads Blender's tool
+    list, `preferences.py` shows the pie count, the file path and problems.
 - `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
-  pie file. `tests/smoke/` runs inside Blender.
+  pie file. `tests/smoke/` runs inside Blender: `checks.py` without a window,
+  `interface.py` with one, pressing shortcuts through simulated events.
 - `docs/brand/`, `docs/design/`: logo, brand notes and the pie design. Not
   shipped in the extension.
 - `agent_docs/`: these instructions, the roadmap and the dependency inventory.
@@ -42,6 +41,8 @@ opens a pie yet (see `ROADMAP.md`).
   `__file__`. Blender keeps that directory across upgrades and deletes it,
   with `pies.json`, on uninstall.
 - `wm.keyconfigs.addon` is `None` in background mode; check before use.
+- `bl_ui` is not documented API: only `blender/tools.py` imports it.
+- A slot whose tool or operator is missing draws disabled and never raises.
 - No `eval` or `exec`.
 - Bundled images, icons and fonts must be CC0 (extensions.blender.org terms
   1.2). The files in `docs/brand/` stay out of `kompass/`.
@@ -52,12 +53,12 @@ opens a pie yet (see `ROADMAP.md`).
 python3 .claude/suite-check.py   # every health check in .claude/suite.json
 pytest -q                        # unit tests
 python3 tests/smoke/run.py       # build, install and check in Blender
+xvfb-run -a python3 tests/smoke/run.py --interface   # the same, with a window
 blender --command extension build --source-dir kompass   # kompass-<version>.zip
 ```
 
-The smoke test installs into a temporary Blender profile, never the real one.
-It is skipped where `blender` is not on `PATH`. CI
-(`.github/workflows/checks.yml`) downloads Blender 5.2 and runs it.
+Both Blender tests use a temporary profile and are skipped where `blender` or
+`xvfb-run` is missing. CI (`.github/workflows/checks.yml`) runs both.
 
 ## Task tracking
 Work is tracked in GitHub Issues. Every issue carries a `type:`, an `area:` and

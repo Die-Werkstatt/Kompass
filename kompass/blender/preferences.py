@@ -3,7 +3,7 @@
 
 import bpy
 
-from . import ADDON, storage
+from . import ADDON, keymaps, storage
 
 
 class KompassPreferences(bpy.types.AddonPreferences):
@@ -13,5 +13,5 @@ class KompassPreferences(bpy.types.AddonPreferences):
         layout = self.layout
         layout.label(text=f"Pies: {len(storage.pies)}")
         layout.label(text=str(storage.path()), icon="FILE")
-        if storage.problem:
-            layout.label(text=storage.problem, icon="ERROR")
+        for problem in filter(None, [storage.problem, *keymaps.problems]):
+            layout.label(text=problem, icon="ERROR")
