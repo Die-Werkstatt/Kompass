@@ -22,8 +22,8 @@ on its own shortcut. Pies are still made by editing the pie file.
 - `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
   pie file. `tests/smoke/` runs inside Blender: `checks.py` without a window,
   `interface.py` with one, pressing shortcuts through simulated events.
-- `docs/brand/`, `docs/design/`: logo, brand notes and the pie design. Not
-  shipped in the extension.
+- `docs/`: logo and brand notes (`brand/`), the pie design (`design/`) and
+  the checklist a person runs before a release (`manual-test.md`).
 - `agent_docs/`: these instructions, the roadmap and the dependency inventory.
 
 ## Architecture rules
