@@ -107,6 +107,7 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     <dt>Sub-pie slot</dt><dd>Stone outline, grey proximity highlight. Resting on it wipes signal orange across it, away from the centre (east slots left to right, west right to left, north upward, south downward), over the sub-pie delay; the sub-pie opens when it is full.</dd>
     <dt>Sub-pie</dt><dd>The parent pie fades and shrinks to 90% toward the pointer while the sub-pie opens there, both in the same 120 ms. Back reverses it: the sub-pie shrinks to 88% around its own centre and fades as the parent opens.</dd>
     <dt>Closing</dt><dd>The dial keeps the state it had when closing began: closed from the centre, it fades out as the disc, and the needle does not return.</dd>
+    <dt>Far click</dt><dd>A click that is neither on the dial nor within 24 px of a slot closes the pie. Native Blender pies pick by direction at any distance instead.</dd>
     <dt>Hit area</dt><dd>The dial's outer ring, the same area that already runs back or close.</dd>
   </dl>
 </div>
@@ -241,7 +242,7 @@ input[type=range] { accent-color: var(--signal); width: 160px }
         y = p[1] - bh / 2 + (deg === 0 ? -bh * 0.5 : deg === 180 ? bh * 0.5 : 0);
         if (deg === 90) x = p[0] - 4; if (deg === 270) x = p[0] - sw + 4;
       }
-      state.rects.push({ x: x, y: y, w: sw, h: bh, sub: it.sub });
+      state.rects.push({ x: x, y: y, w: sw, h: bh, sub: it.sub, deg: deg });
       var hot = deg === dir;
       var near = state.shown === null ? 0 : Math.max(0, 1 - Math.abs(((state.shown - deg) % 360 + 540) % 360 - 180) / (360 / Math.max(n, 2)));
       var amt = near * near * radial * (hot ? 1 : 0.55);
@@ -376,7 +377,12 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     var p = local(e); stage.focus();
     if (!state.open || state.closing) { openAt(p[0], p[1]); return; }
     track(p[0], p[1]);
-    if (!choose()) back();
+    // On the dial: back or close. Within 24 px of a slot: that slot. Anywhere else: the pie closes.
+    if (Math.hypot(p[0] - state.ccx, p[1] - state.ccy) <= state.innerR) { back(); return; }
+    var near = null, nd = 24;
+    (state.rects || []).forEach(function (r) { var d = Math.hypot(Math.max(r.x - p[0], 0, p[0] - r.x - r.w), Math.max(r.y - p[1], 0, p[1] - r.y - r.h)); if (d <= nd) { nd = d; near = r; } });
+    if (!near) { close(); return; }
+    state.dir = near.deg; choose();
   });
   stage.addEventListener("pointermove", function (e) {
     if (state.scrub !== null) { state.scrub = null; state.t = scrub.value / 100; }

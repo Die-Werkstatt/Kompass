@@ -52,6 +52,7 @@ It differs from the table above in the font, which is Blender's interface font w
 | Click on a tool slot | runs the tool and closes the pie |
 | Press, drag over 250 ms, release on a slot | same as a click |
 | Click on the dial, Esc or right-click | back one level; closes the pie at the root |
+| Click neither on the dial nor within 24 px of a slot | closes the pie; native Blender pies pick by direction at any distance instead (Sandro, 11 Nov 2026) |
 | Return from a sub-pie | the slot that opened it does not reopen until the pointer leaves it |
 | Opening a sub-pie | the needle keeps its heading; it does not reset to north |
 | Opening a sub-pie | the parent pie fades and shrinks to 90% around the pointer while the sub-pie opens, both in 120 ms |
