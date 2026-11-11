@@ -1,4 +1,4 @@
-# Project-owned. Deploys site/ to Cloudflare Workers with the latest release's
+# Project-owned. Deploys site/ to Cloudflare Pages with the latest release's
 # .zip and its index.json. Publishing a release first builds that .zip from the
 # tag and attaches it to the release.
 name: site
@@ -76,4 +76,10 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx --yes wrangler@4.154.0 deploy
+        # The first run creates the Pages project. --branch main makes every
+        # deploy, including one from a release tag, the production one.
+        run: |
+          if ! npx --yes wrangler@4.154.0 pages project list --json | grep -q '"kompass-site"'; then
+            npx --yes wrangler@4.154.0 pages project create kompass-site --production-branch main
+          fi
+          npx --yes wrangler@4.154.0 pages deploy --branch main
