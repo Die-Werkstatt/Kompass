@@ -222,6 +222,20 @@ def steps():
     assert bpy.ops.kompass.slot_label(label="") == {"FINISHED"}
     assert editor.shown().slots[west].label is None
 
+    # The slot takes one of Blender's icons and loses it for NONE.
+    assert bpy.ops.kompass.slot_icon(icon="MOD_SUBSURF") == {"FINISHED"}
+    assert editor.shown().slots[west].icon == "MOD_SUBSURF"
+    assert bpy.ops.kompass.slot_icon(icon="NONE") == {"FINISHED"}
+    assert editor.shown().slots[west].icon is None
+
+    # The pie goes to 12 slots and back; west of 8 is slot 10 of 12.
+    eight = editor.shown().slots
+    assert bpy.ops.kompass.pie_slots(count=12) == {"FINISHED"}
+    assert editor.shown().slots[9] == eight[west] and editor.selected() is None
+    assert bpy.ops.kompass.pie_slots(count=8) == {"FINISHED"}
+    assert editor.shown().slots == eight
+    editor.select(west)
+
     # Settings shows the operator's settings on a keymap item that no key
     # reaches. OK stores the ones that were set and removes the item.
     with bpy.context.temp_override(**here):

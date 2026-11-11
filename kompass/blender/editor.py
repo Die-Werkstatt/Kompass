@@ -241,6 +241,20 @@ class KOMPASS_OT_pie_delete(Edit, bpy.types.Operator):
         return edit.delete(pies, pie.id)
 
 
+class KOMPASS_OT_pie_slots(Edit, bpy.types.Operator):
+    """Give the pie on the canvas this many slots, each kept in its direction"""
+
+    bl_idname = "kompass.pie_slots"
+    bl_label = "Slot Count"
+
+    count: bpy.props.IntProperty()
+
+    def edited(self, pies, pie):
+        # Slots are numbered differently in a pie of another size.
+        select(None)
+        return edit.resize(pies, pie.id, self.count)
+
+
 class KOMPASS_PT_pies(bpy.types.Panel):
     bl_label = "Pies"
     bl_space_type = "NODE_EDITOR"
@@ -260,8 +274,18 @@ class KOMPASS_PT_pies(bpy.types.Panel):
         row.operator(KOMPASS_OT_pie_duplicate.bl_idname, text="", icon="DUPLICATE")
         row.operator(KOMPASS_OT_pie_rename.bl_idname, text="", icon="GREASEPENCIL")
         row.operator(KOMPASS_OT_pie_delete.bl_idname, text="", icon="TRASH")
-        column = self.layout.column(align=True)
         on_canvas = shown()
+        if on_canvas is not None:
+            row = self.layout.row(align=True)
+            row.label(text="Slots")
+            for count in (model.NATIVE_SLOTS, model.WIDE_SLOTS):
+                button = row.operator(
+                    KOMPASS_OT_pie_slots.bl_idname,
+                    text=str(count),
+                    depress=len(on_canvas.slots) == count,
+                )
+                button.count = count
+        column = self.layout.column(align=True)
         for pie in storage.pies:
             button = column.operator(
                 KOMPASS_OT_editor_show.bl_idname,

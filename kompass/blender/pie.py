@@ -7,7 +7,8 @@ import bpy
 from ..core import model
 from . import storage, tools
 
-_ICONS = frozenset(
+# The icons a button can carry, "NONE" first.
+ICONS = tuple(
     bpy.types.UILayout.bl_rna.functions["operator"].parameters["icon"].enum_items.keys()
 )
 
@@ -50,7 +51,7 @@ def _draw(layout, context, pie):
 
 
 def _draw_slot(row, context, slot):
-    icon = slot.icon if slot.icon in _ICONS else "NONE"
+    icon = slot.icon if slot.icon in ICONS else "NONE"
     if isinstance(slot, model.ToolSlot):
         label = tools.label(context, slot.space_type, slot.tool)
         if label is None:

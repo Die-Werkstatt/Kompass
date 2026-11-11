@@ -56,10 +56,15 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       nothing changes.
 - [ ] Click a slot, Replace, type "subdiv", pick Subdivide (mesh.subdivide):
       the slot reads SUBDIVIDE. Click an empty slot: the menu says Add.
+- [ ] Slots 12: the pie has 12 slots and every filled slot is where it was.
+      Slots 8: it has 8 again. With something in slot 3 of the 12, Slots 8
+      reports that slot 3 has no place and changes nothing.
 - [ ] Click a slot, New Sub-Pie: the slot reads SUB-PIE with a red corner and
       the pie list has a Sub-Pie. Click a slot, Remove: it is empty.
 - [ ] Click a filled slot, Label, type a name, OK: the slot reads that name.
       Label again with an empty field: it reads Blender's name.
+- [ ] Click a filled slot, Icon, search and choose one: Blender's pie shows it
+      beside the slot's name. Icon again, None: it is gone.
 - [ ] Click a slot that holds an operator, Settings: Blender's settings for the
       operator show. Change one, OK, open the pie on its shortcut and choose
       the slot: the operator runs with that setting.

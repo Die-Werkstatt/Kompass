@@ -4,7 +4,8 @@
 import re
 from dataclasses import replace
 
-from .model import NATIVE_SLOTS, Pie, SubPieSlot
+from .layout import bearings
+from .model import NATIVE_SLOTS, Pie, SubPieSlot, slot_name
 
 
 def free_id(wanted, taken):
@@ -82,6 +83,36 @@ def _placed(pies, pie_id, contents):
         else pie
         for pie in pies
     )
+
+
+def resize(pies, pie_id, count):
+    """Return the pies with the pie at that many slots, each content in the
+    slot of its old direction.
+
+    Raises ValueError when a slot that has no such direction left is filled.
+    """
+    pie = next(pie for pie in pies if pie.id == pie_id)
+    places = bearings(count)
+    slots = [None] * count
+    for index, (bearing, content) in enumerate(
+        zip(bearings(len(pie.slots)), pie.slots)
+    ):
+        # A diagonal is 45 degrees in a pie of 8 and 42 in a pie of 12.
+        near = min(range(count), key=lambda place: _turn(places[place], bearing))
+        if _turn(places[near], bearing) <= 3:
+            slots[near] = content
+        elif content is not None:
+            raise ValueError(
+                f"slot {slot_name(pie, index)} has no place in a pie of {count} slots"
+            )
+    return tuple(
+        replace(other, slots=tuple(slots)) if other is pie else other for other in pies
+    )
+
+
+def _turn(bearing, other):
+    """Return the degrees between two bearings, at most 180."""
+    return abs((bearing - other + 180) % 360 - 180)
 
 
 def bind(pies, pie_id, shortcut):

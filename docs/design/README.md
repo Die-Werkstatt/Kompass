@@ -61,7 +61,7 @@ It differs from the table above in the font, which is Blender's interface font w
 
 The editor's canvas shows this behaviour while Preview is on.
 With it off nothing opens on hover.
-A click selects a slot, drawn with a 2 px white outline, and opens its menu: Add or Replace from a search, New Sub-Pie, Open, Label, Settings for an operator, Swap With and Remove.
+A click selects a slot, drawn with a 2 px white outline, and opens its menu: Add or Replace from a search, New Sub-Pie, Open, Label, Icon, Settings for an operator, Swap With and Remove.
 A filled slot that is pressed and moved more than 6 px is dragged: its box follows 12 px below and right of the pointer, the slot a release would swap it with has a 2 px signal-red outline, and a release anywhere else changes nothing.
 The canvas is black (Sandro, 11 Nov 2026); slots keep their ground.
 On the canvas today: the highlight and the selection by bearing, the centre hover state, slot width and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
