@@ -26,11 +26,9 @@ Milestone 1, pies open from shortcuts (#5).
 
 ## Later
 
-- [ ] Milestone 2, editor: canvas (#18), then pie list, search and
-      pick-and-place (#19), then starter pies (#20, second half). Host and
-      input as the spike found workable (`docs/design/README.md`, Editor
-      host): a Kompass node tree type, slots as Kompass-drawn gizmos, the
-      dial in a backdrop draw handler, a modal operator only while a tool is
-      carried. Sandro chose this host on 11 Nov 2026.
+- [ ] Milestone 2, editor. The canvas shows a pie (#18). Left in #18: needle
+      easing, sub-pie on hover, the canvas font (#10), tool icons. Then pie
+      list, search and pick-and-place with a modal operator only while a
+      tool is carried (#19), then starter pies (#20, second half).
 - [ ] Milestone 3, release Lite (#7)
 - [ ] Milestone 4, Kompass-drawn pie, only if its spike says so (#8, #22)

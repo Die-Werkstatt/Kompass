@@ -36,6 +36,20 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       Scale at 2.0: nothing is clipped or overlaps.
 - [ ] Repeat it with the Blender Light theme: labels and icons are readable.
 
+## Editor
+
+- [ ] Preferences > Add-ons > Kompass > Open Editor: a new window opens with
+      the Select pie on a dark canvas. In its sidebar (N), the Kompass tab
+      lists the pies.
+- [ ] Move the pointer around the dial: the needle and the outer arrow
+      follow it, and the nearest slot lights up red, stronger further out.
+- [ ] Click MESH: the Mesh pie replaces it, with a smaller dial and BACK
+      below. Click the dial: Select is back.
+- [ ] Make the window small: the pie shrinks to fit and stays clickable.
+- [ ] Scroll and middle-drag on the canvas: nothing moves.
+- [ ] Save the `.blend`, reopen it: the editor window is back and works.
+- [ ] Disable Kompass with the editor open: no error.
+
 ## Export and import
 
 - [ ] Export All opens the file browser with the name `kompass-pies.json`.

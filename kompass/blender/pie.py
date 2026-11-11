@@ -70,7 +70,7 @@ def _draw_slot(row, context, slot):
 
 
 def _draw_operator(row, slot, icon):
-    if not _operator_exists(slot.idname):
+    if operator_type(slot.idname) is None:
         _draw_unavailable(row, slot.label or slot.idname)
         return
     if slot.label is None:
@@ -86,13 +86,13 @@ def _draw_operator(row, slot, icon):
         row.enabled = False
 
 
-def _operator_exists(idname):
+def operator_type(idname):
+    """Return Blender's description of the operator, or None without it."""
     module, _, name = idname.partition(".")
     try:
-        getattr(getattr(bpy.ops, module), name).get_rna_type()
+        return getattr(getattr(bpy.ops, module), name).get_rna_type()
     except (AttributeError, KeyError):
-        return False
-    return True
+        return None
 
 
 def _draw_unavailable(row, text):
