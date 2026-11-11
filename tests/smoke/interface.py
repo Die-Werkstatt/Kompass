@@ -177,6 +177,39 @@ def steps():
     assert not bpy.ops.kompass.slot_clear.poll()
     assert editor.shown().slots[east] == before[west]
 
+    # Every context the editor offers is a keymap of Blender's.
+    default = bpy.context.window_manager.keyconfigs.default.keymaps
+    for keymap, space_type, _ in keymaps.CONTEXTS:
+        assert default[keymap].space_type == space_type, keymap
+
+    # The next key press becomes the shortcut and is bound at once. Esc
+    # keeps the old one.
+    here = {"window": editor_window, "area": editor_area, "region": canvas}
+
+    def press(key, **held):
+        with bpy.context.temp_override(**here):
+            bpy.ops.kompass.pie_shortcut("INVOKE_DEFAULT")
+        yield PAUSE / 2
+        editor_window.event_simulate(type=key, value="PRESS", x=x, y=y, **held)
+        editor_window.event_simulate(type=key, value="RELEASE", x=x, y=y, **held)
+        yield PAUSE / 2
+
+    yield from press("C", shift=True)
+    bound = editor.shown().shortcut
+    assert (bound.key, bound.modifiers) == ("C", {"shift"}), bound
+    assert (bound.keymap, bound.space_type) == ("3D View", "VIEW_3D")
+    assert keymaps.warnings(editor.shown()) == ['Blender also has "Frame All" on it']
+    assert any(item.type == "C" for _, item in keymaps._items)
+    yield from press("ESC")
+    assert editor.shown().shortcut == bound
+    assert bpy.ops.kompass.pie_context(keymap="Mesh") == {"FINISHED"}
+    assert editor.shown().shortcut == replace(bound, keymap="Mesh", space_type="EMPTY")
+    assert bpy.ops.kompass.pie_unbind() == {"FINISHED"}
+    assert editor.shown().shortcut is None
+    assert not any(item.type == "C" for _, item in keymaps._items)
+    yield from press("Q", shift=True, alt=True)
+    assert editor.shown().shortcut == select.shortcut
+
     # A search result is carried to a slot by a click. What the slot held is
     # carried next, here into the empty south-east slot. Esc drops the rest.
     slots = importlib.import_module(addon + ".blender.slots")

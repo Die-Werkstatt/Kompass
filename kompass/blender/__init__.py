@@ -8,7 +8,17 @@ import bpy
 ADDON = __package__.rpartition(".")[0]
 
 # These read ADDON while they load.
-from . import canvas, editor, files, keymaps, pie, preferences, slots, storage
+from . import (
+    canvas,
+    editor,
+    files,
+    keymaps,
+    pie,
+    preferences,
+    shortcuts,
+    slots,
+    storage,
+)
 
 _CLASSES = (
     preferences.KompassPreferences,
@@ -24,6 +34,10 @@ _CLASSES = (
     editor.KOMPASS_OT_pie_duplicate,
     editor.KOMPASS_OT_pie_delete,
     editor.KOMPASS_PT_pies,
+    shortcuts.KOMPASS_OT_pie_shortcut,
+    shortcuts.KOMPASS_OT_pie_unbind,
+    shortcuts.KOMPASS_OT_pie_context,
+    shortcuts.KOMPASS_PT_shortcut,
     slots.KOMPASS_OT_slot_fill,
     slots.KOMPASS_OT_slot_carry,
     slots.KOMPASS_OT_slot_place,

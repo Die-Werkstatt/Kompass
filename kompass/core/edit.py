@@ -82,3 +82,10 @@ def _placed(pies, pie_id, contents):
         else pie
         for pie in pies
     )
+
+
+def bind(pies, pie_id, shortcut):
+    """Return the pies with that shortcut on the pie, or none for None."""
+    return tuple(
+        replace(pie, shortcut=shortcut) if pie.id == pie_id else pie for pie in pies
+    )

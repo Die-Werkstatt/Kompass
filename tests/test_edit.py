@@ -60,6 +60,14 @@ def test_place_fills_or_empties_one_slot():
     model.validate(pies)
 
 
+def test_bind_sets_and_removes_a_shortcut():
+    shortcut = model.Shortcut("Mesh", "EMPTY", "K", frozenset({"ctrl"}))
+    pies = edit.bind(EXAMPLE, "mesh", shortcut)
+    assert pies[1].shortcut == shortcut and pies[0] is SELECT
+    model.validate(pies)
+    assert edit.bind(pies, "mesh", None)[1].shortcut is None
+
+
 def test_swap_exchanges_two_slots():
     pies = edit.swap(EXAMPLE, "select", 0, 5)
     assert pies[0].slots[0] == SELECT.slots[5]

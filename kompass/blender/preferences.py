@@ -19,8 +19,8 @@ class KompassPreferences(bpy.types.AddonPreferences):
         for stored in storage.pies:
             self._draw_pie(layout.box(), stored)
         layout.label(text=str(storage.path()), icon="FILE")
-        for problem in filter(None, [storage.problem, *keymaps.problems]):
-            layout.label(text=problem, icon="ERROR")
+        if storage.problem:
+            layout.label(text=storage.problem, icon="ERROR")
 
     def _draw_pie(self, box, stored):
         row = box.row()
@@ -32,6 +32,5 @@ class KompassPreferences(bpy.types.AddonPreferences):
             files.KOMPASS_OT_pies_export.bl_idname, text="", icon="EXPORT"
         )
         export.pie = stored.id
-        taken = shortcut and keymaps.taken_by(shortcut)
-        if taken:
-            box.label(text=f'Blender also has "{taken}" on it', icon="ERROR")
+        for warning in keymaps.warnings(stored):
+            box.label(text=warning, icon="ERROR")
