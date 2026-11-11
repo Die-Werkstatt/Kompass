@@ -14,6 +14,9 @@ blender_version_min = "5.2.0"
 license = [
   "SPDX:GPL-3.0-or-later",
 ]
+copyright = [
+  "2026 Sandro Gekeler",
+]
 
 [permissions]
 files = "Save, import and export pie menus as JSON files"
