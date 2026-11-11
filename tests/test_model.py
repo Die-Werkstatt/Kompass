@@ -32,7 +32,7 @@ def test_example_loads():
     assert select.slots[2] == model.SubPieSlot(pie="mesh")
     assert select.slots[4:] == (None, None, None, None)
     assert mesh.shortcut is None
-    assert mesh.slots[1].properties == {"value": [0, 0, 1.0], "use_snap": False}
+    assert mesh.slots[1].properties == {"value": [0, 0, 1.0], "snap": False}
 
 
 def test_dumps_round_trips_the_example():

@@ -5,7 +5,9 @@ In development: pies open from their shortcuts, and there is no editor yet.
 
 ## Install from source
 
-Needs Blender 5.2 or newer on your `PATH`.
+Needs Blender 5.2 or newer. Where `blender` is not on your `PATH`, as on
+Windows, write the full path instead, for example
+`"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe"`.
 
 ```sh
 git clone https://github.com/Die-Werkstatt/Kompass.git
