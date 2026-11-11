@@ -6,11 +6,8 @@ covered by `python3 .claude/suite-check.py`.
 
 ## Set up
 
-1. `blender --command extension build --source-dir kompass`
-2. In Blender: Preferences > Get Extensions > the arrow menu > Install from
-   Disk, and pick the `.zip`.
-3. Preferences > Add-ons > Kompass > Import, and pick
-   `tests/data/example.json`.
+Install Kompass and import `tests/data/example.json` as the
+[README](../README.md#install-from-source) describes.
 
 ## The pie
 
