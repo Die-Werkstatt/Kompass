@@ -53,6 +53,13 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
 - [ ] With MESH selected, Slot > Swap With > N: MESH and the north slot
       change places and the outline follows MESH. Clear: the slot is empty.
       Close and reopen Blender: both changes are still there.
+- [ ] Slot > Add to Pie, type "subdiv", pick Subdivide (mesh.subdivide): a
+      SUBDIVIDE box follows the pointer and the slot near it is outlined red.
+      Click LASSO: the slot reads SUBDIVIDE and a LASSO box follows the
+      pointer. Click the empty slot: LASSO is there and nothing follows.
+- [ ] Add to Pie again, pick a tool, press Esc: nothing follows the pointer
+      and no slot changed. The same with a right-click.
+- [ ] In the 3D Viewport, Shift+Alt+Q: the pie shows the new slots.
 - [ ] Turn on Preview in the Kompass tab for the steps up to Reduce Motion:
       the Slot panel is gone and a click outlines nothing.
 - [ ] MESH has a grey outline and lights up grey, not red. Rest the pointer

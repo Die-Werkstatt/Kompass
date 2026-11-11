@@ -44,8 +44,10 @@ class Look:
     # What labels() gave for the pie, and how far each long label has slid.
     labels: tuple[tuple[str, float, float], ...]
     slide: dict[int, float]
-    # The slot the editor's menu acts on.
+    # The slot the editor's panel acts on.
     selected: int | None
+    # The label of what is carried to a slot.
+    carried: str | None
 
     @property
     def dial(self):
@@ -141,7 +143,7 @@ def labels(shown):
     blf.size(FONT, LABEL_SIZE)
     result = []
     for content in shown.slots:
-        text = "" if content is None else _label(bpy.context, content).upper()
+        text = "" if content is None else label(bpy.context, content).upper()
         width = blf.dimensions(FONT, text)[0]
         result.append((text, width, layout.slot_width(width)))
     return tuple(result)
@@ -271,7 +273,34 @@ def _draw_slot(canvas, look, slot, content, pull):
         canvas.text(text, (left + right) / 2, baseline, LABEL_SIZE, colour)
 
 
-def _label(context, slot):
+def draw_carried(canvas, look):
+    """Draw what is carried beside the pointer and outline the slot a click
+    would put it in."""
+    widths = [width for _, _, width in look.labels]
+    target = layout.slot_clicked(*look.pointer, widths)
+    if target is not None:
+        left, bottom = layout.slot_corner(target, len(widths), widths[target])
+        right, top = left + widths[target], bottom + layout.SLOT_HEIGHT
+        box = [(left, bottom), (right, bottom), (right, top), (left, top)]
+        canvas.line([*box, box[0]], SIGNAL, 2)
+    blf.size(FONT, LABEL_SIZE)
+    text_width = blf.dimensions(FONT, look.carried)[0]
+    width = layout.slot_width(text_width)
+    # Below and right of the pointer, which stays free to aim.
+    left, top = look.pointer[0] + 12, look.pointer[1] - 12
+    right, bottom = left + width, top - layout.SLOT_HEIGHT
+    box = [(left, bottom), (right, bottom), (right, top), (left, top)]
+    canvas.fill(box, GROUND)
+    canvas.line([*box, box[0]], WHITE, 1)
+    pad = layout.LABEL_PAD
+    baseline = bottom + layout.SLOT_HEIGHT / 2 - 4
+    if text_width > width - 2 * pad:
+        canvas.label(look.carried, (left + pad, right - pad), baseline, WHITE, 0)
+    else:
+        canvas.text(look.carried, (left + right) / 2, baseline, LABEL_SIZE, WHITE)
+
+
+def label(context, slot):
     if slot.label:
         return slot.label
     if isinstance(slot, model.ToolSlot):

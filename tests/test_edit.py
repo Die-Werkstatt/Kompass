@@ -49,10 +49,14 @@ def test_delete_empties_the_slots_that_opened_the_pie():
     model.validate((left,))
 
 
-def test_clear_empties_one_slot():
-    pies = edit.clear(EXAMPLE, "select", 0)
+def test_place_fills_or_empties_one_slot():
+    pies = edit.place(EXAMPLE, "select", 0, None)
     assert pies[0].slots == (None, *SELECT.slots[1:])
     assert pies[1] is MESH
+    model.validate(pies)
+    subdivide = model.OperatorSlot("mesh.subdivide")
+    pies = edit.place(pies, "select", 0, subdivide)
+    assert pies[0].slots == (subdivide, *SELECT.slots[1:])
     model.validate(pies)
 
 

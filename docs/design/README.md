@@ -61,6 +61,8 @@ It differs from the table above in the font, which is Blender's interface font w
 
 The editor's canvas shows this behaviour while Preview is on.
 With it off a click selects a slot, drawn with a 2 px white outline, a second click opens its sub-pie, and nothing opens on hover.
+What Add to Pie finds is carried: its box follows 12 px below and right of the pointer, and the slot a click would put it in has a 2 px signal-red outline.
+A click within 24 px of a slot places it there and carries what the slot held; Esc or a right-click drops what is carried.
 On the canvas today: the highlight and the selection by bearing, the centre hover state, slot width and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
 A sub-pie left through its centre fades out as the disc.
 The needle and arrow follow the pointer without easing.

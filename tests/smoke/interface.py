@@ -177,6 +177,36 @@ def steps():
     assert not bpy.ops.kompass.slot_clear.poll()
     assert editor.shown().slots[east] == before[west]
 
+    # A search result is carried to a slot by a click. What the slot held is
+    # carried next, here into the empty south-east slot. Esc drops the rest.
+    slots = importlib.import_module(addon + ".blender.slots")
+    slots._find()
+    kinds = {found[0].partition(" ")[0] for found in slots._found}
+    assert kinds == {"tool", "operator", "pie"}, kinds
+    assert "tool VIEW_3D builtin.select_box" in {found[0] for found in slots._found}
+    with bpy.context.temp_override(window=editor_window, area=editor_area):
+        result = bpy.ops.kompass.slot_fill(found="operator mesh.subdivide")
+    assert result == {"FINISHED"}
+    yield PAUSE / 2
+    held = editor.shown().slots[east]
+    yield from click(x + 2 * FLICK, y)
+    assert editor.shown().slots[east].idname == "mesh.subdivide"
+    assert editor.carried == held and editor.selected() == east
+    south_east = layout.BEARINGS.index(135)
+    corner = layout.slot_corner(south_east, 8)
+    yield from click(x + int(corner[0]) + 60, y + int(corner[1]) + 10)
+    assert editor.shown().slots[south_east] == held and editor.carried is None
+    with bpy.context.temp_override(window=editor_window, area=editor_area):
+        bpy.ops.kompass.slot_fill(found="pie mesh")
+    yield PAUSE / 2
+    assert editor.carried is not None
+    editor_window.event_simulate(type="ESC", value="PRESS", x=x, y=y)
+    editor_window.event_simulate(type="ESC", value="RELEASE", x=x, y=y)
+    yield PAUSE / 2
+    assert editor.carried is None
+    yield from click(x + 2 * FLICK, y)
+    assert editor.shown().slots[east].idname == "mesh.subdivide"
+
     # In preview a click selects nothing. A click on a tool slot changes
     # nothing, a click far below Mesh does nothing, a click just below its
     # box opens it.
