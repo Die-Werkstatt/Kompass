@@ -106,7 +106,6 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     <dt>12-slot spacing</dt><dd>Boxes are wide and short. With equal angles, neighbours near north and south sit side by side and their gap is their distance minus 120 px; near east and west they stack and the gap is their distance minus 32 px. Equal gaps moves the bearings to 0, 42, 68, 90, 112, 138, 180 and their mirrors, on a 170 px ring, so each pair of neighbours is 37 px apart.</dd>
     <dt>Sub-pie slot</dt><dd>Stone outline, grey proximity highlight. Resting on it wipes signal orange across it, away from the centre (east slots left to right, west right to left, north upward, south downward), over the sub-pie delay; the sub-pie opens when it is full.</dd>
     <dt>Sub-pie</dt><dd>The parent pie fades and shrinks to 90% toward the pointer while the sub-pie opens there, both in the same 120 ms. Back reverses it: the sub-pie shrinks to 88% around its own centre and fades as the parent opens.</dd>
-    <dt>Opening</dt><dd>A pie or sub-pie opens under the pointer with the needle showing. The centre hover arms only after the pointer has left the dial ring once.</dd>
     <dt>Closing</dt><dd>The dial keeps the state it had when closing began: closed from the centre, it fades out as the disc, and the needle does not return.</dd>
     <dt>Hit area</dt><dd>The dial's outer ring, the same area that already runs back or close.</dd>
   </dl>
@@ -302,8 +301,7 @@ input[type=range] { accent-color: var(--signal); width: 160px }
   function holdMs() { return state.delay * state.dur / 120; } // the Slow setting stretches the delay too
   var measure = document.createElement("canvas").getContext("2d");
   function textWidth(s, fs) { measure.font = "600 " + fs + "px Barlow, 'IBM Plex Sans', sans-serif"; return measure.measureText(s).width + s.length * fs * 0.08; }
-  // A pie opens under the pointer, so the centre hover arms only once the pointer has left the dial ring.
-  function inCentre() { return state.open && !state.closing && state.armed && Math.hypot(state.px - state.ccx, state.py - state.ccy) <= state.innerR; }
+  function inCentre() { return state.open && !state.closing && Math.hypot(state.px - state.ccx, state.py - state.ccy) <= state.innerR; }
 
   // One loop eases the needle angle and the hover morph; it stops when both have settled.
   var raf = 0, last = 0;
@@ -346,7 +344,6 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     state.px = x; state.py = y;
     if (!state.open || state.closing) return;
     var dx = x - state.ccx, dy = y - state.ccy, dist = Math.hypot(dx, dy);
-    if (dist > state.innerR) state.armed = true;
     state.angle = dist < 8 ? state.angle : (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
     var nd = dist > state.innerR ? nearestDir(pie().items, state.angle) : null;
     if (nd !== state.dir) state.hotSince = performance.now();
@@ -359,8 +356,8 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     if (!hit) state.suppress = null;
     kick();
   }
-  function openSub(key, x, y) { clearTimeout(state.timer); state.pending = null; snapshot(x, y, 0.9); state.centres.push([state.ccx, state.ccy]); state.stack.push(key); state.cx = x; state.cy = y; state.dir = null; state.t = 0; state.o = 0; state.armed = false; render(); track(x, y); }
-  function openAt(x, y) { state.ghost = null; state.open = true; state.stack = []; state.centres = []; state.suppress = null; state.cx = x; state.cy = y; state.angle = null; state.shown = null; state.dir = null; state.t = 0; state.o = 0; state.closing = false; state.armed = false; render(); track(x, y); }
+  function openSub(key, x, y) { clearTimeout(state.timer); state.pending = null; snapshot(x, y, 0.9); state.centres.push([state.ccx, state.ccy]); state.stack.push(key); state.cx = x; state.cy = y; state.dir = null; state.t = 0; state.o = 0; render(); track(x, y); }
+  function openAt(x, y) { state.ghost = null; state.open = true; state.stack = []; state.centres = []; state.suppress = null; state.cx = x; state.cy = y; state.angle = null; state.shown = null; state.dir = null; state.t = 0; state.o = 0; state.closing = false; render(); track(x, y); }
   function close() { clearTimeout(state.timer); state.pending = null; state.closing = true; state.dir = null; kick(); }
   function back() {
     if (!state.open) return;
