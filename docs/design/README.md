@@ -14,11 +14,13 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 |---|---|
 | Slot labels | Barlow SemiBold, capitals, tracking 0.08 em |
 | Slots | square corners; ground `#0E0E0E`, outline `#2C2C2C` |
+| Slot width | at least 120 px; grows to fit the label plus 12 px padding each side, up to 180 px |
+| Long label | clipped at the padding |
 | Sub-pie marker | signal-red triangle in a slot's top-right corner |
 | Sub-pie slot | outline `#5A5955`; grey highlight `#4A4946` instead of signal red |
 | Centre dial | ring with a tick every 5°, longer every 45°, and the split compass needle |
 | Outer arrow | signal-red triangle outside the ring; turns with the needle |
-| Centre hover | the needle becomes a signal-red disc with a 3 px white border, radius 75% of the needle length; the 45° ticks shorten to the length of the 5° ticks; the outer arrow fades out; the ring stays |
+| Centre hover | the needle becomes a signal-red disc with a 3 px white border, radius 75% of the needle length; the 45° ticks shorten to the length of the 5° ticks; the outer arrow slides in onto the ring, shrinks and fades; the ring stays |
 | Sub-pie dial | 72% of the main dial |
 | Sub-pie title | pie name in capitals above the dial |
 | Dial label | BACK in a sub-pie, CLOSE at the root, below the dial |
@@ -40,6 +42,8 @@ It differs from the table above in the font, which is Blender's interface font w
 | Highlight on a sub-pie slot | the same strength in grey |
 | Pointer rests on a sub-pie slot | signal red fills the slot away from the centre over 100 ms and its outline turns red: east slots fill left to right, west right to left, north upward, south downward, diagonals like their side |
 | The fill completes | the sub-pie opens, centred on the pointer |
+| Pointer rests on a slot with a clipped label | after 400 ms the label slides left at 40 px/s until its end shows |
+| Pointer leaves that slot | the label eases back, time constant 60 ms |
 | Pie opens | every part fades in over 120 ms, ease-out cubic; slots and labels move out from 88% of their distance to the centre; the dial grows from 92% |
 | Pie closes | the same, reversed |
 | Click on a tool slot | runs the tool and closes the pie |

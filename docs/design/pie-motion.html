@@ -86,9 +86,10 @@ input[type=range] { accent-color: var(--signal); width: 160px }
 
   <dl class="spec">
     <dt>Rest</dt><dd>Bearing ring, ticks and needle as in variant G. The needle follows the pointer.</dd>
-    <dt>Hover</dt><dd>Signal-red disc with a 3 px white border in place of the needle, its radius 75% of the needle length. The ring stays, the outer arrow fades out, and the white ticks shrink to the length of the grey ones.</dd>
+    <dt>Hover</dt><dd>Signal-red disc with a 3 px white border in place of the needle, its radius 75% of the needle length. The ring stays, the outer arrow slides onto the ring, shrinks and fades, and the white ticks shrink to the length of the grey ones.</dd>
     <dt>Between</dt><dd>The needle shrinks into the centre and fades while the disc grows out of it and the white ticks shorten. 120 ms, eased in and out; leaving mid-way reverses from where it is.</dd>
     <dt>Open, close</dt><dd>Every element fades. Slots and labels travel out from 12% further in, the dial grows from 92%. 120 ms each way, ease-out. </dd>
+    <dt>Slot width</dt><dd>At least 120 px; grows to fit its label with 12 px padding each side, up to 180 px. A longer label is clipped at the padding. On hover it waits 400 ms, then slides left at 40 px/s until its end shows, and eases back when the pointer leaves. Knife Project From View tests this.</dd>
     <dt>Sub-pie slot</dt><dd>Stone outline, grey proximity highlight. Resting on it wipes signal orange across it, away from the centre (east slots left to right, west right to left, north upward, south downward), over the sub-pie delay; the sub-pie opens when it is full.</dd>
     <dt>Sub-pie</dt><dd>The parent pie fades and shrinks to 90% toward the pointer while the sub-pie opens there, both in the same 120 ms. Back reverses it: the sub-pie shrinks to 88% around its own centre and fades as the parent opens.</dd>
     <dt>Hit area</dt><dd>The dial's outer ring, the same area that already runs back or close.</dd>
@@ -103,14 +104,14 @@ input[type=range] { accent-color: var(--signal); width: 160px }
   // Directions in degrees, 0 = north, clockwise.
   var PIES = {
     root: { name: "Modeling", items: {
-      0: { label: "Extrude", sub: "extrude" }, 45: { label: "Inset" }, 90: { label: "Bevel", sub: "bevel" }, 135: { label: "Knife" },
+      0: { label: "Extrude", sub: "extrude" }, 45: { label: "Inset" }, 90: { label: "Bevel", sub: "bevel" }, 135: { label: "Knife Project From View" },
       180: { label: "Loop Cut" }, 225: { label: "Merge" }, 270: { label: "Subdivide" }, 315: { label: "Dissolve" } } },
-    extrude: { name: "Extrude", items: { 270: { label: "Region" }, 90: { label: "Along Normals" }, 180: { label: "Individual" }, 0: { label: "Manifold" } } },
+    extrude: { name: "Extrude", items: { 270: { label: "Region" }, 90: { label: "Along Normals" }, 180: { label: "Individual Faces" }, 0: { label: "Manifold" } } },
     bevel: { name: "Bevel", items: { 270: { label: "Edges" }, 90: { label: "Vertices" } } }
   };
 
   var state = { open: false, stack: [], centres: [], cx: 0, cy: 0, angle: null, shown: null, dir: null, px: 0, py: 0,
-    size: 0.75, dur: 120, t: 0, scrub: null, o: 0, closing: false, hand: true, ghost: null, delay: 100 };
+    size: 0.75, dur: 120, t: 0, scrub: null, o: 0, closing: false, hand: true, ghost: null, delay: 100, offs: {} };
   var layer = null; // group the current frame draws into
   var stage = document.getElementById("stage"), svg = document.getElementById("svg");
   var scrub = document.getElementById("scrub"), scrubval = document.getElementById("scrubval");
@@ -150,8 +151,12 @@ input[type=range] { accent-color: var(--signal); width: 160px }
       el("line", { x1: a1[0], y1: a1[1], x2: a2[0], y2: a2[1], stroke: on ? C.signal : major ? C.ink : C.stone, "stroke-width": on ? 3 : major ? 2 : 1, opacity: major || on ? 1 : .55 });
     }
     var g = el("g", { transform: "rotate(" + (ang === null ? 0 : ang) + " " + cx + " " + cy + ")" });
-    var nn = P(cx, cy, R0 + 12, 0);
-    el("path", { d: "M" + nn[0] + " " + (nn[1] - 4) + "l5 8h-10z", fill: C.signal, opacity: 1 - clamp(e * 1.3) }, g); // the outer arrow fades out on hover
+    // On hover the outer arrow slides in onto the ring, shrinks to nothing and fades, over the same eased 120 ms.
+    if (e < 1) {
+      var nn = P(cx, cy, lerp(R0 + 12, R0 + 4, e), 0), as = 1 - e;
+      var ag = el("g", { transform: "translate(" + nn[0] + " " + nn[1] + ") scale(" + as + ") translate(" + (-nn[0]) + " " + (-nn[1]) + ")", opacity: as }, g);
+      el("path", { d: "M" + nn[0] + " " + (nn[1] - 4) + "l5 8h-10z", fill: C.signal }, ag);
+    }
 
     // The needle shrinks into the centre while the signal disc with its white border grows out of it.
     var s = 1 - e;
@@ -164,16 +169,18 @@ input[type=range] { accent-color: var(--signal); width: 160px }
   }
 
   function render() {
+    state.scrolling = false;
+    var now = performance.now(), rdt = state.lastRender ? Math.min(50, now - state.lastRender) : 16; state.lastRender = now;
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     document.getElementById("crumb").textContent = ["Modeling"].concat(state.stack.map(function (s) { return PIES[s].name; })).join(" / ");
     if (!state.open) return;
     var w = stage.clientWidth, h = stage.clientHeight;
     var R = Math.max(95, Math.min(150, Math.min(w, h) * 0.3));
-    var bw = w < 520 ? 84 : 120, bh = 32;
-    R = Math.min(R, w / 2 - bw - 2);
-    var cx = Math.min(Math.max(state.cx, R + bw + 8), w - R - bw - 8);
+    var bw = w < 520 ? 84 : 120, bwMax = w < 520 ? 120 : 180, bh = 32;
+    R = Math.min(R, w / 2 - bwMax - 2);
+    var cx = Math.min(Math.max(state.cx, R + bwMax + 8), w - R - bwMax - 8);
     var cy = Math.min(Math.max(state.cy, R + bh + 30), h - R - bh - 36);
-    if (w < R * 2.2 + bw + 8) cx = w / 2;
+    if (w < 2 * (R + bwMax + 8)) cx = w / 2;
     state.ccx = cx; state.ccy = cy; state.rects = [];
     state.innerR = 46 * scale() + 9;
     var items = pie().items, dir = state.dir;
@@ -196,10 +203,13 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     var fs = 13 * (w < 520 ? 0.8 : 1);
     Object.keys(items).forEach(function (key) {
       var deg = +key, it = items[key], p = P(cx, cy, R * pull, deg);
-      var x = p[0] + (deg === 90 ? 0 : deg === 270 ? -bw : -bw / 2) + (deg === 45 || deg === 135 ? bw * 0.2 : deg === 225 || deg === 315 ? -bw * 0.2 : 0);
+      // The box grows to fit its label between the minimum and maximum width; a longer label is clipped.
+      var label = it.label.toUpperCase(), tw = textWidth(label, fs), pad = 12;
+      var sw = Math.min(bwMax, Math.max(bw, Math.ceil(tw) + 2 * pad)), over = tw - (sw - 2 * pad);
+      var x = p[0] - sw / 2 + (deg === 45 || deg === 135 ? bw * 0.2 : deg === 225 || deg === 315 ? -bw * 0.2 : 0);
       var y = p[1] - bh / 2 + (deg === 0 ? -bh * 0.5 : deg === 180 ? bh * 0.5 : 0);
-      if (deg === 90) x = p[0] - 4; if (deg === 270) x = p[0] - bw + 4;
-      state.rects.push({ x: x, y: y, w: bw, h: bh, sub: it.sub });
+      if (deg === 90) x = p[0] - 4; if (deg === 270) x = p[0] - sw + 4;
+      state.rects.push({ x: x, y: y, w: sw, h: bh, sub: it.sub });
       var hot = deg === dir;
       var near = state.shown === null ? 0 : Math.max(0, 1 - Math.abs(((state.shown - deg) % 360 + 540) % 360 - 180) / (360 / Math.max(n, 2)));
       var amt = near * near * radial * (hot ? 1 : 0.55);
@@ -207,24 +217,35 @@ input[type=range] { accent-color: var(--signal); width: 160px }
       var txt = mix(C.ink, C.white, amt);
       if (it.sub) {
         // Sub-pie slots: grey proximity highlight and a stone outline; orange wipes outward from the centre while the pointer rests on it.
-        el("rect", { x: x, y: y, width: bw, height: bh, fill: mix(C.ground, "#4a4946", amt), stroke: mix("#5a5955", C.stone, amt), "stroke-width": 1 });
+        el("rect", { x: x, y: y, width: sw, height: bh, fill: mix(C.ground, "#4a4946", amt), stroke: mix("#5a5955", C.stone, amt), "stroke-width": 1 });
         var f = state.pending === it.sub ? clamp((performance.now() - state.pendingAt) / holdMs()) : 0;
         if (f > 0) {
-          var fx = x, fy = y, fw = bw, fh = bh;
+          var fx = x, fy = y, fw = sw, fh = bh;
           if (deg === 0) { fh = bh * f; fy = y + bh - fh; }
           else if (deg === 180) fh = bh * f;
-          else if (deg > 180) { fw = bw * f; fx = x + bw - fw; }
-          else fw = bw * f;
+          else if (deg > 180) { fw = sw * f; fx = x + sw - fw; }
+          else fw = sw * f;
           el("rect", { x: fx, y: fy, width: fw, height: fh, fill: C.signal });
           txt = C.white;
         }
-        el("rect", { x: x + 0.5, y: y + 0.5, width: bw - 1, height: bh - 1, fill: "none", stroke: f > 0 ? C.signal : "none", "stroke-width": 1 });
-        el("path", { d: "M" + (x + bw - 9) + " " + y + "H" + (x + bw) + "V" + (y + 9) + "Z", fill: f > 0.85 ? C.white : C.signal });
+        el("rect", { x: x + 0.5, y: y + 0.5, width: sw - 1, height: bh - 1, fill: "none", stroke: f > 0 ? C.signal : "none", "stroke-width": 1 });
+        el("path", { d: "M" + (x + sw - 9) + " " + y + "H" + (x + sw) + "V" + (y + 9) + "Z", fill: f > 0.85 ? C.white : C.signal });
       } else {
-        el("rect", { x: x, y: y, width: bw, height: bh, fill: mix(C.ground, C.signal, amt), stroke: mix(C.line, C.signal, amt), "stroke-width": 1 });
+        el("rect", { x: x, y: y, width: sw, height: bh, fill: mix(C.ground, C.signal, amt), stroke: mix(C.line, C.signal, amt), "stroke-width": 1 });
       }
-      var t = el("text", { x: x + bw / 2, y: y + bh / 2 + fs * 0.36, "text-anchor": "middle", fill: txt, "font-size": fs, "letter-spacing": "0.08em", "font-family": "'Barlow', 'IBM Plex Sans', sans-serif" });
-      t.textContent = it.label.toUpperCase();
+      var ta = { y: y + bh / 2 + fs * 0.36, fill: txt, "font-size": fs, "letter-spacing": "0.08em", "font-family": "'Barlow', 'IBM Plex Sans', sans-serif" };
+      if (over > 0) {
+        // Clipped label: on hover it waits 400 ms, then slides left at 40 px/s until its end shows; on leaving it eases back (time constant 60 ms).
+        var ok = key + "-" + state.stack.length, off = state.offs[ok] || 0;
+        if (hot && state.hotSince && now - state.hotSince > 400) off = Math.min(over, off + 0.04 * rdt);
+        else if (!hot && off > 0) off = off < 0.3 ? 0 : off * Math.exp(-rdt / 60);
+        if (hot ? off < over && now - state.hotSince > 0 : off > 0) state.scrolling = true;
+        state.offs[ok] = off;
+        var cid = "clip-" + key + "-" + state.stack.length;
+        var cp = el("clipPath", { id: cid }); el("rect", { x: x + pad - 2, y: y, width: sw - 2 * pad + 4, height: bh }, cp);
+        ta.x = x + pad - off; ta["clip-path"] = "url(#" + cid + ")";
+      } else { ta.x = x + sw / 2; ta["text-anchor"] = "middle"; }
+      el("text", ta).textContent = label;
     });
     layer = null;
     // The pie being left stays underneath, fading and shrinking toward its origin.
@@ -246,6 +267,8 @@ input[type=range] { accent-color: var(--signal); width: 160px }
   }
 
   function holdMs() { return state.delay * state.dur / 120; } // the Slow setting stretches the delay too
+  var measure = document.createElement("canvas").getContext("2d");
+  function textWidth(s, fs) { measure.font = "600 " + fs + "px Barlow, 'IBM Plex Sans', sans-serif"; return measure.measureText(s).width + s.length * fs * 0.08; }
   function inCentre() { return state.open && !state.closing && Math.hypot(state.px - state.ccx, state.py - state.ccy) <= state.innerR; }
 
   // One loop eases the needle angle and the hover morph; it stops when both have settled.
@@ -267,7 +290,7 @@ input[type=range] { accent-color: var(--signal); width: 160px }
       if (reduce) state.t = target;
       else { var step = dt / state.dur; state.t = target > state.t ? Math.min(1, state.t + step) : Math.max(0, state.t - step); busy = busy || state.t !== target; }
     }
-    if (state.pending) busy = true;
+    if (state.pending || state.scrolling) busy = true;
     if (state.ghost) {
       state.ghost.o = Math.max(0, state.ghost.o - dt / (120 * (state.dur / 120)));
       if (state.ghost.o === 0) state.ghost = null; else busy = true;
@@ -290,7 +313,9 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     if (!state.open || state.closing) return;
     var dx = x - state.ccx, dy = y - state.ccy, dist = Math.hypot(dx, dy);
     state.angle = dist < 8 ? state.angle : (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
-    state.dir = dist > state.innerR ? nearestDir(pie().items, state.angle) : null;
+    var nd = dist > state.innerR ? nearestDir(pie().items, state.angle) : null;
+    if (nd !== state.dir) state.hotSince = performance.now();
+    state.dir = nd;
     var hit = null;
     (state.rects || []).forEach(function (r) { if (r.sub && x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h) hit = r.sub; });
     if (hit && hit !== state.suppress) {
