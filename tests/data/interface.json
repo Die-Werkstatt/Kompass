@@ -82,7 +82,10 @@
           "type": "operator",
           "idname": "object.shade_smooth"
         },
-        null,
+        {
+          "type": "sub_pie",
+          "pie": "broken"
+        },
         null,
         null,
         null,

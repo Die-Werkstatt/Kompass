@@ -2,177 +2,205 @@
 # aislop-ignore-file hallucinated-import -- bpy is provided by Blender
 """Draws the pie on the editor's canvas and takes the pointer.
 
-The dial is drawn behind Blender's gizmos by a draw handler. Each slot and
-the dial's centre is a gizmo, which is how the canvas learns where the
-pointer is and gets clicks without a modal operator.
+A draw handler has paint.py draw the pie over Blender's own drawing, and
+decides how far each animation has come. Each slot and the dial's centre is
+a gizmo that draws nothing, which is how the canvas learns where the pointer
+is and gets clicks without a modal operator.
 """
 
 import math
+import time
+from dataclasses import dataclass, field
 
-import blf
 import bpy
 import gpu
-from gpu_extras.batch import batch_for_shader
 
 from ..core import layout, model
-from . import editor, pie, storage, tools
+from . import editor, paint
 
-# The brand colours of docs/brand/README.md.
-GROUND = (0.055, 0.055, 0.055, 1)
-LINE = (0.173, 0.173, 0.173, 1)
-STONE = (0.561, 0.553, 0.533, 1)
-INK = (0.945, 0.941, 0.925, 1)
-SIGNAL = (0.949, 0.329, 0.176, 1)
-WHITE = (1, 1, 1, 1)
+# Seconds between two frames of an animation.
+FRAME = 1 / 60
 
-# Blender's own interface font.
-FONT = 0
 
-# The pointer in canvas units, and the needle's bearing. A pointer at rest
-# on the centre keeps the last bearing.
-_pointer = (0.0, 0.0)
-_heading = 0.0
+@dataclass
+class _State:
+    pointer: tuple[float, float] = (0.0, 0.0)
+    # The needle's bearing. A pointer at rest on the centre keeps the last.
+    heading: float = 0.0
+    # Whether Blender highlights each gizmo, by slot. It highlights none
+    # while the pointer is off the canvas, which sends no other sign.
+    lit: dict[int, bool] = field(default_factory=dict)
+    # The centre's hover state runs from hover_from to hover_target.
+    hover_from: float = 0.0
+    hover_target: float = 0.0
+    hover_since: float = 0.0
+    # The sub-pie slot the pointer rests on, and since when.
+    rest: tuple[int, float] | None = None
+    # The slot under the pointer when the pie came onto the canvas. It does
+    # not open until the pointer has left it.
+    held: int | None = None
+    opened: float = 0.0
+    look: paint.Look | None = None
+    # The pie being left, what it shrinks to and around which point.
+    ghost: paint.Look | None = None
+    shrink: float = 1.0
+    origin: tuple[float, float] = (0.0, 0.0)
+
+
+_state = _State()
 _handle = None
 
 
 def register():
     global _handle
     _handle = bpy.types.SpaceNodeEditor.draw_handler_add(
-        _draw_dial, (), "WINDOW", "BACKDROP"
+        _draw, (), "WINDOW", "POST_PIXEL"
     )
 
 
 def unregister():
     bpy.types.SpaceNodeEditor.draw_handler_remove(_handle, "WINDOW")
+    if bpy.app.timers.is_registered(_tick):
+        bpy.app.timers.unregister(_tick)
 
 
-class _Canvas:
-    """Turns canvas units into the pixels of a region."""
-
-    def __init__(self, context):
-        region = context.region
-        self.size = region.width, region.height
-        # The sidebar lies over the right of the canvas.
-        sidebar = next(r for r in context.area.regions if r.type == "UI")
-        width = region.width - (sidebar.width if sidebar.width > 1 else 0)
-        scale = context.preferences.system.ui_scale
-        self.scale = scale * layout.fit(width / scale, region.height / scale)
-        self.centre = width / 2, region.height / 2
-        dial = layout.SUB_PIE_DIAL if editor.in_sub_pie() else 1
-        self.dial = layout.DIAL_RADIUS * dial
-        self.ring = layout.RING_RADIUS * dial
-
-    def pixels(self, points, bearing=0):
-        """Return the points in pixels, turned clockwise around the centre."""
-        angle = math.radians(bearing)
-        sin, cos = math.sin(angle), math.cos(angle)
-        return [
-            (
-                self.centre[0] + (x * cos + y * sin) * self.scale,
-                self.centre[1] + (y * cos - x * sin) * self.scale,
-            )
-            for x, y in points
-        ]
-
-    def units(self, location):
-        return (
-            (location[0] - self.centre[0]) / self.scale,
-            (location[1] - self.centre[1]) / self.scale,
-        )
-
-    def fill(self, points, colour, bearing=0):
-        shader = gpu.shader.from_builtin("UNIFORM_COLOR")
-        shader.uniform_float("color", colour)
-        batch = batch_for_shader(
-            shader, "TRI_FAN", {"pos": self.pixels(points, bearing)}
-        )
-        batch.draw(shader)
-
-    def line(self, points, colour, width):
-        shader = gpu.shader.from_builtin("POLYLINE_UNIFORM_COLOR")
-        shader.uniform_float("viewportSize", self.size)
-        shader.uniform_float("lineWidth", width * self.scale)
-        shader.uniform_float("color", colour)
-        batch_for_shader(shader, "LINE_STRIP", {"pos": self.pixels(points)}).draw(
-            shader
-        )
-
-    def text(self, text, x, y, size, colour, width=None):
-        """Draw text centred on x with its baseline at y."""
-        blf.size(FONT, size * self.scale)
-        blf.color(FONT, *colour)
-        ((left, bottom),) = self.pixels([(x, y)])
-        text_width = blf.dimensions(FONT, text)[0]
-        if width is not None and text_width > width * self.scale:
-            half = width * self.scale / 2
-            blf.enable(FONT, blf.CLIPPING)
-            blf.clipping(
-                FONT, left - half, bottom - size, left + half, bottom + 2 * size
-            )
-            text_width = width * self.scale
-        blf.position(FONT, left - text_width / 2, bottom, 0)
-        blf.draw(FONT, text)
-        blf.disable(FONT, blf.CLIPPING)
+def _ring():
+    return layout.RING_RADIUS * (layout.SUB_PIE_DIAL if editor.in_sub_pie() else 1)
 
 
-def _mix(a, b, amount):
-    return tuple(x + (y - x) * amount for x, y in zip(a, b))
+def _share(since, now, context):
+    """Return how much of an animation that began at since is done, 0 to 1."""
+    if context.preferences.view.use_reduce_motion:
+        return 1.0
+    return min(1.0, (now - since) / layout.MOTION)
 
 
-def _draw_dial():
+def _hover(inside, now, context):
+    """Return how far the centre is into its hover state, 0 to 1."""
+    state = _state
+    step = _share(state.hover_since, now, context)
+    hover = layout.toward(state.hover_from, state.hover_target, step)
+    if inside != state.hover_target:
+        # It turns around from wherever it is.
+        state.hover_from, state.hover_target = hover, float(inside)
+        state.hover_since = now
+    return hover
+
+
+def _arrive(shown, depth, now):
+    """Start the opening of a pie that was not on the canvas at the last draw."""
+    state = _state
+    before = state.look
+    if before is not None and (before.pie.id, before.depth) == (shown.id, depth):
+        return
+    state.opened = now
+    state.rest = None
+    state.held = layout.slot_under(*state.pointer)
+    state.ghost = None
+    if before is not None and depth == before.depth + 1:
+        state.ghost = before
+        state.shrink, state.origin = layout.PARENT_SHRINK, state.pointer
+    elif before is not None and depth == before.depth - 1:
+        state.ghost = before
+        state.shrink, state.origin = layout.SUB_PIE_SHRINK, (0.0, 0.0)
+
+
+def _draw():
     context = bpy.context
     if context.space_data.tree_type != editor.KompassTree.bl_idname:
         return
-    canvas = _Canvas(context)
+    state = _state
+    now = time.perf_counter()
+    canvas = paint.Canvas(context)
     gpu.state.blend_set("ALPHA")
     # The whole region, which the pie's centre is not the middle of.
     left, bottom = canvas.units((0, 0))
     right, top = canvas.units(canvas.size)
     corners = [(left, bottom), (right, bottom), (right, top), (left, top)]
-    canvas.fill(corners, GROUND)
+    canvas.fill(corners, paint.GROUND)
     shown = editor.shown()
     if shown is None:
-        canvas.text("NO PIES", 0, 0, 12, STONE)
+        canvas.text("NO PIES", 0, 0, 12, paint.STONE)
+        state.look = None
         return
-    selected = layout.slot_at(*_pointer, canvas.ring)
-    circle = [layout.point(canvas.ring, bearing) for bearing in range(0, 361, 5)]
-    canvas.line(circle, LINE, 1.5)
-    for bearing, inner, outer, major in layout.ticks(canvas.dial):
-        on = selected is not None and bearing == layout.BEARINGS[selected]
-        colour = SIGNAL if on else INK if major else (*STONE[:3], 0.55)
-        tick = [layout.point(inner, bearing), layout.point(outer, bearing)]
-        canvas.line(tick, colour, 3 if on else 2 if major else 1)
-    tip = canvas.dial + 16
-    canvas.fill([(0, tip), (5, tip - 8), (-5, tip - 8)], SIGNAL, _heading)
-    length, half = canvas.dial - 22, canvas.dial * 0.15
-    canvas.fill([(0, length), (half, 3), (-half, 3)], SIGNAL, _heading)
-    canvas.fill([(-half, -3), (half, -3), (0, -length)], INK, _heading)
-    inside = math.hypot(*_pointer) <= canvas.ring
-    below = "BACK" if editor.in_sub_pie() else "CLOSE"
-    canvas.text(below, 0, -canvas.ring - 26, 11, INK if inside else (*STONE[:3], 0.6))
-    if editor.in_sub_pie():
-        canvas.text(shown.name.upper(), 0, canvas.ring + 14, 12, INK)
+    _arrive(shown, editor.depth(), now)
+    pointer = state.pointer if any(state.lit.values()) else None
+    inside = pointer is not None and math.hypot(*pointer) <= _ring()
+    hover = _hover(inside, now, context)
+    filling = None
+    if state.rest is not None:
+        slot, since = state.rest
+        filling = slot, min(1.0, (now - since) / layout.HOVER_DELAY)
+    look = paint.Look(shown, editor.depth(), pointer, state.heading, hover, filling)
+    opened = _share(state.opened, now, context)
+    if state.ghost is not None and opened < 1:
+        left = layout.ease_out(1 - opened)
+        canvas.opacity = left
+        canvas.zoom = state.shrink + (1 - state.shrink) * left
+        canvas.origin = state.origin
+        paint.draw(canvas, state.ghost, 1.0)
+        canvas.zoom, canvas.origin = 1.0, (0.0, 0.0)
+    paint.draw(canvas, look, layout.ease_out(opened))
+    state.look = look
+    moving = opened < 1 or hover != state.hover_target or state.rest is not None
+    if moving and not bpy.app.timers.is_registered(_tick):
+        bpy.app.timers.register(_tick, first_interval=FRAME)
+
+
+def _tick():
+    """Draw the next frame of an animation, and open a sub-pie that is due."""
+    state = _state
+    if state.rest is not None:
+        slot, since = state.rest
+        if not any(state.lit.values()):
+            state.rest = None
+        elif time.perf_counter() - since >= layout.HOVER_DELAY:
+            state.rest = None
+            editor.click(slot)
+    editor.redraw(bpy.context)
 
 
 def _follow(context, location):
     """Record where the pointer is and return it in canvas units."""
-    global _pointer, _heading
-    canvas = _Canvas(context)
-    pointer = canvas.units(location)
-    if pointer != _pointer:
-        _pointer = pointer
+    state = _state
+    pointer = paint.Canvas(context).units(location)
+    if pointer != state.pointer:
+        state.pointer = pointer
         if math.hypot(*pointer) >= layout.NEEDLE_REST:
-            _heading = layout.bearing_to(*pointer)
+            state.heading = layout.bearing_to(*pointer)
+        _rest(pointer)
         context.region.tag_redraw()
-    return canvas, pointer
+    return pointer
 
 
-class _Clickable:
-    """A gizmo that takes a click itself.
+def _rest(pointer):
+    """Note the sub-pie slot the pointer came to rest on, if any."""
+    state = _state
+    shown = editor.shown()
+    under = layout.slot_under(*pointer)
+    if under != state.held:
+        state.held = None
+    opens = (
+        shown is not None
+        and under is not None
+        and under != state.held
+        and isinstance(shown.slots[under], model.SubPieSlot)
+    )
+    if not opens:
+        state.rest = None
+    elif state.rest is None or state.rest[0] != under:
+        state.rest = under, time.perf_counter()
+
+
+class _Part:
+    """A gizmo that draws nothing and takes a click itself.
 
     With a target operator instead, Blender shows that operator's tooltip
     over the canvas.
     """
+
+    def draw(self, _context):
+        _state.lit[self.slot] = self.is_highlight
 
     def invoke(self, _context, _event):
         return {"RUNNING_MODAL"}
@@ -186,44 +214,17 @@ class _Clickable:
             context.region.tag_redraw()
 
 
-class KOMPASS_GT_slot(_Clickable, bpy.types.Gizmo):
+class KOMPASS_GT_slot(_Part, bpy.types.Gizmo):
     bl_idname = "KOMPASS_GT_slot"
 
     __slots__ = ("slot",)
 
     def test_select(self, context, location):
-        canvas, pointer = _follow(context, location)
-        return 0 if layout.slot_at(*pointer, canvas.ring) == self.slot else -1
-
-    def draw(self, context):
-        shown = editor.shown()
-        if shown is None:
-            return
-        canvas = _Canvas(context)
-        gpu.state.blend_set("ALPHA")
-        content = shown.slots[self.slot]
-        amount = layout.highlight(*_pointer, self.slot, canvas.ring)
-        left, bottom = layout.slot_corner(self.slot)
-        right, top = left + layout.SLOT_WIDTH, bottom + layout.SLOT_HEIGHT
-        box = [(left, bottom), (right, bottom), (right, top), (left, top)]
-        canvas.fill(box, _mix(GROUND, SIGNAL, amount))
-        canvas.line([*box, box[0]], _mix(LINE, SIGNAL, amount), 1)
-        if content is None:
-            return
-        if isinstance(content, model.SubPieSlot):
-            marker = [(right - 9, top), (right, top), (right, top - 9)]
-            canvas.fill(marker, INK if amount > 0.6 else SIGNAL)
-        canvas.text(
-            _label(context, content).upper(),
-            (left + right) / 2,
-            bottom + layout.SLOT_HEIGHT / 2 - 4,
-            12,
-            _mix(INK, WHITE, amount),
-            layout.SLOT_WIDTH - 12,
-        )
+        pointer = _follow(context, location)
+        return 0 if layout.slot_at(*pointer, _ring()) == self.slot else -1
 
 
-class KOMPASS_GT_dial(_Clickable, bpy.types.Gizmo):
+class KOMPASS_GT_dial(_Part, bpy.types.Gizmo):
     """The centre of the dial, which takes the click that goes back."""
 
     bl_idname = "KOMPASS_GT_dial"
@@ -232,24 +233,8 @@ class KOMPASS_GT_dial(_Clickable, bpy.types.Gizmo):
     slot = -1
 
     def test_select(self, context, location):
-        canvas, pointer = _follow(context, location)
-        return 0 if math.hypot(*pointer) <= canvas.ring else -1
-
-    def draw(self, context):
-        # _draw_dial draws the dial, behind the slots.
-        pass
-
-
-def _label(context, slot):
-    if slot.label:
-        return slot.label
-    if isinstance(slot, model.ToolSlot):
-        name = tools.label(context, slot.space_type, slot.tool)
-        return name or slot.tool.rpartition(".")[2].replace("_", " ")
-    if isinstance(slot, model.OperatorSlot):
-        operator = pie.operator_type(slot.idname)
-        return slot.idname if operator is None else operator.name
-    return next(stored.name for stored in storage.pies if stored.id == slot.pie)
+        pointer = _follow(context, location)
+        return 0 if math.hypot(*pointer) <= _ring() else -1
 
 
 class KOMPASS_GGT_canvas(bpy.types.GizmoGroup):

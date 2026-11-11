@@ -28,8 +28,13 @@ def shown():
     return storage.pies[0] if storage.pies else None
 
 
+def depth():
+    """Return how many pies deep the canvas is: 1 for a pie, 2 for its sub-pie."""
+    return len(_trail) if _trail and shown().id == _trail[-1] else 1
+
+
 def in_sub_pie():
-    return len(_trail) > 1 and shown().id == _trail[-1]
+    return depth() > 1
 
 
 class KOMPASS_OT_editor_open(bpy.types.Operator):
@@ -60,7 +65,7 @@ def _tree():
     return bpy.data.node_groups.new(KompassTree.bl_label, KompassTree.bl_idname)
 
 
-def _redraw(context):
+def redraw(context):
     """Redraw every Kompass editor. The pie list is drawn in each."""
     for window in context.window_manager.windows:
         for area in window.screen.areas:
@@ -79,7 +84,7 @@ class KOMPASS_OT_editor_show(bpy.types.Operator):
 
     def execute(self, context):
         _trail[:] = [self.pie]
-        _redraw(context)
+        redraw(context)
         return {"FINISHED"}
 
 
@@ -111,7 +116,7 @@ class _Edit:
         except (OSError, ValueError) as error:
             self.report({"ERROR"}, f"Nothing was changed: {error}")
             return {"CANCELLED"}
-        _redraw(context)
+        redraw(context)
         return {"FINISHED"}
 
 

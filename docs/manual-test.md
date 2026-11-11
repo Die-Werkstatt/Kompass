@@ -43,8 +43,17 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       lists the pies.
 - [ ] Move the pointer around the dial: the needle and the outer arrow
       follow it, and the nearest slot lights up red, stronger further out.
-- [ ] Click MESH: the Mesh pie replaces it, with a smaller dial and BACK
-      below. Click the dial: Select is back.
+- [ ] Move the pointer into the dial: the needle turns into a red disc with
+      a white border, the long ticks shorten and the outer arrow fades. Move
+      out: it turns back.
+- [ ] MESH has a grey outline and lights up grey, not red. Rest the pointer
+      on it: red fills it downward and the Mesh pie opens, with a smaller
+      dial and BACK below. Select fades and shrinks while Mesh fades in.
+- [ ] Click the dial: Mesh shrinks away and Select is back.
+- [ ] Move onto MESH and straight off the canvas onto the sidebar: Select
+      stays.
+- [ ] Preferences > Interface > Reduce Motion on: the same steps work
+      without any fading or growing. Turn it off again.
 - [ ] In the Kompass tab, New adds a pie named Pie and shows it. Rename it,
       duplicate it, delete the copy: the list follows each step, and Delete
       asks first.
