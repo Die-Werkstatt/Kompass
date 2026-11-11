@@ -40,6 +40,12 @@ class _State:
     # not open until the pointer has left it.
     held: int | None = None
     opened: float = 0.0
+    # The slot the pointer selects, and since when.
+    selected: int | None = None
+    selected_since: float = 0.0
+    # How far each label that is too long for its slot has slid.
+    slide: dict[int, float] = field(default_factory=dict)
+    drawn: float = 0.0
     look: paint.Look | None = None
     # The pie being left, what it shrinks to and around which point.
     ghost: paint.Look | None = None
@@ -87,6 +93,10 @@ def _hover(inside, now, context):
     return hover
 
 
+def _widths(shown):
+    return [width for _, _, width in paint.labels(shown)]
+
+
 def _arrive(shown, depth, now):
     """Start the opening of a pie that was not on the canvas at the last draw."""
     state = _state
@@ -95,7 +105,9 @@ def _arrive(shown, depth, now):
         return
     state.opened = now
     state.rest = None
-    state.held = layout.slot_under(*state.pointer)
+    state.held = layout.slot_under(*state.pointer, _widths(shown))
+    # The pie being left keeps the old one.
+    state.slide = {}
     state.ghost = None
     if before is not None and depth == before.depth + 1:
         state.ghost = before
@@ -131,7 +143,18 @@ def _draw():
     if state.rest is not None:
         slot, since = state.rest
         filling = slot, min(1.0, (now - since) / layout.HOVER_DELAY)
-    look = paint.Look(shown, editor.depth(), pointer, state.heading, hover, filling)
+    labels = paint.labels(shown)
+    sliding = _slide(labels, pointer, now, context)
+    look = paint.Look(
+        shown,
+        editor.depth(),
+        pointer,
+        state.heading,
+        hover,
+        filling,
+        labels,
+        dict(state.slide),
+    )
     opened = _share(state.opened, now, context)
     if state.ghost is not None and opened < 1:
         left = layout.ease_out(1 - opened)
@@ -143,8 +166,34 @@ def _draw():
     paint.draw(canvas, look, layout.ease_out(opened))
     state.look = look
     moving = opened < 1 or hover != state.hover_target or state.rest is not None
+    moving = moving or sliding
     if moving and not bpy.app.timers.is_registered(_tick):
         bpy.app.timers.register(_tick, first_interval=FRAME)
+
+
+def _slide(labels, pointer, now, context):
+    """Move the labels that are too long. Return whether one is not at rest."""
+    state = _state
+    selected = None if pointer is None else layout.slot_at(*pointer, _ring())
+    if selected != state.selected:
+        state.selected, state.selected_since = selected, now
+    # A draw after a long rest is not a long step.
+    step = min(0.05, now - state.drawn)
+    state.drawn = now
+    sliding = False
+    for slot, (_, text_width, width) in enumerate(labels):
+        over = text_width - (width - 2 * layout.LABEL_PAD)
+        if over <= 0:
+            continue
+        held = now - state.selected_since if slot == selected else None
+        if context.preferences.view.use_reduce_motion:
+            waited = held is not None and held > layout.LABEL_WAIT
+            offset = over if waited else 0.0
+        else:
+            offset = layout.slide(state.slide.get(slot, 0.0), over, held, step)
+        state.slide[slot] = offset
+        sliding = sliding or (offset < over if slot == selected else offset > 0)
+    return sliding
 
 
 def _tick():
@@ -177,7 +226,7 @@ def _rest(pointer):
     """Note the sub-pie slot the pointer came to rest on, if any."""
     state = _state
     shown = editor.shown()
-    under = layout.slot_under(*pointer)
+    under = None if shown is None else layout.slot_under(*pointer, _widths(shown))
     if under != state.held:
         state.held = None
     opens = (

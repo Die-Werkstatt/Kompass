@@ -25,6 +25,7 @@ SUB_PIE_LIT = (0.290, 0.286, 0.275, 1)
 
 # Blender's own interface font.
 FONT = 0
+LABEL_SIZE = 12
 
 
 @dataclass(frozen=True)
@@ -40,6 +41,9 @@ class Look:
     hover: float
     # The sub-pie slot the pointer rests on and how far its fill has come.
     filling: tuple[int, float] | None
+    # What labels() gave for the pie, and how far each long label has slid.
+    labels: tuple[tuple[str, float, float], ...]
+    slide: dict[int, float]
 
     @property
     def dial(self):
@@ -104,23 +108,38 @@ class Canvas:
             shader
         )
 
-    def text(self, text, x, y, size, colour, width=None):
+    def text(self, text, x, y, size, colour):
         """Draw text centred on x with its baseline at y."""
-        size *= self.zoom
-        blf.size(FONT, size * self.scale)
+        blf.size(FONT, size * self.zoom * self.scale)
         blf.color(FONT, *self._colour(colour))
-        ((left, bottom),) = self.pixels([(x, y)])
-        text_width = blf.dimensions(FONT, text)[0]
-        if width is not None and text_width > width * self.zoom * self.scale:
-            half = width * self.zoom * self.scale / 2
-            blf.enable(FONT, blf.CLIPPING)
-            blf.clipping(
-                FONT, left - half, bottom - size, left + half, bottom + 2 * size
-            )
-            text_width = 2 * half
-        blf.position(FONT, left - text_width / 2, bottom, 0)
+        ((middle, bottom),) = self.pixels([(x, y)])
+        blf.position(FONT, middle - blf.dimensions(FONT, text)[0] / 2, bottom, 0)
+        blf.draw(FONT, text)
+
+    def clipped(self, text, left, right, y, size, colour, offset):
+        """Draw text from left, slid left by offset and cut at left and right."""
+        height = size * self.zoom * self.scale
+        blf.size(FONT, height)
+        blf.color(FONT, *self._colour(colour))
+        (start, bottom), (low, _), (high, _) = self.pixels(
+            [(left - offset, y), (left - 2, y), (right + 2, y)]
+        )
+        blf.enable(FONT, blf.CLIPPING)
+        blf.clipping(FONT, low, bottom - height, high, bottom + 2 * height)
+        blf.position(FONT, start, bottom, 0)
         blf.draw(FONT, text)
         blf.disable(FONT, blf.CLIPPING)
+
+
+def labels(shown):
+    """Return the label, its width and the slot's width for each slot."""
+    blf.size(FONT, LABEL_SIZE)
+    result = []
+    for content in shown.slots:
+        text = "" if content is None else _label(bpy.context, content).upper()
+        width = blf.dimensions(FONT, text)[0]
+        result.append((text, width, layout.slot_width(width)))
+    return tuple(result)
 
 
 def _mix(a, b, amount):
@@ -163,14 +182,20 @@ def _draw_dial(canvas, look, opened):
         colour = SIGNAL if on else INK if major else (*STONE[:3], 0.55)
         tick = [layout.point(inner, bearing), layout.point(outer, bearing)]
         canvas.line(tick, colour, 3 if on else 2 if major else 1)
-    # The needle and the outer arrow fade out before the disc is full.
+    small = 1 - hover
+    # The outer arrow slides onto the ring, shrinks and fades.
+    middle = dial + 12 - 8 * hover
+    arrow = [
+        (0, middle + 4 * small),
+        (5 * small, middle - 4 * small),
+        (-5 * small, middle - 4 * small),
+    ]
+    canvas.fill(arrow, (*SIGNAL[:3], small), look.heading)
+    # The needle fades out before the disc is full, and shrinks into the
+    # centre while the disc grows out of it.
     fade = 1 - min(1.0, hover * 1.3)
     needle = (*SIGNAL[:3], fade)
-    tip = dial + 16
-    canvas.fill([(0, tip), (5, tip - 8), (-5, tip - 8)], needle, look.heading)
     length, half = dial - layout.NEEDLE_INSET, dial * 0.15
-    # The needle shrinks into the centre while the disc grows out of it.
-    small = 1 - hover
     north = [(0, length * small), (half * small, 3 * small), (-half * small, 3 * small)]
     south = [
         (-half * small, -3 * small),
@@ -196,8 +221,9 @@ def _draw_slot(canvas, look, slot, content, pull):
     if look.pointer is not None:
         ring = layout.RING_RADIUS * look.dial
         amount = layout.highlight(*look.pointer, slot, ring)
-    left, bottom = layout.slot_corner(slot, pull)
-    right, top = left + layout.SLOT_WIDTH, bottom + layout.SLOT_HEIGHT
+    text, text_width, width = look.labels[slot]
+    left, bottom = layout.slot_corner(slot, width, pull)
+    right, top = left + width, bottom + layout.SLOT_HEIGHT
     box = [(left, bottom), (right, bottom), (right, top), (left, top)]
     sub_pie = isinstance(content, model.SubPieSlot)
     fill = 0.0
@@ -207,7 +233,7 @@ def _draw_slot(canvas, look, slot, content, pull):
         canvas.fill(box, _mix(GROUND, SUB_PIE_LIT, amount))
         if fill > 0:
             x0, y0, x1, y1 = layout.filled(slot, fill)
-            width, height = layout.SLOT_WIDTH, layout.SLOT_HEIGHT
+            height = layout.SLOT_HEIGHT
             part = [
                 (left + x0 * width, bottom + y0 * height),
                 (left + x1 * width, bottom + y0 * height),
@@ -222,16 +248,16 @@ def _draw_slot(canvas, look, slot, content, pull):
     else:
         canvas.fill(box, _mix(GROUND, SIGNAL, amount))
         canvas.line([*box, box[0]], _mix(LINE, SIGNAL, amount), 1)
-    if content is None:
-        return
-    canvas.text(
-        _label(bpy.context, content).upper(),
-        (left + right) / 2,
-        bottom + layout.SLOT_HEIGHT / 2 - 4,
-        12,
-        WHITE if fill > 0 else _mix(INK, WHITE, amount),
-        layout.SLOT_WIDTH - 12,
-    )
+    colour = WHITE if fill > 0 else _mix(INK, WHITE, amount)
+    baseline = bottom + layout.SLOT_HEIGHT / 2 - 4
+    pad = layout.LABEL_PAD
+    if text_width > width - 2 * pad:
+        offset = look.slide.get(slot, 0.0)
+        canvas.clipped(
+            text, left + pad, right - pad, baseline, LABEL_SIZE, colour, offset
+        )
+    else:
+        canvas.text(text, (left + right) / 2, baseline, LABEL_SIZE, colour)
 
 
 def _label(context, slot):

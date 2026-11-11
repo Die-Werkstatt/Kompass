@@ -12,8 +12,12 @@ import math
 from .model import SLOT_DIRECTIONS
 
 PIE_RADIUS = 150
+# A slot grows from SLOT_WIDTH to fit its label, up to SLOT_MAX_WIDTH.
 SLOT_WIDTH = 120
+SLOT_MAX_WIDTH = 180
 SLOT_HEIGHT = 32
+# The room between a slot's side and its label.
+LABEL_PAD = 12
 # The tips of the dial's ticks, and the ring drawn around them.
 DIAL_RADIUS = 52
 RING_RADIUS = 55
@@ -26,6 +30,12 @@ NEEDLE_INSET = 22
 HOVER_DISC = 0.75
 TICK = 5
 MAJOR_TICK = 12
+
+# A label too long for its slot waits this long on the selected slot, slides
+# left at this speed and eases back with this time constant.
+LABEL_WAIT = 0.4
+LABEL_SPEED = 40
+LABEL_RETURN = 0.06
 
 # How long every animation takes.
 MOTION = 0.12
@@ -40,7 +50,7 @@ PARENT_SHRINK = 0.9
 SUB_PIE_SHRINK = 0.88
 
 # Half the width and height the whole pie needs, with a margin.
-_HALF_WIDTH = PIE_RADIUS + SLOT_WIDTH + 12
+_HALF_WIDTH = PIE_RADIUS + SLOT_MAX_WIDTH + 12
 _HALF_HEIGHT = PIE_RADIUS + SLOT_HEIGHT * 1.5 + 12
 
 _BEARINGS = {"N": 0, "NE": 45, "E": 90, "SE": 135, "S": 180, "SW": 225, "W": 270}
@@ -58,7 +68,12 @@ def point(radius, bearing):
     return math.sin(angle) * radius, math.cos(angle) * radius
 
 
-def slot_corner(slot, pull=1.0):
+def slot_width(label):
+    """Return the width of a slot whose label is that wide."""
+    return min(SLOT_MAX_WIDTH, max(SLOT_WIDTH, math.ceil(label) + 2 * LABEL_PAD))
+
+
+def slot_corner(slot, width=SLOT_WIDTH, pull=1.0):
     """Return the left and bottom of slot n, which is SLOT_DIRECTIONS[n].
 
     pull is the share of its distance from the centre the slot has reached
@@ -66,10 +81,10 @@ def slot_corner(slot, pull=1.0):
     """
     bearing = BEARINGS[slot]
     x, y = point(PIE_RADIUS * pull, bearing)
-    left = x - SLOT_WIDTH / 2
+    left = x - width / 2
     if bearing in {90, 270}:
         # East and west start at the pie's radius instead of straddling it.
-        left += math.copysign(SLOT_WIDTH / 2 - 4, x)
+        left += math.copysign(width / 2 - 4, x)
     elif bearing % 90:
         # The diagonal slots move outwards to clear the ones above and below.
         left += math.copysign(SLOT_WIDTH * 0.2, x)
@@ -79,13 +94,28 @@ def slot_corner(slot, pull=1.0):
     return left, bottom
 
 
-def slot_under(x, y):
-    """Return the slot whose box the pointer is on, or None."""
-    for slot in range(len(BEARINGS)):
-        left, bottom = slot_corner(slot)
-        if left < x < left + SLOT_WIDTH and bottom < y < bottom + SLOT_HEIGHT:
+def slot_under(x, y, widths):
+    """Return the slot whose box the pointer is on, or None.
+
+    widths is the width of each slot.
+    """
+    for slot, width in enumerate(widths):
+        left, bottom = slot_corner(slot, width)
+        if left < x < left + width and bottom < y < bottom + SLOT_HEIGHT:
             return slot
     return None
+
+
+def slide(offset, over, selected, step):
+    """Return how far a label that is over too long has slid, step later.
+
+    selected is how long its slot has been the selected one, or None.
+    """
+    if selected is None:
+        return 0.0 if offset < 0.3 else offset * math.exp(-step / LABEL_RETURN)
+    if selected > LABEL_WAIT:
+        return min(over, offset + LABEL_SPEED * step)
+    return offset
 
 
 def filled(slot, amount):
