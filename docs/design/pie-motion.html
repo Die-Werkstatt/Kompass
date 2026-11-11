@@ -344,7 +344,6 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     state.px = x; state.py = y;
     if (!state.open || state.closing) return;
     var dx = x - state.ccx, dy = y - state.ccy, dist = Math.hypot(dx, dy);
-    if (dist > state.innerR) state.armed = true;
     state.angle = dist < 8 ? state.angle : (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
     var nd = dist > state.innerR ? nearestDir(pie().items, state.angle) : null;
     if (nd !== state.dir) state.hotSince = performance.now();
@@ -357,8 +356,8 @@ input[type=range] { accent-color: var(--signal); width: 160px }
     if (!hit) state.suppress = null;
     kick();
   }
-  function openSub(key, x, y) { clearTimeout(state.timer); state.pending = null; snapshot(x, y, 0.9); state.centres.push([state.ccx, state.ccy]); state.stack.push(key); state.cx = x; state.cy = y; state.dir = null; state.t = 0; state.o = 0; state.armed = false; render(); track(x, y); }
-  function openAt(x, y) { state.ghost = null; state.open = true; state.stack = []; state.centres = []; state.suppress = null; state.cx = x; state.cy = y; state.angle = null; state.shown = null; state.dir = null; state.t = 0; state.o = 0; state.closing = false; state.armed = false; render(); track(x, y); }
+  function openSub(key, x, y) { clearTimeout(state.timer); state.pending = null; snapshot(x, y, 0.9); state.centres.push([state.ccx, state.ccy]); state.stack.push(key); state.cx = x; state.cy = y; state.dir = null; state.t = 0; state.o = 0; render(); track(x, y); }
+  function openAt(x, y) { state.ghost = null; state.open = true; state.stack = []; state.centres = []; state.suppress = null; state.cx = x; state.cy = y; state.angle = null; state.shown = null; state.dir = null; state.t = 0; state.o = 0; state.closing = false; render(); track(x, y); }
   function close() { clearTimeout(state.timer); state.pending = null; state.closing = true; state.dir = null; kick(); }
   function back() {
     if (!state.open) return;
