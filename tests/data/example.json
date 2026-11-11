@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "pies": [
+    {
+      "id": "select",
+      "name": "Select",
+      "shortcut": {
+        "keymap": "3D View",
+        "space_type": "VIEW_3D",
+        "key": "Q",
+        "modifiers": [
+          "shift",
+          "alt"
+        ]
+      },
+      "slots": [
+        {
+          "type": "tool",
+          "space_type": "VIEW_3D",
+          "tool": "builtin.select_box"
+        },
+        {
+          "type": "tool",
+          "space_type": "VIEW_3D",
+          "tool": "builtin.select_lasso",
+          "label": "Lasso"
+        },
+        {
+          "type": "sub_pie",
+          "pie": "mesh"
+        },
+        {
+          "type": "operator",
+          "idname": "object.select_all",
+          "properties": {
+            "action": "INVERT"
+          },
+          "label": "Invert",
+          "icon": "SELECT_DIFFERENCE"
+        },
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "mesh",
+      "name": "Mesh",
+      "slots": [
+        {
+          "type": "operator",
+          "idname": "mesh.subdivide",
+          "properties": {
+            "number_cuts": 2,
+            "smoothness": 0.5
+          }
+        },
+        {
+          "type": "operator",
+          "idname": "transform.translate",
+          "properties": {
+            "value": [
+              0,
+              0,
+              1.0
+            ],
+            "use_snap": false
+          }
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  ]
+}

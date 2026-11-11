@@ -10,9 +10,6 @@ list unless it says otherwise.
 
 Milestone 0, foundations (#4).
 
-- [ ] Extension scaffold, licence file, unit test and build checks (#11)
-- [ ] Pie data model, validation and JSON format in a `core` package that never
-      imports `bpy` (#12)
 - [ ] Pie file in the extension user directory, with atomic writes and a kept
       copy of a corrupt file; headless smoke test script (#13, #21)
 
@@ -30,7 +27,7 @@ Milestone 1, pies open from shortcuts (#5).
       pies (#20, first half). Uninstalling deletes the pie file, so this ships
       with the first version that can store a pie.
 
-In parallel, from the moment the data model is merged:
+In parallel:
 
 - [ ] Editor spike: node-tree host, gizmo slots, short-lived modal (#17). It
       blocks all of Milestone 2 and needs Sandro's hands in Blender.

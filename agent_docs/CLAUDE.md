@@ -3,7 +3,8 @@
 Kompass is a Blender add-on for artists who want their own pie menus: each pie
 holds up to 8 tools, operators or sub-pies and opens on its own shortcut. It is
 distributed as a Blender extension under GPL-3.0-or-later. The repo holds the
-installable scaffold; no pie code exists yet (see `ROADMAP.md`).
+installable extension and the pie data model; nothing opens a pie yet (see
+`ROADMAP.md`).
 
 ## Stack
 - Blender 5.2 LTS is the minimum version (`blender_version_min` in the
@@ -15,6 +16,8 @@ installable scaffold; no pie code exists yet (see `ROADMAP.md`).
 
 - `kompass/`: the extension. `blender_manifest.toml` and the add-on package.
   Everything in here ships in the `.zip`.
+- `kompass/core/`: the pie model, its validation and the JSON file format
+  (`model.py`). `tests/data/example.json` is a file in that format.
 - `tests/`: unit tests, run without Blender.
 - `docs/brand/`, `docs/design/`: logo files, brand notes and the pie design
   with its playground. Not shipped in the extension.
@@ -22,6 +25,9 @@ installable scaffold; no pie code exists yet (see `ROADMAP.md`).
 
 ## Architecture rules
 
+- `kompass/core/` never imports `bpy`. A unit test enforces it.
+- Every pie file goes through `core.model.loads` and `dumps`. Both validate,
+  and neither accepts a key or slot type the model does not know.
 - `import kompass` works without Blender. Modules that need `bpy` are imported
   inside `register()`, never at the top of `kompass/__init__.py`.
 - Use `__package__` for the add-on identifier. Never write the literal `bl_ext`
