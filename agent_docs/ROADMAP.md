@@ -35,6 +35,9 @@ Milestone 1, pies open from shortcuts (#5).
       (#20, second half).
 - [ ] Milestone 3, release Native, the edition that opens Blender's own pie
       menu (#7)
+- [ ] Website download: a release `.zip` link that installs when dragged into
+      Blender, plus an `index.json` from `extension server-generate` for
+      updates. No installer app. Then a listing on extensions.blender.org.
 - [ ] Milestone 4, the Kompass edition: a pie drawn by Kompass with 12 slots,
       only if its spike says so (#8, #22). Until then a pie of 12 slots shows
       in the editor and cannot be opened.
