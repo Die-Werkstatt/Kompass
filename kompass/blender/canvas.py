@@ -150,6 +150,9 @@ def _draw():
         slot, since = state.rest
         filling = slot, min(1.0, (now - since) / layout.HOVER_DELAY)
     labels = paint.labels(shown)
+    carried = None
+    if editor.carried is not None:
+        carried = paint.label(context, editor.carried).upper()
     sliding = _slide(labels, pointer, now, context)
     look = paint.Look(
         shown,
@@ -161,6 +164,7 @@ def _draw():
         labels,
         dict(state.slide),
         editor.selected(),
+        carried,
     )
     opened = _share(state.opened, now, context)
     if state.ghost is not None and opened < 1:
@@ -171,6 +175,8 @@ def _draw():
         paint.draw(canvas, state.ghost, 1.0)
         canvas.zoom, canvas.origin = 1.0, (0.0, 0.0)
     paint.draw(canvas, look, layout.ease_out(opened))
+    if carried is not None and pointer is not None:
+        paint.draw_carried(canvas, look)
     state.look = look
     moving = opened < 1 or hover != state.hover_target or state.rest is not None
     moving = moving or sliding

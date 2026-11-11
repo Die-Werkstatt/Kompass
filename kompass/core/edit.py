@@ -59,9 +59,9 @@ def delete(pies, pie_id):
     )
 
 
-def clear(pies, pie_id, slot):
-    """Return the pies with that slot of the pie empty."""
-    return _placed(pies, pie_id, {slot: None})
+def place(pies, pie_id, slot, content):
+    """Return the pies with that slot of the pie holding content, or empty."""
+    return _placed(pies, pie_id, {slot: content})
 
 
 def swap(pies, pie_id, slot, other):

@@ -14,6 +14,8 @@ _trail = []
 _selected = None
 # In preview a click selects nothing and the pie behaves as it will when open.
 preview = False
+# What a slot would hold, while it follows the pointer on its way to a slot.
+carried = None
 
 
 class KompassTree(bpy.types.NodeTree):
@@ -109,8 +111,8 @@ class KOMPASS_OT_editor_show(bpy.types.Operator):
 def click(slot):
     """Take a click on a slot, on the dial for -1, or on neither for None.
 
-    The dial goes back. A slot is selected, and opens its sub-pie once it is
-    selected or in preview.
+    The dial goes back. A slot takes what is carried. Otherwise it is
+    selected, and opens its sub-pie once it is selected or in preview.
     """
     pie = shown()
     if pie is None:
@@ -118,6 +120,11 @@ def click(slot):
     if slot is not None and slot < 0:
         if in_sub_pie():
             _trail.pop()
+        return
+    if carried is not None:
+        if slot is not None:
+            # An operator, since it saves and reports what goes wrong.
+            bpy.ops.kompass.slot_place(slot=slot)
         return
     opens = slot is not None and isinstance(pie.slots[slot], model.SubPieSlot)
     if opens and (preview or slot == selected()):
@@ -134,8 +141,9 @@ class KOMPASS_OT_editor_preview(bpy.types.Operator):
     bl_options = {"INTERNAL"}  # noqa: RUF012
 
     def execute(self, context):
-        global preview
+        global preview, carried
         preview = not preview
+        carried = None
         select(None)
         redraw(context)
         return {"FINISHED"}

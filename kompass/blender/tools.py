@@ -17,3 +17,22 @@ def label(context, space_type, tool_id):
     except Exception:  # noqa: BLE001
         return None
     return None if item is None else item.label
+
+
+def every():
+    """Return the space type, id and name of each tool of every editor."""
+    found = {}
+    try:
+        from bl_ui.space_toolsystem_common import ToolSelectPanelHelper as Helper
+
+        for toolbar in Helper.__subclasses__():
+            for _mode, tools in toolbar.tools_all():
+                # Without a context it gives the tools of every mode.
+                for item in Helper._tools_flatten_with_dynamic(tools, context=None):
+                    if item is not None:
+                        key = toolbar.bl_space_type, item.idname
+                        found.setdefault(key, item.label)
+    # Undocumented code may fail in any way; the search then has no tools.
+    except Exception:  # noqa: BLE001
+        return []
+    return [(space_type, tool, name) for (space_type, tool), name in found.items()]
