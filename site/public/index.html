@@ -72,12 +72,11 @@ p { margin: 0 }
 .a-stage > svg.layer { z-index: 3 }
 .a-stage > svg.scene-grid { z-index: 1 }
 .a-stage > svg.scene-cube { z-index: 2 }
-/* Two pies further back show that every pie can differ: darker, smaller, slightly out of focus. */
-/* Each loop gives a background pie a new random distance: further away means smaller, blurrier and darker. */
-.depth { position: absolute; z-index: 0; pointer-events: none; width: 56%; height: 100%; opacity: 0; transition: opacity .8s }
+.depth { position: absolute; top: 0; z-index: 0; pointer-events: none; width: 760px; height: 100%; opacity: 0; transition: opacity .8s;
+  transform: scale(.85); filter: blur(2.5px) brightness(.6) }
 .a-dl { border-top: 1px solid var(--line); padding-block: 72px 96px; display: grid; gap: 40px; position: relative; isolation: isolate }
 .a-dl > :not(.dl-depth) { position: relative; z-index: 1 }
-/* One pie plays beside the download plates across the full page width. */
+/* Two pies sit behind the download plates and take turns: Blender's native pie on the left, the Kompass pie on the right. */
 .dl-depth { position: absolute; inset: 0 calc(50% - 50vw); z-index: 0; overflow: hidden; pointer-events: none;
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent) }
 .a-dl header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap }
@@ -146,7 +145,7 @@ p { margin: 0 }
       </div>
     </section>
     <section class="a-dl" id="download">
-      <div class="dl-depth" aria-hidden="true"><div class="depth" data-depth="0"></div></div>
+      <div class="dl-depth" aria-hidden="true"><div class="depth" data-depth="0"></div><div class="depth" data-depth="1"></div></div>
       <header><h2>Download</h2><p>Blender 5.2 or later</p></header>
       <div class="plates">
         <article class="plate">
@@ -382,11 +381,44 @@ p { margin: 0 }
     // The demo's own pointer is an arrow in signal red with a light edge, so it never reads as the visitor's cursor.
     this.el("path", { d: "M" + x + " " + y + "l0 18l4.8 -4.5l3.4 7.6l3.2 -1.4l-3.3 -7.4l6.6 -.3z", fill: C.signal, stroke: C.cursor, "stroke-width": 1.4, "stroke-linejoin": "round" });
   };
+  // Blender's own pie in its default theme: colours from wcol_pie_menu (userdef_default_theme.c), the centre ring from
+  // draw_pie_center (interface_widgets.cc) with the default 100 px radius and 12 px threshold. Each slot shows its numpad key.
+  var BL = { inner: "#181818", outline: "#242424", sel: "#4772b3", text: "#d9d9d9", textSel: "#ffffff", hint: "#8c8c8c", title: "#a6a6a6" };
+  var NUMPAD = { 0: 8, 45: 9, 90: 6, 135: 3, 180: 2, 225: 1, 270: 4, 315: 7 };
+  Demo.prototype.drawNative = function () {
+    var d = this, s = d.s, el = d.el.bind(d), cx = s.cx, cy = s.cy, pie = d.pie(), keys = Object.keys(pie.items).map(Number);
+    var eo = easeOut(s.o), R = 100 * eo, h = 24, r0 = 12, r1 = 19;
+    d.layer = el("g", { opacity: eo });
+    var dx = s.px - cx, dy = s.py - cy, dir = Math.hypot(dx, dy) > r0 ? d.nearest((Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360) : null;
+    el("circle", { cx: cx, cy: cy, r: (r0 + r1) / 2, fill: "none", stroke: BL.inner, "stroke-width": r1 - r0 });
+    if (dir !== null) {
+      // The arc points at the pointer; it spans 45 degrees when the pie has both axis and diagonal slots, 90 otherwise.
+      var a = (Math.atan2(dx, -dy) * 180 / Math.PI), span = keys.some(function (k) { return k % 90; }) && keys.some(function (k) { return !(k % 90); }) ? 45 : 90;
+      var p0 = P(cx, cy, (r0 + r1) / 2, a - span / 2), p1 = P(cx, cy, (r0 + r1) / 2, a + span / 2);
+      el("path", { d: "M" + p0[0] + " " + p0[1] + "A" + (r0 + r1) / 2 + " " + (r0 + r1) / 2 + " 0 0 1 " + p1[0] + " " + p1[1], fill: "none", stroke: BL.sel, "stroke-width": r1 - r0 });
+    }
+    el("circle", { cx: cx, cy: cy, r: r0, fill: "none", stroke: BL.outline, "stroke-width": 1 });
+    el("circle", { cx: cx, cy: cy, r: r1, fill: "none", stroke: BL.outline, "stroke-width": 1 });
+    var ttl = el("text", { x: cx, y: cy - r1 - 8, "text-anchor": "middle", fill: BL.title, "font-size": 12, "font-family": "'IBM Plex Sans', sans-serif" });
+    ttl.textContent = pie.name;
+    keys.forEach(function (deg) {
+      var it = pie.items[deg], w = textW(it.label, 13) * 0.82 + 62, p = P(cx, cy, R, deg), a = deg * Math.PI / 180;
+      var x = p[0] - w / 2 + Math.sin(a) * w / 2, y = p[1] - h / 2 - Math.cos(a) * h / 2 * (deg % 180 ? 0 : 1), on = deg === dir;
+      el("rect", { x: x, y: y, width: w, height: h, rx: h * 0.2, fill: on ? BL.sel : BL.inner, stroke: BL.outline, "stroke-width": 1 });
+      el("circle", { cx: x + 14, cy: y + h / 2, r: 5.5, fill: "none", stroke: on ? BL.textSel : BL.text, "stroke-width": 1.4 });
+      var lt = el("text", { x: x + 28, y: y + h / 2 + 4.5, fill: on ? BL.textSel : BL.text, "font-size": 13, "font-family": "'IBM Plex Sans', sans-serif" });
+      lt.textContent = it.label;
+      var kt = el("text", { x: x + w - 10, y: y + h / 2 + 4.5, "text-anchor": "end", fill: on ? BL.textSel : BL.hint, "font-size": 12, "font-family": "'IBM Plex Sans', sans-serif" });
+      kt.textContent = NUMPAD[deg] || "";
+    });
+    d.layer = null;
+  };
   Demo.prototype.render = function () {
     var d = this, s = d.s, C = d.C, svg = d.svg, el = d.el.bind(d);
     d.dirty = false;
     d.layer = null; d.pieG = null;
     while (svg.firstChild) svg.removeChild(svg.firstChild);
+    if (d.opts.native) { if (s.open) d.drawNative(); return; }
     var gh = s.ghost;
     if (gh) {
       var ge = easeOut(gh.o), gs = lerp(gh.to, 1, ge);
@@ -491,6 +523,7 @@ p { margin: 0 }
           else if (op[0] === "click") { if (!d.choose()) d.back(); }
           else if (op[0] === "hide") { d.stage.style.opacity = 0; }
           else if (op[0] === "reset") { if (d.opts.onReset) d.opts.onReset(); }
+          else if (op[0] === "pass") d.opts.onPass();
           if (to) human(d.op, to, dur, op[0] === "slot" ? [s.rects[op[1]].w * (s.rects[op[1]].sub ? 0.04 : 0.1), s.rects[op[1]].h * 0.1] : op[0] === "home" ? [6, 6] : [2, 2]);
           else d.op.dur = dur;
           dur = d.op.dur;
@@ -827,34 +860,34 @@ p { margin: 0 }
     };
   }
 
-  // ---------- variant A: two background pies with other layouts ----------
-  var BACK = {
-    far: { root: { name: "Shading", items: { 0: { label: "Solid" }, 90: { label: "Material" }, 180: { label: "Rendered" }, 270: { label: "Wireframe" } } } },
-    near: { root: { name: "Sculpt", items: {
+  // ---------- the two background pies in the download section ----------
+  // Left, behind Native: Blender's own pies. Right, behind Kompass: Kompass pies with ten and twelve slots.
+  var NATIVE_PIES = [
+    [{ root: { name: "Shading", items: { 270: { label: "Wireframe" }, 90: { label: "Solid" }, 180: { label: "Material Preview" }, 0: { label: "Rendered" } } } }, [90, 270, 0]],
+    [{ root: { name: "View", items: { 270: { label: "Left" }, 90: { label: "Right" }, 180: { label: "Bottom" }, 0: { label: "Top" },
+      315: { label: "Back" }, 45: { label: "Front" }, 225: { label: "Camera" }, 135: { label: "View Selected" } } } }, [45, 225, 135, 0]]
+  ];
+  var KOMPASS_PIES = [
+    [{ root: { name: "Sculpt", items: {
       0: { label: "Draw" }, 36: { label: "Clay Strips" }, 72: { label: "Crease" }, 108: { label: "Grab" }, 144: { label: "Snake Hook" },
-      180: { label: "Smooth" }, 216: { label: "Flatten" }, 252: { label: "Inflate" }, 288: { label: "Pinch" }, 324: { label: "Mask" } } } },
-    view: { root: { name: "View", items: { 0: { label: "Top" }, 42: { label: "Front" }, 68: { label: "Camera" }, 90: { label: "Right" },
+      180: { label: "Smooth" }, 216: { label: "Flatten" }, 252: { label: "Inflate" }, 288: { label: "Pinch" }, 324: { label: "Mask" } } } }, [108, 288, 36, 180]],
+    [{ root: { name: "View", items: { 0: { label: "Top" }, 42: { label: "Front" }, 68: { label: "Camera" }, 90: { label: "Right" },
       112: { label: "Selected" }, 138: { label: "Local" }, 180: { label: "Bottom" }, 222: { label: "Back" }, 248: { label: "Ortho" },
-      270: { label: "Left" }, 292: { label: "Frame All" }, 318: { label: "Perspective" } } } }
-  };
-  // z runs from 0 (far) to 1 (near).
-  // On each loop the background pie switches sides, left or right of the plates, and may run off the page edge.
-  var lastSpot = Math.random() < .5 ? 0 : 1, spots = [[4, 14], [82, 14]];
-  function placeDepth(el) {
-    var spot = 1 - lastSpot;
-    var z = Math.random(), s = 0.6 + 0.35 * z;
-    var x = spots[spot][0] + Math.random() * spots[spot][1], y = 50 + Math.random() * 10;
-    lastSpot = spot;
-    el.style.left = (x - 28) + "%";
-    el.style.top = (y - 50) + "%";
-    el.style.transform = "scale(" + s.toFixed(2) + ")";
-    // further away: smaller, blurrier and darker
-    el.style.filter = "blur(" + (4.2 - 2.4 * z).toFixed(1) + "px) brightness(" + (0.28 + 0.2 * z).toFixed(2) + ")";
-  }
-  function backScript(degs, start) {
-    var s = [["wait", start], ["reset"], ["home", .5, .5, 10], ["keydown"], ["wait", 400]];
+      270: { label: "Left" }, 292: { label: "Frame All" }, 318: { label: "Perspective" } } } }, [318, 68, 138, 248, 0]]
+  ];
+  // Each pie plays one layout, fades out and hands over to the other; "pass" pauses it until its turn comes back.
+  function backScript(degs) {
+    var s = [["reset"], ["home", .5, .5, 10], ["keydown"], ["wait", 400]];
     degs.forEach(function (g) { s.push(["slot", g, 1100], ["wait", 900]); });
-    return s.concat([["keyup"], ["wait", 500], ["hide"], ["wait", 850]]);
+    return s.concat([["keyup"], ["wait", 500], ["hide"], ["wait", 850], ["pass"]]);
+  }
+  // A pie's centre sits 80 px outside its plate, left of Native and right of Kompass; its inner slots reach behind the plate.
+  function placeDepth(el, side) {
+    var box = el.parentNode.getBoundingClientRect(), plate = document.querySelectorAll(".plate")[side].getBoundingClientRect();
+    var x = side ? plate.right + 80 - box.left : plate.left - 80 - box.left, y = plate.top + plate.height / 2 - box.top;
+    el.style.left = (x - el.offsetWidth / 2) + "px";
+    el.style.height = Math.max(520, box.height) + "px";
+    el.style.top = (y - Math.max(520, box.height) / 2) + "px";
   }
 
   // ---------- wiring per variant ----------
@@ -863,18 +896,15 @@ p { margin: 0 }
     var sa = document.getElementById("site");
     var scene = makeScene(sa.querySelector("[data-demo]"));
     demos.a = new Demo(sa.querySelector("[data-demo]"), { colors: DARK, script: SCRIPT, animBg: scene.step.bind(scene), onRun: scene.run, onOpen: scene.reset, onHover: scene.preview });
-    // One background pie; on each loop it takes a layout it was not just showing.
-    var layouts = [[BACK.near, [108, 288, 36, 180]], [BACK.far, [90, 180, 270]], [BACK.view, [318, 68, 138, 248, 0]]];
-    demos.a.extras = [0].map(function (i) {
-      var el = sa.querySelector('[data-depth="' + i + '"]'), x = new Demo(el, { colors: DARK, pies: layouts[i][0], passive: true, script: backScript(layouts[i][1], i * 900),
-        onReset: function () {
-          var free = layouts.filter(function (l) { return l[0] !== x.pies; }), pick = free[Math.floor(Math.random() * free.length)];
-          x.pies = pick[0]; x.script = backScript(pick[1], 0);
-          placeDepth(el); requestAnimationFrame(function () { el.style.opacity = 1; });
-        } });
+    demos.a.extras = [NATIVE_PIES, KOMPASS_PIES].map(function (set, side) {
+      var el = sa.querySelector('[data-depth="' + side + '"]'), n = 0, x = new Demo(el, { colors: DARK, pies: set[0][0], passive: true, native: !side, script: backScript(set[0][1]),
+        onReset: function () { var pick = set[n++ % set.length]; x.pies = pick[0]; x.script = backScript(pick[1]); requestAnimationFrame(function () { el.style.opacity = 1; }); },
+        onPass: function () { x.holdUntil = Infinity; var o = demos.a.extras[1 - side]; o.holdUntil = 0; } });
+      x.ghost = false;
+      placeDepth(el, side);
       return x;
     });
-    demos.a.extras.forEach(function (x) { x.ghost = false; if (reduce) { placeDepth(x.stage); x.stage.style.opacity = 1; } });
+    if (reduce) demos.a.extras[0].stage.style.opacity = 1;
 
     Object.keys(demos).forEach(function (k) {
       var d = demos[k];
@@ -893,14 +923,14 @@ p { margin: 0 }
     // The first pie opens 0.5 s after the page shows, from the stage centre.
     else if (!d.user) { d.op = null; d.s.open = false; d.s.px = d.w * .5; d.s.py = d.h * .58; d.i = 3; d.holdUntil = performance.now() + 500; }
     d.render();
-    (d.extras || []).forEach(function (x) { x.size(); x.holdUntil = performance.now() + 500; if (reduce) { x.openAt(x.w * .5, x.h * .5); x.track(x.w * .5 - 50, x.h * .5 + 40); } x.render(); });
+    (d.extras || []).forEach(function (x, side) { x.size(); x.holdUntil = side ? Infinity : performance.now() + 500; if (reduce && !side) { x.openAt(x.w * .5, x.h * .5); x.track(x.w * .5 - 50, x.h * .5 + 40); } x.render(); });
   }
   // Button fill starts where the pointer enters and shrinks toward where it leaves.
   document.querySelectorAll(".btn").forEach(function (b) {
     function at(e) { var r = b.getBoundingClientRect(); b.style.setProperty("--x", (e.clientX - r.left) + "px"); b.style.setProperty("--y", (e.clientY - r.top) + "px"); }
     b.addEventListener("pointerenter", at); b.addEventListener("pointerleave", at);
   });
-  window.addEventListener("resize", function () { var d = demos[current]; if (d) { d.size(); (d.extras || []).forEach(function (x) { x.size(); }); } });
+  window.addEventListener("resize", function () { var d = demos[current]; if (d) { d.size(); (d.extras || []).forEach(function (x, side) { placeDepth(x.stage, side); x.size(); }); } });
 
   // Each demo, and each background pie in the download section, only runs while it is on screen.
   function loop(now) {

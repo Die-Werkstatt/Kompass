@@ -26,3 +26,4 @@ __pycache__/
 
 # Built by the site workflow from the latest release
 site/public/download/
+site/.wrangler/
