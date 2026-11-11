@@ -69,7 +69,8 @@ def steps():
     # Importing binds the shortcuts at once, without a restart.
     assert bpy.ops.kompass.pies_import(filepath=str(PIES)) == {"FINISHED"}
     assert keymaps.problems == [
-        'Pie "Broken key" has no shortcut: Blender has no key "NOT_A_KEY"'
+        'Pie "Broken key" has no shortcut: Blender has no key "NOT_A_KEY"',
+        'Pie "Wide" has no shortcut: Blender\'s pie menu holds 8 slots, it has 12',
     ], keymaps.problems
 
     select = storage.pies[0]
@@ -158,7 +159,7 @@ def steps():
 
     # Resting on the Mesh slot opens it without a click. Mesh has a sub-pie
     # in the same slot, which stays shut until the pointer has left it.
-    left, bottom = layout.slot_corner(layout.BEARINGS.index(180))
+    left, bottom = layout.slot_corner(layout.BEARINGS.index(180), 8)
     south = x + int(left) + layout.SLOT_WIDTH // 2, y + int(bottom) + 10
     editor_window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
     yield PAUSE / 2
@@ -197,6 +198,14 @@ def steps():
     )
     yield PAUSE
     assert editor.shown().id == "mesh", editor.shown().id
+
+    # A pie of 12 slots: 20 degrees from north is its second slot, a sub-pie.
+    # In a pie of 8 that bearing is north, where Wide has a tool.
+    assert bpy.ops.kompass.editor_show(pie="wide") == {"FINISHED"}
+    yield PAUSE / 2
+    dx, dy = layout.point(2 * FLICK, 20)
+    yield from click(x + int(dx), y + int(dy))
+    assert editor.shown().id == "broken" and editor.depth() == 2, editor.shown().id
 
     # Disabling with the editor open leaves nothing registered.
     addon_utils.disable(addon)

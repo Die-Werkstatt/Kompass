@@ -73,6 +73,12 @@ def unregister():
         bpy.app.timers.unregister(_tick)
 
 
+def _count():
+    """Return how many slots the pie on the canvas has."""
+    shown = editor.shown()
+    return model.NATIVE_SLOTS if shown is None else len(shown.slots)
+
+
 def _ring():
     return layout.RING_RADIUS * (layout.SUB_PIE_DIAL if editor.in_sub_pie() else 1)
 
@@ -128,7 +134,7 @@ def _draw():
         return
     state = _state
     now = time.perf_counter()
-    canvas = paint.Canvas(context)
+    canvas = paint.Canvas(context, _count())
     gpu.state.blend_set("ALPHA")
     # The whole region, which the pie's centre is not the middle of.
     left, bottom = canvas.units((0, 0))
@@ -181,7 +187,9 @@ def _draw():
 def _slide(labels, pointer, now, context):
     """Move the labels that are too long. Return whether one is not at rest."""
     state = _state
-    selected = None if pointer is None else layout.slot_at(*pointer, _ring())
+    selected = None
+    if pointer is not None:
+        selected = layout.slot_at(*pointer, _count(), _ring())
     if selected != state.selected:
         state.selected, state.selected_since = selected, now
     # A draw after a long rest is not a long step.
@@ -219,7 +227,7 @@ def _tick():
 def _follow(context, location):
     """Record where the pointer is and return it in canvas units."""
     state = _state
-    pointer = paint.Canvas(context).units(location)
+    pointer = paint.Canvas(context, _count()).units(location)
     if pointer != state.pointer:
         state.pointer = pointer
         if math.hypot(*pointer) >= layout.NEEDLE_REST:
@@ -277,7 +285,7 @@ class KOMPASS_GT_slot(_Part, bpy.types.Gizmo):
 
     def test_select(self, context, location):
         pointer = _follow(context, location)
-        return 0 if layout.slot_at(*pointer, _ring()) == self.slot else -1
+        return 0 if layout.slot_at(*pointer, _count(), _ring()) == self.slot else -1
 
 
 class KOMPASS_GT_dial(_Part, bpy.types.Gizmo):
@@ -305,6 +313,6 @@ class KOMPASS_GGT_canvas(bpy.types.GizmoGroup):
         return context.space_data.tree_type == editor.KompassTree.bl_idname
 
     def setup(self, _context):
-        for slot in range(len(model.SLOT_DIRECTIONS)):
+        for slot in range(model.WIDE_SLOTS):
             self.gizmos.new(KOMPASS_GT_slot.bl_idname).slot = slot
         self.gizmos.new(KOMPASS_GT_dial.bl_idname)

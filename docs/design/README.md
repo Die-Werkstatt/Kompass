@@ -14,6 +14,7 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 |---|---|
 | Slot labels | Barlow SemiBold, capitals, tracking 0.08 em |
 | Slots | square corners; ground `#0E0E0E`, outline `#2C2C2C` |
+| Slot count | 8, at 45°, or 12, at 30° clockwise from north |
 | Slot width | at least 120 px; grows to fit the label plus 12 px padding each side, up to 180 px |
 | Long label | clipped at the padding |
 | Sub-pie marker | signal-red triangle in a slot's top-right corner |
@@ -67,6 +68,11 @@ With it a long label jumps to its end after the 400 ms.
 Not on the canvas: the closing motion, since nothing closes a pie there, press-drag-release, Esc and right-click.
 A click on a tool or operator slot does nothing.
 
+Sandro decided on 11 Nov 2026 that the pie Kompass draws holds 12 slots (#8).
+Blender's own pie menu holds 8, so a pie of 12 gets no shortcut and a slot that leads to one is disabled there until Kompass draws the live pie (#22).
+The canvas shows a pie of 12 with a radius of 190 px and a long tick every 30°; that radius is a first guess, not a design.
+The editor cannot make a pie of 12 yet: it comes from a pie file.
+
 ## Editor host
 
 Checked with a throwaway prototype in Blender 5.2.4 on 11 Nov 2026 (issue #17), with simulated input on Linux.
@@ -104,8 +110,9 @@ Not checked: a `.blend` saved with the Kompass window, opened without Kompass in
 
 ## Open questions
 
+- Whether slots 30° apart can be hit blind with a flick, against Blender's 45° (#22).
 - Signal red for the selected slot differs from Blender, where selection follows the user's theme.
   Sandro chose red on 10 Nov 2026.
 - The native pie cannot open sub-pies on hover: Blender's pie handler has no hover timer.
-  In Lite a sub-pie opens when its slot is chosen, centred on the pointer, and then waits for a click.
+  In the native pie a sub-pie opens when its slot is chosen, centred on the pointer, and then waits for a click.
   Checked in Blender 5.2.4 on 11 Nov 2026.

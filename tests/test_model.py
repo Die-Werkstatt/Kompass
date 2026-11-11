@@ -85,7 +85,26 @@ def test_wrong_slot_count_is_rejected():
     def change(data):
         data["pies"][0]["slots"].append(None)
 
-    assert rejected(change) == 'pie "select" has 9 slots, expected 8'
+    assert rejected(change) == 'pie "select" has 9 slots, expected 8 or 12'
+
+
+def test_a_pie_of_twelve_slots_round_trips():
+    data = json.loads(EXAMPLE)
+    data["pies"][0]["slots"] += [None] * 4
+    pies = model.loads(json.dumps(data))
+    assert len(pies[0].slots) == 12
+    assert model.loads(model.dumps(pies)) == pies
+
+
+def test_slots_of_twelve_are_named_by_bearing():
+    def change(data):
+        slots = data["pies"][0]["slots"]
+        slots += [None] * 4
+        slots[2] = {"type": "sub_pie", "pie": "gone"}
+
+    assert rejected(change) == (
+        'pie "select" slot 60° opens the pie "gone", which does not exist'
+    )
 
 
 def test_duplicate_id_is_rejected():

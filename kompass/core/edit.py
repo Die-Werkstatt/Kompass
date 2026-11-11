@@ -4,7 +4,7 @@
 import re
 from dataclasses import replace
 
-from .model import SLOT_DIRECTIONS, Pie, SubPieSlot
+from .model import NATIVE_SLOTS, Pie, SubPieSlot
 
 
 def free_id(wanted, taken):
@@ -21,7 +21,7 @@ def add(pies, name):
     """Return the pies with a new, empty pie of that name at the end."""
     wanted = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "pie"
     pie_id = free_id(wanted, {pie.id for pie in pies})
-    return (*pies, Pie(id=pie_id, name=name, slots=(None,) * len(SLOT_DIRECTIONS)))
+    return (*pies, Pie(id=pie_id, name=name, slots=(None,) * NATIVE_SLOTS))
 
 
 def rename(pies, pie_id, name):

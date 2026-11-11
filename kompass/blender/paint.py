@@ -53,14 +53,15 @@ class Look:
 class Canvas:
     """Turns canvas units into the pixels of a region."""
 
-    def __init__(self, context):
+    def __init__(self, context, count):
+        """count is how many slots the pie has that must fit."""
         region = context.region
         self.size = region.width, region.height
         # The sidebar lies over the right of the canvas.
         sidebar = next(r for r in context.area.regions if r.type == "UI")
         width = region.width - (sidebar.width if sidebar.width > 1 else 0)
         scale = context.preferences.system.ui_scale
-        self.scale = scale * layout.fit(width / scale, region.height / scale)
+        self.scale = scale * layout.fit(width / scale, region.height / scale, count)
         self.centre = width / 2, region.height / 2
         # What is drawn next is this opaque, and this size around origin.
         self.opacity = 1.0
@@ -175,12 +176,13 @@ def _draw_dial(canvas, look, opened):
             layout.OPEN_DIAL + (1 - layout.OPEN_DIAL) * opened,
             (0.0, 0.0),
         )
+    count = len(look.pie.slots)
     selected = None
     if look.pointer is not None:
-        selected = layout.slot_at(*look.pointer, ring)
+        selected = layout.slot_at(*look.pointer, count, ring)
     canvas.line(_circle(ring), LINE, 1.5)
-    for bearing, inner, outer, major in layout.ticks(dial, hover):
-        on = selected is not None and bearing == layout.BEARINGS[selected]
+    for bearing, inner, outer, major in layout.ticks(count, dial, hover):
+        on = selected is not None and bearing == layout.bearings(count)[selected]
         colour = SIGNAL if on else INK if major else (*STONE[:3], 0.55)
         tick = [layout.point(inner, bearing), layout.point(outer, bearing)]
         canvas.line(tick, colour, 3 if on else 2 if major else 1)
@@ -219,12 +221,13 @@ def _draw_dial(canvas, look, opened):
 
 
 def _draw_slot(canvas, look, slot, content, pull):
+    count = len(look.pie.slots)
     amount = 0.0
     if look.pointer is not None:
         ring = layout.RING_RADIUS * look.dial
-        amount = layout.highlight(*look.pointer, slot, ring)
+        amount = layout.highlight(*look.pointer, slot, count, ring)
     text, text_width, width = look.labels[slot]
-    left, bottom = layout.slot_corner(slot, width, pull)
+    left, bottom = layout.slot_corner(slot, count, width, pull)
     right, top = left + width, bottom + layout.SLOT_HEIGHT
     box = [(left, bottom), (right, bottom), (right, top), (left, top)]
     sub_pie = isinstance(content, model.SubPieSlot)
@@ -234,7 +237,7 @@ def _draw_slot(canvas, look, slot, content, pull):
     if sub_pie:
         canvas.fill(box, _mix(GROUND, SUB_PIE_LIT, amount))
         if fill > 0:
-            x0, y0, x1, y1 = layout.filled(slot, fill)
+            x0, y0, x1, y1 = layout.filled(slot, count, fill)
             height = layout.SLOT_HEIGHT
             part = [
                 (left + x0 * width, bottom + y0 * height),

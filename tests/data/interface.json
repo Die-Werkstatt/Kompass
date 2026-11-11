@@ -111,6 +111,40 @@
         null,
         null
       ]
+    },
+    {
+      "id": "wide",
+      "name": "Wide",
+      "shortcut": {
+        "keymap": "3D View",
+        "space_type": "VIEW_3D",
+        "key": "W",
+        "modifiers": [
+          "shift",
+          "alt"
+        ]
+      },
+      "slots": [
+        {
+          "type": "tool",
+          "space_type": "VIEW_3D",
+          "tool": "builtin.select_box"
+        },
+        {
+          "type": "sub_pie",
+          "pie": "broken"
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
     }
   ]
 }
