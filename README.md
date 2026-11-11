@@ -12,18 +12,16 @@ Needs Blender 5.2 or newer.
 ```sh
 git clone https://github.com/Die-Werkstatt/Kompass.git
 cd Kompass
-./build.sh        # Windows: build.bat
+./build.sh install   # Windows: build.bat install
 ```
 
-The script finds Blender and writes `kompass-0.1.0.zip` into the folder.
-Where it finds none, set `BLENDER` to the path of the Blender program first.
+The script finds Blender, writes `kompass-0.1.0.zip` into the folder and
+installs it. Close Blender first. Without `install` it only builds the
+`.zip`. Where it finds no Blender, set `BLENDER` to the path of the Blender
+program first.
 
-Install the `.zip` in Blender: Preferences > Get Extensions > the arrow menu
-at the top right > Install from Disk. Or from the command line:
-
-```sh
-blender --command extension install-file -r user_default --enable kompass-0.1.0.zip
-```
+To install a `.zip` by hand, drag it into Blender, or use Preferences >
+Get Extensions > the arrow menu at the top right > Install from Disk.
 
 Kompass starts with no pies. Preferences > Add-ons > Kompass > Import and
 pick `tests/data/example.json`, then hold Shift+Alt+Q in the 3D Viewport.
