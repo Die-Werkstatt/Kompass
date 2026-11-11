@@ -37,6 +37,36 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 | Return from a sub-pie | the slot that opened it does not reopen until the pointer leaves it |
 | Opening a sub-pie | the needle keeps its heading; it does not reset to north |
 
+## Editor host
+
+Checked with a throwaway prototype in Blender 5.2.4 on 11 Nov 2026 (issue #17), with simulated input on Linux.
+The prototype is not in the repository.
+
+It hosted the editor in a `NodeTree` subclass named Kompass, with the slots as gizmos and the dial drawn behind them.
+
+| Question | Answer |
+|---|---|
+| Does a node tree type become an editor? | Yes. `area.ui_type = "<tree idname>"` switches an area to it, and it is listed in the editor-type menu with its label and icon. |
+| What does the empty editor show? | A dot grid, the header with View, Select, Add and Node menus and the tree selector, and a sidebar. |
+| Does it need a node tree data-block? | Yes. Without one assigned to the editor, gizmo groups are not polled or drawn. The data-block is saved in the user's `.blend`. |
+| Can the header be hidden? | Yes, with `space.show_region_header = False`, per area. Blender leaves a small arrow to bring it back. |
+| Can the grid be hidden? | Yes. A `BACKDROP` draw handler that fills the region covers it. |
+| Which sidebar tabs appear? | Blender's Group, Tool and View tabs beside the Kompass tab. A panel `poll` on `space_data.tree_type` keeps Kompass panels out of other node editors, but Blender's tabs cannot be removed. |
+| Do gizmos work in the Node Editor? | Yes. A `GizmoGroup` with `bl_space_type = "NODE_EDITOR"` and `bl_region_type = "WINDOW"` draws, highlights under the pointer and runs its operator on a click. |
+| Are gizmo positions in pixels? | Yes, region pixels. They stay in place and clickable when the node view below is zoomed or panned. |
+| Does scroll and drag still move the node view? | Yes. The wheel zooms and middle-drag pans it under the canvas. With the grid covered nothing visible moves. |
+| Do node shortcuts still work? | Yes. Shift+A opens the node Add menu, which is empty apart from Search. |
+| Can `GIZMO_GT_button_2d` be a slot? | It can be placed and sized freely and shows a Blender icon, but it is a circle with no label. |
+| Can a slot be drawn by Kompass? | Yes. A `Gizmo` subclass with `draw` and `test_select` draws a square slot with a `blf` label, highlights on hover and runs its target operator on a click. |
+| What draws above what? | `BACKDROP`, then gizmos, then `POST_PIXEL`. The dial belongs in `BACKDROP`. |
+| Does a draw handler fire in other node editors? | It is registered for the space type, so it returns early unless `space_data.tree_type` is Kompass. |
+| Is a modal operator needed? | Only while a tool is carried. A modal started from the canvas receives pointer moves and ends on the next click, and that click does not also reach the gizmo under it. |
+| Press on a sidebar button, drag, release on the canvas? | Does not work: the button does nothing. Click, move, click stays. |
+| What does `wm.window_new()` give? | A window of 1216 by 720 px from a 1280 by 800 px parent, showing a copy of the area it was called from. |
+| Is the Kompass window saved in the `.blend`? | Yes. Save and reopen brings the window back with the Kompass editor and its tree. A new file has neither. |
+
+Not checked: a `.blend` saved with the Kompass window, opened without Kompass installed; trackpad gestures; a real mouse; macOS and Windows.
+
 ## Open questions
 
 - Signal red for the selected slot differs from Blender, where selection follows the user's theme.

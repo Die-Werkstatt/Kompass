@@ -24,14 +24,13 @@ Milestone 1, pies open from shortcuts (#5).
       beside "3D View", when warning that a shortcut is taken, and decide
       whether an edit in Blender's Keymap preferences is read back (#16)
 
-In parallel:
-
-- [ ] Editor spike: node-tree host, gizmo slots, short-lived modal (#17). It
-      blocks all of Milestone 2 and needs Sandro's hands in Blender.
-
 ## Later
 
 - [ ] Milestone 2, editor: canvas (#18), then pie list, search and
-      pick-and-place (#19), then starter pies (#20, second half)
+      pick-and-place (#19), then starter pies (#20, second half). Host and
+      input as the spike found workable (`docs/design/README.md`, Editor
+      host): a Kompass node tree type, slots as Kompass-drawn gizmos, the
+      dial in a backdrop draw handler, a modal operator only while a tool is
+      carried. Sandro has not confirmed this choice.
 - [ ] Milestone 3, release Lite (#7)
 - [ ] Milestone 4, Kompass-drawn pie, only if its spike says so (#8, #22)
