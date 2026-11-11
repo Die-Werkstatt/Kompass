@@ -81,13 +81,23 @@ def _draw_operator(row, slot, icon):
         button = row.operator(slot.idname, icon=icon)
     else:
         button = row.operator(slot.idname, text=slot.label, icon=icon)
+    # Running the operator with other settings than the stored ones would be
+    # worse than not running it.
+    row.enabled = apply(button, slot.properties)
+
+
+def apply(settings, properties):
+    """Give an operator's settings the stored values. Return whether this
+    Blender accepts them all."""
     try:
-        for name, value in slot.properties.items():
-            setattr(button, name, value)
-    except (AttributeError, TypeError, ValueError):
-        # A setting this Blender does not accept: running the operator with
-        # other settings than the stored ones would be worse than not running.
-        row.enabled = False
+        for name, value in properties.items():
+            known = settings.bl_rna.properties[name]
+            # Blender wants a set where a file holds a list.
+            flags = getattr(known, "is_enum_flag", False)
+            setattr(settings, name, set(value) if flags else value)
+    except (AttributeError, KeyError, TypeError, ValueError):
+        return False
+    return True
 
 
 def operator_type(idname):

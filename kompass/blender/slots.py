@@ -2,6 +2,8 @@
 # aislop-ignore-file hallucinated-import -- bpy is provided by Blender
 """What the editor does with the selected slot."""
 
+from dataclasses import replace
+
 import bpy
 
 from ..core import edit, model
@@ -16,6 +18,12 @@ def _names(pie):
     ]
 
 
+def _held():
+    """Return what the selected slot holds, or None."""
+    slot = editor.selected()
+    return None if slot is None else editor.shown().slots[slot]
+
+
 class KOMPASS_OT_slot_clear(editor.Edit, bpy.types.Operator):
     """Empty the selected slot"""
 
@@ -24,8 +32,7 @@ class KOMPASS_OT_slot_clear(editor.Edit, bpy.types.Operator):
 
     @classmethod
     def poll(cls, _context):
-        slot = editor.selected()
-        return slot is not None and editor.shown().slots[slot] is not None
+        return _held() is not None
 
     def edited(self, pies, pie):
         return edit.place(pies, pie.id, editor.selected(), None)
@@ -112,15 +119,91 @@ class KOMPASS_OT_slot_open(bpy.types.Operator):
 
     @classmethod
     def poll(cls, _context):
-        slot = editor.selected()
-        if slot is None:
-            return False
-        return isinstance(editor.shown().slots[slot], model.SubPieSlot)
+        return isinstance(_held(), model.SubPieSlot)
 
     def execute(self, context):
         editor.enter(editor.selected())
         editor.redraw(context)
         return {"FINISHED"}
+
+
+class KOMPASS_OT_slot_label(editor.Edit, bpy.types.Operator):
+    """Name the selected slot, or leave empty for Blender's name"""
+
+    bl_idname = "kompass.slot_label"
+    bl_label = "Slot Label"
+
+    label: bpy.props.StringProperty(name="Label")
+
+    @classmethod
+    def poll(cls, _context):
+        return _held() is not None
+
+    def invoke(self, context, _event):
+        self.label = _held().label or ""
+        return context.window_manager.invoke_props_dialog(self)
+
+    def edited(self, pies, pie):
+        content = replace(_held(), label=self.label.strip() or None)
+        return edit.place(pies, pie.id, editor.selected(), content)
+
+
+def _plain(value):
+    """Return a setting of Blender's as what a pie file holds."""
+    if isinstance(value, (bool, int, float, str)):
+        return value
+    # A set of flags has no order of its own.
+    return [
+        _plain(item) for item in (sorted(value) if isinstance(value, set) else value)
+    ]
+
+
+class KOMPASS_OT_slot_settings(editor.Edit, bpy.types.Operator):
+    """Change the settings the operator in the selected slot runs with"""
+
+    bl_idname = "kompass.slot_settings"
+    bl_label = "Operator Settings"
+
+    # Blender draws an operator's settings for a keymap item only, so the
+    # dialog edits one that no key reaches.
+    _item = None
+
+    @classmethod
+    def poll(cls, context):
+        held = _held()
+        return (
+            isinstance(held, model.OperatorSlot)
+            and pie.operator_type(held.idname) is not None
+            and context.window_manager.keyconfigs.addon is not None
+        )
+
+    def invoke(self, context, _event):
+        keyconfig = context.window_manager.keyconfigs.addon
+        keymap = keyconfig.keymaps.new(name="Window", space_type="EMPTY")
+        item = keymap.keymap_items.new(_held().idname, "NONE", "PRESS")
+        item.active = False
+        pie.apply(item.properties, _held().properties)
+        KOMPASS_OT_slot_settings._item = keymap, item
+        return context.window_manager.invoke_props_dialog(self)
+
+    def draw(self, _context):
+        self.layout.template_keymap_item_properties(self._item[1])
+
+    def edited(self, pies, pie):
+        settings = self._item[1].properties
+        properties = {
+            known.identifier: _plain(getattr(settings, known.identifier))
+            for known in settings.bl_rna.properties
+            if known.identifier != "rna_type"
+            and settings.is_property_set(known.identifier)
+        }
+        self.cancel(None)
+        content = replace(_held(), properties=properties)
+        return edit.place(pies, pie.id, editor.selected(), content)
+
+    def cancel(self, _context):
+        keymap, item = self._item
+        keymap.keymap_items.remove(item)
 
 
 class KOMPASS_OT_slot_swap(editor.Edit, bpy.types.Operator):
@@ -158,13 +241,14 @@ class KOMPASS_MT_slot(bpy.types.Menu):
     bl_label = "Slot"
 
     def draw(self, _context):
-        filled = editor.shown().slots[editor.selected()] is not None
         self.layout.operator(
             KOMPASS_OT_slot_fill.bl_idname,
-            text="Replace" if filled else "Add",
+            text="Add" if _held() is None else "Replace",
             icon="VIEWZOOM",
         )
         self.layout.operator(KOMPASS_OT_slot_group.bl_idname, icon="ADD")
         self.layout.operator(KOMPASS_OT_slot_open.bl_idname, text="Open")
+        self.layout.operator(KOMPASS_OT_slot_label.bl_idname, text="Label...")
+        self.layout.operator(KOMPASS_OT_slot_settings.bl_idname, text="Settings...")
         self.layout.menu(KOMPASS_MT_slot_swap.bl_idname)
         self.layout.operator(KOMPASS_OT_slot_clear.bl_idname, text="Remove", icon="X")

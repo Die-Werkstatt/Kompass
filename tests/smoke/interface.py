@@ -216,6 +216,26 @@ def steps():
     assert editor.shown().slots[west].pie == storage.pies[-1].id == "sub-pie"
     assert bpy.ops.kompass.slot_fill(found="operator mesh.subdivide") == {"FINISHED"}
 
+    # The slot takes a label and loses it for an empty one.
+    assert bpy.ops.kompass.slot_label(label=" Cut ") == {"FINISHED"}
+    assert editor.shown().slots[west].label == "Cut"
+    assert bpy.ops.kompass.slot_label(label="") == {"FINISHED"}
+    assert editor.shown().slots[west].label is None
+
+    # Settings shows the operator's settings on a keymap item that no key
+    # reaches. OK stores the ones that were set and removes the item.
+    with bpy.context.temp_override(**here):
+        bpy.ops.kompass.slot_settings("INVOKE_DEFAULT")
+    yield PAUSE
+    keymap, item = slots.KOMPASS_OT_slot_settings._item
+    held = len(keymap.keymap_items)
+    item.properties.number_cuts = 3
+    editor_window.event_simulate(type="RET", value="PRESS")
+    editor_window.event_simulate(type="RET", value="RELEASE")
+    yield PAUSE
+    assert editor.shown().slots[west].properties == {"number_cuts": 3}
+    assert len(keymap.keymap_items) == held - 1
+
     # Every context the editor offers is a keymap of Blender's.
     default = bpy.context.window_manager.keyconfigs.default.keymaps
     for keymap, space_type, _ in keymaps.CONTEXTS:

@@ -58,6 +58,11 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       the slot reads SUBDIVIDE. Click an empty slot: the menu says Add.
 - [ ] Click a slot, New Sub-Pie: the slot reads SUB-PIE with a red corner and
       the pie list has a Sub-Pie. Click a slot, Remove: it is empty.
+- [ ] Click a filled slot, Label, type a name, OK: the slot reads that name.
+      Label again with an empty field: it reads Blender's name.
+- [ ] Click a slot that holds an operator, Settings: Blender's settings for the
+      operator show. Change one, OK, open the pie on its shortcut and choose
+      the slot: the operator runs with that setting.
 - [ ] Close and reopen Blender: the changes are still there.
 - [ ] In the 3D Viewport, Shift+Alt+Q: the pie shows the new slots.
 - [ ] In the Shortcut panel click the shortcut and press Shift+C: the button

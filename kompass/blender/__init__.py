@@ -42,6 +42,8 @@ _CLASSES = (
     slots.KOMPASS_OT_slot_group,
     slots.KOMPASS_OT_slot_open,
     slots.KOMPASS_OT_slot_clear,
+    slots.KOMPASS_OT_slot_label,
+    slots.KOMPASS_OT_slot_settings,
     slots.KOMPASS_OT_slot_swap,
     slots.KOMPASS_MT_slot_swap,
     slots.KOMPASS_MT_slot,
