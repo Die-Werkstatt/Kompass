@@ -10,8 +10,7 @@ list unless it says otherwise.
 
 Milestone 0, foundations (#4).
 
-- [ ] Pie file in the extension user directory, with atomic writes and a kept
-      copy of a corrupt file; headless smoke test script (#13, #21)
+- [ ] Manual test checklist in `docs/` for what only a person can judge (#21)
 
 Still to decide in #10: the canvas font and the icon licence. Until then the
 plan assumes Blender's own UI font and CC0 icons.
@@ -25,7 +24,8 @@ Milestone 1, pies open from shortcuts (#5).
 - [ ] Shortcut and context per pie, with the conflict warning (#16)
 - [ ] Export and import in the add-on preferences, with a list of the stored
       pies (#20, first half). Uninstalling deletes the pie file, so this ships
-      with the first version that can store a pie.
+      with the first version that can store a pie, together with the user
+      documentation that says so.
 
 In parallel:
 

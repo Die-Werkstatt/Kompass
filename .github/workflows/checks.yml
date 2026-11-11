@@ -1,5 +1,5 @@
-# Project-owned. Unit tests, then the extension built, installed and enabled in
-# the minimum supported Blender.
+# Project-owned. Unit tests, then the smoke test in the minimum supported
+# Blender.
 name: checks
 
 on:
@@ -44,10 +44,4 @@ jobs:
           rm "$archive"
           echo "$RUNNER_TEMP/blender" >> "$GITHUB_PATH"
 
-      - run: blender --command extension build --source-dir kompass
-
-      - name: Install and enable the extension
-        run: |
-          blender --command extension install-file -r user_default --enable kompass-*.zip
-          blender --background --python-exit-code 1 --python-expr \
-            "import bpy; assert 'bl_ext.user_default.kompass' in bpy.context.preferences.addons"
+      - run: python3 tests/smoke/run.py
