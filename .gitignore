@@ -23,3 +23,6 @@ __pycache__/
 # Extension package from `blender --command extension build`
 /kompass-*.zip
 .pytest_cache/
+
+# Built by the site workflow from the latest release
+site/public/download/

@@ -24,8 +24,8 @@ pie of 12 only shows in the editor so far. Slots are filled in the editor.
 - `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
   pie file. `tests/smoke/` runs inside Blender: `checks.py` without a window,
   `interface.py` with one, pressing shortcuts through simulated events.
-- `docs/`: logo and brand notes (`brand/`), the pie design (`design/`) and
-  the checklist a person runs before a release (`manual-test.md`).
+- `docs/`: brand notes (`brand/`), the pie design (`design/`), the release
+  checklist (`manual-test.md`). `site/`: the website (`workflows/site.yml`).
 - `agent_docs/`: these instructions, the roadmap and the dependency inventory.
 
 ## Architecture rules
