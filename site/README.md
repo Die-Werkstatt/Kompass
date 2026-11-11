@@ -1,7 +1,7 @@
 # Website
 
-`public/` is the whole site: one page, its fonts and favicon. Cloudflare
-Workers serves it as static assets, with no Worker script (`wrangler.jsonc`).
+`public/` is the whole site: one page, its fonts and favicon. Cloudflare Pages
+serves it at `kompass-site.pages.dev` (`wrangler.jsonc`).
 
 `.github/workflows/site.yml` deploys it on every push to `main` that touches
 `site/`, and when a release is published. A release's tag must be `v` plus the
@@ -16,17 +16,18 @@ Blender offers later releases as updates.
 
 ```sh
 cd site
-npx wrangler@4.154.0 dev
+npx wrangler@4.154.0 pages dev
 ```
 
 ## Set up Cloudflare once
 
-1. In the Cloudflare dashboard, go to Account API tokens, select Create Token
-   and use the Edit Cloudflare Workers template. Limit it to your account.
+1. In the Cloudflare dashboard, go to Account API tokens and select Create
+   Token > Custom token. Give it the permission Account > Cloudflare Pages >
+   Edit, limited to your account.
 2. Copy your account ID from Workers & Pages > Account Details.
 3. In GitHub, add both as repository secrets (Settings > Secrets and
    variables > Actions): `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
-4. Run the site workflow (Actions > site > Run workflow). The first deploy
-   creates the Worker `kompass-site` at `kompass-site.<subdomain>.workers.dev`.
-5. For your own domain, the domain's zone must be on Cloudflare. In the
-   Worker, go to Settings > Domains & Routes > Add > Custom Domain.
+4. Run the site workflow (Actions > site > Run workflow). The first run creates
+   the Pages project `kompass-site`.
+5. For your own domain, open the project in Workers & Pages and go to Custom
+   domains > Set up a custom domain.
