@@ -67,7 +67,7 @@ A slot that is under the pointer when its pie arrives does not open until the po
 Reduced motion is Blender's Preferences > Interface > Reduce Motion; the 100 ms before a sub-pie opens stay.
 With it a long label jumps to its end after the 400 ms.
 Not on the canvas: the closing motion, since nothing closes a pie there, press-drag-release, Esc and right-click.
-A click on a tool or operator slot does nothing.
+A click on a tool or operator slot does nothing, and so does a click further than 24 px from every slot, since nothing closes a pie there.
 
 Sandro decided on 11 Nov 2026 that the pie Kompass draws holds 12 slots (#8).
 Blender's own pie menu holds 8, so a pie of 12 gets no shortcut and a slot that leads to one is disabled there until Kompass draws the live pie (#22).

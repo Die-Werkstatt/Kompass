@@ -21,6 +21,8 @@ WIDE_BEARINGS = (0, 42, 68, 90, 112, 138, 180, 222, 248, 270, 292, 318)
 SLOT_WIDTH = 120
 SLOT_MAX_WIDTH = 180
 SLOT_HEIGHT = 32
+# A click this close to a slot counts for it.
+CLICK_REACH = 24
 # The room between a slot's side and its label.
 LABEL_PAD = 12
 # The tips of the dial's ticks, and the ring drawn around them.
@@ -113,6 +115,20 @@ def slot_under(x, y, widths):
         if left < x < left + width and bottom < y < bottom + SLOT_HEIGHT:
             return slot
     return None
+
+
+def slot_clicked(x, y, widths):
+    """Return the slot nearest to a click, or None beyond CLICK_REACH of all."""
+    nearest, reach = None, CLICK_REACH
+    for slot, width in enumerate(widths):
+        left, bottom = slot_corner(slot, len(widths), width)
+        distance = math.hypot(
+            max(left - x, 0, x - left - width),
+            max(bottom - y, 0, y - bottom - SLOT_HEIGHT),
+        )
+        if distance <= reach:
+            nearest, reach = slot, distance
+    return nearest
 
 
 def slide(offset, over, selected, step):

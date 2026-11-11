@@ -266,8 +266,15 @@ class _Part:
         return {"RUNNING_MODAL"}
 
     def exit(self, context, cancel):
-        if not cancel:
-            editor.click(self.slot)
+        if cancel:
+            return
+        slot = self.slot
+        if slot >= 0:
+            # Blender picks the gizmo by bearing at any distance; a click
+            # counts only close to a slot.
+            slot = layout.slot_clicked(*_state.pointer, _widths(editor.shown()))
+        if slot is not None:
+            editor.click(slot)
             context.region.tag_redraw()
 
 

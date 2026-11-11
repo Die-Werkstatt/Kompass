@@ -113,6 +113,23 @@ def test_slot_under_is_the_box_not_the_bearing():
     assert layout.slot_under(left + layout.SLOT_WIDTH + 5, 0, widths) == E
 
 
+def test_click_counts_near_a_slot_only():
+    widths = [layout.SLOT_WIDTH] * 8
+    left, bottom = layout.slot_corner(E, 8)
+    right = left + layout.SLOT_WIDTH
+    assert layout.slot_clicked(left + 5, bottom + 5, widths) == E
+    assert layout.slot_clicked(right + layout.CLICK_REACH, bottom + 5, widths) == E
+    assert (
+        layout.slot_clicked(right + layout.CLICK_REACH + 1, bottom + 5, widths) is None
+    )
+    # Past the corner the distance is the diagonal.
+    assert layout.slot_clicked(right + 20, bottom - 20, widths) is None
+    # Between two slots of a pie of 12 the nearer one takes it.
+    twelve = [layout.SLOT_WIDTH] * 12
+    assert layout.slot_clicked(200, 30, twelve) == 3
+    assert layout.slot_clicked(200, 40, twelve) == 2
+
+
 def test_slot_width_follows_the_label():
     assert layout.slot_width(40) == layout.SLOT_WIDTH
     assert layout.slot_width(110.2) == 111 + 2 * layout.LABEL_PAD
