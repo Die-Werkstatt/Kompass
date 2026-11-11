@@ -6,9 +6,9 @@ slots did. It cannot check how a pie looks.
 
 import importlib
 import os
-import shutil
 import sys
 import traceback
+from dataclasses import replace
 from pathlib import Path
 
 import addon_utils
@@ -64,12 +64,17 @@ def active_tool():
 
 
 def steps():
-    shutil.copy(PIES, storage.path())
-    addon_utils.disable(addon)
-    addon_utils.enable(addon)
+    # Importing binds the shortcuts at once, without a restart.
+    assert bpy.ops.kompass.pies_import(filepath=str(PIES)) == {"FINISHED"}
     assert keymaps.problems == [
         'Pie "Broken key" has no shortcut: Blender has no key "NOT_A_KEY"'
     ], keymaps.problems
+
+    select, mesh = storage.pies[:2]
+    assert keymaps.text(select.shortcut) == "Shift Alt Q"
+    assert keymaps.taken_by(select.shortcut) is None
+    frame_all = replace(select.shortcut, key="C", modifiers=frozenset({"shift"}))
+    assert keymaps.taken_by(frame_all) == "Frame All", keymaps.taken_by(frame_all)
 
     # The splash screen of a new profile takes the first key press.
     tap("ESC")

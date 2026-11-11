@@ -12,12 +12,13 @@ on its own shortcut. Pies are still made by editing the pie file.
 ## Project structure
 
 - `kompass/`: the extension; everything in it ships in the `.zip`.
-  - `core/`: the pie model, validation and JSON format (`model.py`), and
-    reading and writing a pie file on disk (`store.py`).
+  - `core/`: the pie model, validation and JSON format (`model.py`), reading
+    and writing a pie file on disk (`store.py`), and choosing pies for export
+    and merging imported ones (`transfer.py`).
   - `blender/`: everything that needs `bpy`. `storage.py` holds the pies
     loaded from `pies.json`, `pie.py` opens one as a native pie menu,
     `keymaps.py` gives each its shortcut, `tools.py` reads Blender's tool
-    list, `preferences.py` shows the pie count, the file path and problems.
+    list, `files.py` exports and imports, `preferences.py` lists the pies.
 - `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
   pie file. `tests/smoke/` runs inside Blender: `checks.py` without a window,
   `interface.py` with one, pressing shortcuts through simulated events.
