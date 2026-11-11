@@ -38,6 +38,7 @@ It differs from the table above in the font, which is Blender's interface font w
 | Pointer outside the dial ring | the nearest slot is selected |
 | Pointer inside the dial ring | no slot is selected; the dial turns to its hover state in 120 ms, ease-in-out cubic |
 | Pointer leaves the dial ring | the hover state reverses from wherever it is |
+| A pie or sub-pie opens under the pointer | the needle shows; the hover state arms only after the pointer has left the dial ring once |
 | Highlight on a tool slot | signal red, strength rises with distance past the ring and closeness to the needle; the selected slot keeps at least 30% |
 | Highlight on a sub-pie slot | the same strength in grey |
 | Pointer rests on a sub-pie slot | signal red fills the slot away from the centre over 100 ms and its outline turns red: east slots fill left to right, west right to left, north upward, south downward, diagonals like their side |
