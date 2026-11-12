@@ -49,10 +49,16 @@ def selected():
     return _selected[1]
 
 
-def select(slot):
-    """Select that slot of the pie on the canvas, or none for None."""
+def selection():
+    """Return the id of a pie and the index of its selected slot, or None."""
+    return _selected
+
+
+def select(slot, pie_id=None):
+    """Select that slot, or none for None, of the pie on the canvas or of
+    the pie a slot was dragged from."""
     global _selected
-    _selected = None if slot is None else (shown().id, slot)
+    _selected = None if slot is None else (pie_id or shown().id, slot)
 
 
 class KOMPASS_OT_editor_open(bpy.types.Operator):

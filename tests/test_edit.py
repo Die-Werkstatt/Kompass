@@ -71,13 +71,21 @@ def test_bind_sets_and_removes_a_shortcut():
 
 
 def test_swap_exchanges_two_slots():
-    pies = edit.swap(EXAMPLE, "select", 0, 5)
+    pies = edit.swap(EXAMPLE, ("select", 0), ("select", 5))
     assert pies[0].slots[0] == SELECT.slots[5]
     assert pies[0].slots[5] == SELECT.slots[0]
     assert [pies[0].slots[n] for n in (1, 2, 3, 4, 6, 7)] == [
         SELECT.slots[n] for n in (1, 2, 3, 4, 6, 7)
     ]
-    assert edit.swap(pies, "select", 5, 0) == EXAMPLE
+    assert edit.swap(pies, ("select", 5), ("select", 0)) == EXAMPLE
+
+
+def test_swap_exchanges_slots_of_two_pies():
+    pies = edit.swap(EXAMPLE, ("select", 0), ("mesh", 7))
+    assert pies[0].slots[0] == EXAMPLE[1].slots[7]
+    assert pies[1].slots[7] == SELECT.slots[0]
+    model.validate(pies)
+    assert edit.swap(pies, ("mesh", 7), ("select", 0)) == EXAMPLE
 
 
 def test_resize_keeps_each_slot_in_its_direction():

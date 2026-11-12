@@ -31,8 +31,8 @@ Milestone 1, pies open from shortcuts (#5).
       shortcut and context; a slot's menu fills, labels and clears it and sets its
       icon and its operator's settings, and a drag swaps two (#19).
       Left in #18: needle easing, the closing motion, the canvas font (#10),
-      tool icons. Left in #19, in this order: dragging into a sub-pie, preview of the
-      real pie. Starter pies (#20) are `kompass/starter.json`, added from the
+      tool icons. Left in #19: dragging out of a sub-pie, preview of the real
+      pie. Starter pies (#20) are `kompass/starter.json`, added from the
       preferences: Modeling, Object, Merge, Snap, Modifiers.
 - [ ] Milestone 3, release Native, the edition that opens Blender's own pie
       menu (#7)
