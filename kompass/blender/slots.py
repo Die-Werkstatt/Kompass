@@ -269,6 +269,9 @@ class KOMPASS_MT_slot(bpy.types.Menu):
     bl_label = "Slot"
 
     def draw(self, _context):
+        # A menu opened by wm.call_menu executes its operators: without this
+        # the search and the dialogs never show.
+        self.layout.operator_context = "INVOKE_DEFAULT"
         self.layout.operator(
             KOMPASS_OT_slot_fill.bl_idname,
             text="Add" if _held() is None else "Replace",

@@ -34,6 +34,7 @@ _CLASSES = (
     editor.KOMPASS_OT_pie_duplicate,
     editor.KOMPASS_OT_pie_delete,
     editor.KOMPASS_OT_pie_slots,
+    editor.KOMPASS_PT_viewport,
     editor.KOMPASS_PT_pies,
     shortcuts.KOMPASS_OT_pie_shortcut,
     shortcuts.KOMPASS_OT_pie_unbind,

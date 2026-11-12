@@ -255,6 +255,16 @@ class KOMPASS_OT_pie_slots(Edit, bpy.types.Operator):
         return edit.resize(pies, pie.id, self.count)
 
 
+class KOMPASS_PT_viewport(bpy.types.Panel):
+    bl_label = "Kompass"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Kompass"
+
+    def draw(self, _context):
+        self.layout.operator(KOMPASS_OT_editor_open.bl_idname)
+
+
 class KOMPASS_PT_pies(bpy.types.Panel):
     bl_label = "Pies"
     bl_space_type = "NODE_EDITOR"

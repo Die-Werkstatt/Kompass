@@ -203,6 +203,19 @@ def steps():
     assert bpy.ops.kompass.slot_clear() == {"FINISHED"}
     assert editor.shown().slots[west] is None
     assert not bpy.ops.kompass.slot_clear.poll()
+
+    # Add in the slot's menu lies under the pointer when the menu opens. It
+    # opens the search, and Enter puts the first result in the slot.
+    yield from click(x - 2 * FLICK, y)
+    yield from click(x - 2 * FLICK, y)
+    for letter in "LASSO":
+        editor_window.event_simulate(type=letter, value="PRESS", unicode=letter)
+        editor_window.event_simulate(type=letter, value="RELEASE")
+    yield PAUSE
+    editor_window.event_simulate(type="RET", value="PRESS")
+    editor_window.event_simulate(type="RET", value="RELEASE")
+    yield PAUSE
+    assert editor.shown().slots[west] is not None
     slots = importlib.import_module(addon + ".blender.slots")
     slots._find()
     kinds = {found[0].partition(" ")[0] for found in slots._found}

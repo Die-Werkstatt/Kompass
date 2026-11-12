@@ -25,11 +25,11 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 | Outer arrow | signal-red triangle outside the ring; turns with the needle |
 | Centre hover | the needle becomes a signal-red disc with a 3 px white border, radius 75% of the needle length; the 45° ticks shorten to the length of the 5° ticks; the outer arrow slides in onto the ring, shrinks and fades; the ring stays |
 | Sub-pie dial | 72% of the main dial |
-| Sub-pie title | pie name in capitals above the dial |
+| Title | pie name in capitals above the dial, in a pie and in a sub-pie |
 | Dial label | BACK in a sub-pie, CLOSE at the root, below the dial |
 | Colours | see [`../brand/README.md`](../brand/README.md) |
 
-`kompass/blender/paint.py` draws the slots, the dial, the needle, the outer arrow, the sub-pie title and the dial label.
+`kompass/blender/paint.py` draws the slots, the dial, the needle, the outer arrow, the title and the dial label.
 It differs from the table above in the font, which is Blender's interface font without tracking, because `blf` has no letter spacing and the font is undecided (#10).
 
 ## Behaviour

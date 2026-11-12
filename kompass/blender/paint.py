@@ -225,8 +225,7 @@ def _draw_dial(canvas, look, opened):
     below = "BACK" if look.depth > 1 else "CLOSE"
     colour = _mix((*STONE[:3], 0.6), INK, hover)
     canvas.text(below, 0, -(ring + 26) * pull, 11, colour)
-    if look.depth > 1:
-        canvas.text(look.pie.name.upper(), 0, (ring + 14) * pull, 12, INK)
+    canvas.text(look.pie.name.upper(), 0, (ring + 14) * pull, 12, INK)
 
 
 def _draw_slot(canvas, look, slot, content, pull):

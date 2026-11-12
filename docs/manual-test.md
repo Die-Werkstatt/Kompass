@@ -38,9 +38,12 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
 
 ## Editor
 
-- [ ] Preferences > Add-ons > Kompass > Open Editor: a small new window opens
-      with the Select pie on a black canvas. Its sidebar shows the Kompass
-      tab, which lists the pies.
+- [ ] 3D Viewport sidebar (N) > Kompass > Open Editor: a small new window
+      opens with the Select pie on a black canvas and SELECT above the dial.
+      Its sidebar shows the Kompass tab, which lists the pies. Preferences >
+      Add-ons > Kompass > Open Editor does the same.
+- [ ] Click an empty slot, Add: a search opens. Choose a result: the slot
+      holds it. Label, Icon and Settings in the menu each open their dialog.
 - [ ] Move the pointer around the dial: the needle and the outer arrow
       follow it, and the nearest slot lights up red, stronger further out.
 - [ ] Move the pointer into the dial: the needle turns into a red disc with
