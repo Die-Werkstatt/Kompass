@@ -152,8 +152,8 @@ p { margin: 0 }
         <script>
           // A different title on every load: never the one this tab showed last.
           (function () {
-            var titles = [["Make pies", "for Blender"], ["Goodbye shortcut", "madness"], ["Life can", "be better"], ["Hello lazy", "Blender"],
-              ["Build radials", "for Blender"], ["Find tools", "in Blender"], ["Ignore industry", "standards"], ["Look cool", "using Blender"]];
+            var titles = [["Make pies", "for Blender"], ["Goodbye shortcut", "madness"], ["Life can", "be radial"],
+              ["Build radials", "for Blender"], ["Find tools", "in Blender"], ["Ignore industry", "standards"]];
             var last = -1; try { last = +(sessionStorage.getItem("hero-title") || -1); } catch (e) {}
             var i = Math.floor(Math.random() * (titles.length - 1)); if (i >= last && last >= 0) i++;
             try { sessionStorage.setItem("hero-title", i); } catch (e) {}
