@@ -134,7 +134,7 @@ def test_click_near_a_slot_counts_for_it():
 
 def test_click_beyond_a_slot_picks_what_the_line_crosses():
     widths = [layout.SLOT_WIDTH] * 8
-    left, bottom = layout.slot_corner(E, 8)
+    left = layout.slot_corner(E, 8)[0]
     assert layout.slot_picked(left + layout.SLOT_WIDTH + 100, 0, widths) == E
     # The line enters the box where the box begins.
     assert layout.enters(2 * left, 0, E, widths) == pytest.approx(0.5)
