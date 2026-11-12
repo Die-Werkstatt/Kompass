@@ -143,7 +143,7 @@ def steps():
     paint = importlib.import_module(addon + ".blender.paint")
     here = {"window": editor_window, "area": editor_area, "region": canvas}
     with bpy.context.temp_override(**here):
-        scale = paint.Canvas(bpy.context, 8).scale
+        scale = paint.fitted(bpy.context, 8).scale
     centre = x, y
 
     def at(x, y):
