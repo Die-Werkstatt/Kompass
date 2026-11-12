@@ -247,6 +247,9 @@ input[type=range] { accent-color: var(--signal); width: 160px }
       var near = state.shown === null ? 0 : Math.max(0, 1 - Math.abs(((state.shown - deg) % 360 + 540) % 360 - 180) / (360 / Math.max(n, 2)));
       var amt = near * near * radial * (hot ? 1 : 0.55);
       if (hot) amt = Math.max(amt, 0.3);
+      // The highlight fades out over the 24 px around the box, the same reach as a far click.
+      var gap = Math.hypot(Math.max(x - state.px, 0, state.px - x - sw), Math.max(y - state.py, 0, state.py - y - bh));
+      amt *= Math.max(0, 1 - gap / 24);
       var txt = mix(C.ink, C.white, amt);
       if (it.sub) {
         // Sub-pie slots: grey proximity highlight and a stone outline; orange wipes outward from the centre while the pointer rests on it.
