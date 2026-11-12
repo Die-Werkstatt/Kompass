@@ -11,7 +11,7 @@ class KompassPreferences(bpy.types.AddonPreferences):
 
     drawn: bpy.props.BoolProperty(
         name="Kompass Pie",
-        description="Open pies of 8 slots as the pie Kompass draws, not as Blender's pie menu",
+        description="Open pies of 4 and 8 slots as the pie Kompass draws, not as Blender's pie menu",
         update=lambda _self, _context: keymaps.rebind(),
     )
 

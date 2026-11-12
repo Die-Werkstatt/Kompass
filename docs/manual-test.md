@@ -57,8 +57,16 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       the pointer, LASSO is outlined red, and the two change places. Drag a
       slot onto an empty one: it moves there. Release far from every slot:
       nothing changes.
+- [ ] Press LASSO, move onto MESH and wait: Mesh opens with LASSO still at
+      the pointer. Release on an empty slot: LASSO is there and gone from
+      Select. Press MESH and move a little: Mesh does not open under it.
 - [ ] Click a slot, Replace, type "subdiv", pick Subdivide (mesh.subdivide):
       the slot reads SUBDIVIDE. Click an empty slot: the menu says Add.
+- [ ] Slots 4 on a pie with only west, east, south or north filled: it has
+      those 4 slots and opens as Blender's pie menu with them. On a pie with
+      a diagonal filled, Slots 4 reports that slot and changes nothing.
+- [ ] The Shortcut panel reads Opens In beside the context, and the pie
+      list shows that context beside each pie that has a shortcut.
 - [ ] Slots 12: the pie has 12 slots and every filled slot is where it was.
       Slots 8: it has 8 again. With something in slot 3 of the 12, Slots 8
       reports that slot 3 has no place and changes nothing.

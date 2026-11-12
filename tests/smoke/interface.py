@@ -202,6 +202,47 @@ def steps():
     assert (after[west], after[east]) == (before[east], before[west])
     assert editor.selected() == west
 
+    # A slot dragged onto a sub-pie slot and held there is taken into the
+    # sub-pie, and let go on a slot of it changes places with that slot.
+    north = layout.BEARINGS.index(0)
+    carried = editor.shown().slots[east]
+    rest = at(x, y + int(bottom) + 10)
+    drop = at(x, y + int(layout.slot_corner(north, 8)[1]) + 10)
+    start = at(x + 2 * FLICK, y)
+    path = [start, start, (start[0] - 20, start[1]), (rest[0] + 5, rest[1]), rest]
+    for step, place in enumerate(path):
+        kind, value = ("LEFTMOUSE", "PRESS") if step == 1 else ("MOUSEMOVE", "NOTHING")
+        editor_window.event_simulate(type=kind, value=value, x=place[0], y=place[1])
+        yield PAUSE / 4
+    yield PAUSE
+    assert editor.shown().id == "mesh", editor.shown().id
+    for place in ((drop[0] + 5, drop[1]), drop):
+        editor_window.event_simulate(
+            type="MOUSEMOVE", value="NOTHING", x=place[0], y=place[1]
+        )
+        yield PAUSE / 4
+    editor_window.event_simulate(
+        type="LEFTMOUSE", value="RELEASE", x=drop[0], y=drop[1]
+    )
+    yield PAUSE / 2
+    assert editor.shown().slots[north] == carried and editor.selected() == north
+    assert storage.pies[0].slots[east] is None
+    # The slot that opens Mesh cannot be put into Mesh.
+    editor.select(mesh, "select")
+    try:
+        bpy.ops.kompass.slot_swap(other=east)
+    except RuntimeError as error:
+        assert "loop" in str(error), error
+    else:
+        raise AssertionError("a sub-pie slot went into its own sub-pie")
+    # Back on Select, the swap operator puts it where it was.
+    yield from click(x, y)
+    assert editor.shown().id == "select"
+    editor.select(north, "mesh")
+    assert bpy.ops.kompass.slot_swap(other=east) == {"FINISHED"}
+    assert editor.shown().slots[east] == carried
+    editor.select(west)
+
     # The selected slot is emptied, filled from the search, and given a new
     # sub-pie.
     assert bpy.ops.kompass.slot_clear() == {"FINISHED"}
@@ -251,6 +292,14 @@ def steps():
     assert editor.shown().slots[9] == eight[west] and editor.selected() is None
     assert bpy.ops.kompass.pie_slots(count=8) == {"FINISHED"}
     assert editor.shown().slots == eight
+    # A new pie takes 4 slots, and 8 again.
+    assert bpy.ops.kompass.pie_add() == {"FINISHED"}
+    assert bpy.ops.kompass.pie_slots(count=4) == {"FINISHED"}
+    assert len(editor.shown().slots) == 4
+    yield PAUSE / 2
+    assert bpy.ops.kompass.pie_slots(count=8) == {"FINISHED"}
+    assert bpy.ops.kompass.pie_delete() == {"FINISHED"}
+    assert bpy.ops.kompass.editor_show(pie="select") == {"FINISHED"}
     editor.select(west)
 
     # Settings shows the operator's settings on a keymap item that no key

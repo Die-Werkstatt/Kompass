@@ -65,10 +65,17 @@ def place(pies, pie_id, slot, content):
     return _placed(pies, pie_id, {slot: content})
 
 
-def swap(pies, pie_id, slot, other):
-    """Return the pies with the contents of two slots of the pie exchanged."""
-    slots = next(pie.slots for pie in pies if pie.id == pie_id)
-    return _placed(pies, pie_id, {slot: slots[other], other: slots[slot]})
+def swap(pies, slot, other):
+    """Return the pies with the contents of two slots exchanged.
+
+    Each slot is the id of its pie and its index there.
+    """
+    held = {
+        place: next(pie.slots for pie in pies if pie.id == place[0])[place[1]]
+        for place in (slot, other)
+    }
+    pies = _placed(pies, slot[0], {slot[1]: held[other]})
+    return _placed(pies, other[0], {other[1]: held[slot]})
 
 
 def _placed(pies, pie_id, contents):

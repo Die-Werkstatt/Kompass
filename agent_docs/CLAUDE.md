@@ -1,7 +1,7 @@
 # Kompass
 
 Kompass is a Blender extension (GPL-3.0-or-later) for artists who want their
-own pie menus. A pie of 8 slots opens as Blender's pie menu on its shortcut, or
+own pie menus. A pie of 4 or 8 slots opens as Blender's pie menu on its shortcut, or
 as the pie Kompass draws, as a pie of 12 always does. Slots are filled in the editor.
 
 ## Stack

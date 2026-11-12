@@ -15,6 +15,7 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 | Slot labels | Barlow SemiBold, capitals, tracking 0.08 em |
 | Slots | square corners; ground `#0E0E0E`, outline `#2C2C2C` |
 | Slot placement | one rule for every slot count and width: the box sits on the ring at its bearing, then moves out by half its width times the bearing's sine and half its height times its cosine |
+| 4 slots | west, east, south and north of the 8, ring 150 px |
 | 8 slots | bearings every 45°, ring 150 px |
 | 12 slots | bearings 0°, 42°, 68°, 90°, 112°, 138°, 180°, 222°, 248°, 270°, 292°, 318°, ring 170 px: every pair of 120 px neighbours is 37 px apart. Equal 30° steps would leave about 15 px near north and south and 81 px near east and west, because wide boxes sit side by side there and stack here |
 | Slot width | at least 120 px; grows to fit the label plus 12 px padding each side, up to 180 px |
@@ -63,6 +64,8 @@ The editor's canvas shows this behaviour while Preview is on.
 With it off nothing opens on hover.
 A click selects a slot, drawn with a 2 px white outline, and opens its menu: Add or Replace from a search, New Sub-Pie, Open, Label, Icon, Settings for an operator, Swap With and Remove.
 A filled slot that is pressed and moved more than 6 px is dragged: its box follows 12 px below and right of the pointer, the slot a release would swap it with has a 2 px signal-red outline, and a release anywhere else changes nothing.
+A dragged slot that rests on a sub-pie slot for 0.1 s is taken into that sub-pie, where a release on a slot swaps the two across the pies.
+A sub-pie slot dragged into its own sub-pie is refused, since the pies would form a loop.
 The canvas is black (Sandro, 11 Nov 2026); slots keep their ground.
 On the canvas today: the highlight and the selection by bearing, the centre hover state, slot width and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
 A sub-pie left through its centre fades out as the disc.
@@ -77,7 +80,7 @@ A long label slides while the pointer is within 24 px of its slot.
 
 Sandro decided on 11 Nov 2026 that the pie Kompass draws holds 12 slots (#8).
 Blender's own pie menu holds 8, so a pie of 12 always opens as the pie Kompass draws.
-A pie of 8 opens as Blender's pie menu unless Kompass Pie is on in the add-on's preferences.
+A pie of 4 or 8 opens as Blender's pie menu unless Kompass Pie is on in the add-on's preferences.
 
 ## The pie in an editor
 

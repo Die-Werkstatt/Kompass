@@ -49,10 +49,16 @@ def selected():
     return _selected[1]
 
 
-def select(slot):
-    """Select that slot of the pie on the canvas, or none for None."""
+def selection():
+    """Return the id of a pie and the index of its selected slot, or None."""
+    return _selected
+
+
+def select(slot, pie_id=None):
+    """Select that slot, or none for None, of the pie on the canvas or of
+    the pie a slot was dragged from."""
     global _selected
-    _selected = None if slot is None else (shown().id, slot)
+    _selected = None if slot is None else (pie_id or shown().id, slot)
 
 
 class KOMPASS_OT_editor_open(bpy.types.Operator):
@@ -288,7 +294,7 @@ class KOMPASS_PT_pies(bpy.types.Panel):
         if on_canvas is not None:
             row = self.layout.row(align=True)
             row.label(text="Slots")
-            for count in (model.NATIVE_SLOTS, model.WIDE_SLOTS):
+            for count in model.SLOT_COUNTS:
                 button = row.operator(
                     KOMPASS_OT_pie_slots.bl_idname,
                     text=str(count),
@@ -297,9 +303,13 @@ class KOMPASS_PT_pies(bpy.types.Panel):
                 button.count = count
         column = self.layout.column(align=True)
         for pie in storage.pies:
-            button = column.operator(
+            row = column.split(factor=0.55, align=True)
+            button = row.operator(
                 KOMPASS_OT_editor_show.bl_idname,
                 text=pie.name,
                 depress=pie is on_canvas,
             )
             button.pie = pie.id
+            # Where its shortcut opens it. A pie without one is a sub-pie.
+            where = "" if pie.shortcut is None else keymaps.context(pie.shortcut)
+            row.label(text=where)

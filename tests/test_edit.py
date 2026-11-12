@@ -71,13 +71,21 @@ def test_bind_sets_and_removes_a_shortcut():
 
 
 def test_swap_exchanges_two_slots():
-    pies = edit.swap(EXAMPLE, "select", 0, 5)
+    pies = edit.swap(EXAMPLE, ("select", 0), ("select", 5))
     assert pies[0].slots[0] == SELECT.slots[5]
     assert pies[0].slots[5] == SELECT.slots[0]
     assert [pies[0].slots[n] for n in (1, 2, 3, 4, 6, 7)] == [
         SELECT.slots[n] for n in (1, 2, 3, 4, 6, 7)
     ]
-    assert edit.swap(pies, "select", 5, 0) == EXAMPLE
+    assert edit.swap(pies, ("select", 5), ("select", 0)) == EXAMPLE
+
+
+def test_swap_exchanges_slots_of_two_pies():
+    pies = edit.swap(EXAMPLE, ("select", 0), ("mesh", 7))
+    assert pies[0].slots[0] == EXAMPLE[1].slots[7]
+    assert pies[1].slots[7] == SELECT.slots[0]
+    model.validate(pies)
+    assert edit.swap(pies, ("mesh", 7), ("select", 0)) == EXAMPLE
 
 
 def test_resize_keeps_each_slot_in_its_direction():
@@ -94,3 +102,10 @@ def test_resize_refuses_to_drop_a_filled_slot():
     filled = edit.place(wide, "select", 2, SELECT.slots[0])
     with pytest.raises(ValueError, match="slot 3 has no place in a pie of 8 slots"):
         edit.resize(filled, "select", 8)
+
+
+def test_resize_to_four_keeps_west_east_south_north():
+    few = edit.resize(EXAMPLE, "select", 4)[0]
+    assert few.slots == SELECT.slots[:4]
+    model.validate(edit.resize(EXAMPLE, "select", 4))
+    assert edit.resize(edit.resize(EXAMPLE, "select", 4), "select", 8) == EXAMPLE

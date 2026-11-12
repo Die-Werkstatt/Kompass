@@ -24,9 +24,10 @@ class _Input:
     # Whether Blender highlights each gizmo, by slot. It highlights none
     # while the pointer is off the canvas, which sends no other sign.
     lit: dict[int, bool] = field(default_factory=dict)
-    # The slot a press began on and where, and that slot once it is dragged.
+    # The slot a press began on and where. Once it is dragged: its pie's id,
+    # its index and its label.
     pressed: tuple | None = None
-    dragged: int | None = None
+    dragged: tuple | None = None
 
 
 _stage = Stage()
@@ -80,8 +81,7 @@ def _draw():
     on = any(_input.lit.values())
     moving = _stage.paint(canvas, shown, editor.depth(), on, editor.selected())
     if _input.dragged is not None and on:
-        carried = _stage.look.labels[_input.dragged][0]
-        paint.draw_carried(canvas, _stage.look, carried)
+        paint.draw_carried(canvas, _stage.look, _input.dragged[2])
     if moving and not bpy.app.timers.is_registered(_tick):
         bpy.app.timers.register(_tick, first_interval=FRAME)
 
@@ -91,7 +91,10 @@ def _tick():
     if not any(_input.lit.values()):
         _stage.rest = None
     slot = _stage.due()
-    if slot is not None:
+    if slot is not None and _input.dragged is not None:
+        # A dragged slot is taken into the sub-pie it rests on.
+        editor.enter(slot)
+    elif slot is not None:
         editor.click(slot)
     editor.redraw(bpy.context)
 
@@ -99,7 +102,8 @@ def _tick():
 def _follow(context, location):
     """Record where the pointer is and return it in canvas units."""
     pointer = paint.fitted(context, _count()).units(location)
-    if _stage.follow(pointer, editor.shown(), editor.preview):
+    opening = editor.preview or _input.dragged is not None
+    if _stage.follow(pointer, editor.shown(), opening):
         context.region.tag_redraw()
     return pointer
 
@@ -134,8 +138,12 @@ class _Part:
         pointer = _follow(context, (event.mouse_region_x, event.mouse_region_y))
         if _input.pressed is not None:
             slot, start = _input.pressed
-            if math.dist(pointer, start) > layout.DRAG_START:
-                _input.dragged = slot
+            moved = math.dist(pointer, start) > layout.DRAG_START
+            if moved and _input.dragged is None:
+                label = _stage.look.labels[slot][0]
+                _input.dragged = editor.shown().id, slot, label
+                # Its own sub-pie does not open under it.
+                _stage.held = slot
         return {"RUNNING_MODAL"}
 
     def exit(self, context, cancel):
@@ -145,8 +153,8 @@ class _Part:
         slot = self._near()
         if dragged is None:
             editor.click(slot)
-        elif slot is not None and slot >= 0 and slot != dragged:
-            editor.select(dragged)
+        elif slot not in (None, -1) and dragged[:2] != (editor.shown().id, slot):
+            editor.select(dragged[1], dragged[0])
             bpy.ops.kompass.slot_swap(other=slot)
         editor.redraw(context)
 

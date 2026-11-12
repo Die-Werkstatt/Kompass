@@ -235,7 +235,7 @@ class KOMPASS_OT_slot_settings(editor.Edit, bpy.types.Operator):
 
 
 class KOMPASS_OT_slot_swap(editor.Edit, bpy.types.Operator):
-    """Exchange the contents of the selected slot and this slot"""
+    """Exchange the contents of the selected slot and this slot of the pie on the canvas"""
 
     bl_idname = "kompass.slot_swap"
     bl_label = "Swap Slots"
@@ -244,13 +244,14 @@ class KOMPASS_OT_slot_swap(editor.Edit, bpy.types.Operator):
 
     @classmethod
     def poll(cls, _context):
-        return editor.selected() is not None
+        return editor.selection() is not None
 
     def edited(self, pies, pie):
-        slot = editor.selected()
+        # A slot dragged into a sub-pie is selected in the pie it came from.
+        slot = editor.selection()
         # The selection stays with what was selected.
         editor.select(self.other)
-        return edit.swap(pies, pie.id, slot, self.other)
+        return edit.swap(pies, slot, (pie.id, self.other))
 
 
 class KOMPASS_MT_slot_swap(bpy.types.Menu):

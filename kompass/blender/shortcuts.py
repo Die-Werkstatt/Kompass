@@ -125,11 +125,12 @@ class KOMPASS_PT_shortcut(bpy.types.Panel):
         row.operator(KOMPASS_OT_pie_unbind.bl_idname, text="", icon="X")
         if shortcut is None:
             return
-        names = {keymap: name for keymap, _, name in keymaps.CONTEXTS}
-        self.layout.operator_menu_enum(
+        row = self.layout.row()
+        row.label(text="Opens In")
+        row.operator_menu_enum(
             KOMPASS_OT_pie_context.bl_idname,
             "keymap",
-            text=names.get(shortcut.keymap, shortcut.keymap),
+            text=keymaps.context(shortcut),
         )
         for warning in keymaps.warnings(pie):
             self.layout.label(text=warning, icon="ERROR")
