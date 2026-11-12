@@ -73,6 +73,15 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       the slot: the operator runs with that setting.
 - [ ] Close and reopen Blender: the changes are still there.
 - [ ] In the 3D Viewport, Shift+Alt+Q: the pie shows the new slots.
+- [ ] Preferences > Add-ons > Kompass, Kompass Pie on. Hold Shift+Alt+Q, move
+      onto a slot and let go: the pie Kompass draws opens under the pointer
+      and the slot is picked. Tap the keys: it stays open; click a slot.
+- [ ] Open it and rest on MESH: Mesh opens around the pointer. Esc: Select is
+      back. Esc again, or a click far from every slot: the pie is gone.
+- [ ] Open it in a corner of the viewport: the whole pie is inside. Over a
+      bright scene: the dial and slots are readable.
+- [ ] Turn Kompass Pie off. Give a pie 12 slots and a shortcut: it still
+      opens as the drawn pie. Give it 8 slots again.
 - [ ] In the Shortcut panel click the shortcut and press Shift+C: the button
       reads Shift C and a line says Blender also has "Frame All" on it. Click
       it and press Esc: it stays. Choose Mesh Edit Mode below it. Press the X:

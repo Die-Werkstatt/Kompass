@@ -5,12 +5,23 @@
 import bpy
 
 from ..core import model
-from . import storage, tools
+from . import ADDON, storage, tools
 
 # The icons a button can carry, "NONE" first.
 ICONS = tuple(
     bpy.types.UILayout.bl_rna.functions["operator"].parameters["icon"].enum_items.keys()
 )
+
+
+# The operator of live.py, which opens a pie as the pie Kompass draws.
+LIVE = "kompass.pie_live"
+
+
+def drawn(stored):
+    """Return whether Kompass draws the pie. Blender's pie menu holds 8 slots."""
+    if len(stored.slots) > model.NATIVE_SLOTS:
+        return True
+    return bpy.context.preferences.addons[ADDON].preferences.drawn
 
 
 class KOMPASS_OT_pie_open(bpy.types.Operator):
@@ -24,7 +35,7 @@ class KOMPASS_OT_pie_open(bpy.types.Operator):
     pie: bpy.props.StringProperty(name="Pie", options={"HIDDEN", "SKIP_SAVE"})
 
     def invoke(self, context, event):
-        pie = _find(self.pie)
+        pie = find(self.pie)
         if pie is None:
             self.report({"WARNING"}, f'Kompass has no pie "{self.pie}"')
             return {"CANCELLED"}
@@ -36,7 +47,7 @@ class KOMPASS_OT_pie_open(bpy.types.Operator):
         return {"FINISHED"}
 
 
-def _find(pie_id):
+def find(pie_id):
     return next((pie for pie in storage.pies if pie.id == pie_id), None)
 
 
@@ -63,14 +74,9 @@ def _draw_slot(row, context, slot):
     elif isinstance(slot, model.OperatorSlot):
         _draw_operator(row, slot, icon)
     else:
-        target = _find(slot.pie)
-        if len(target.slots) > model.NATIVE_SLOTS:
-            # Blender's pie menu cannot hold it.
-            _draw_unavailable(row, slot.label or target.name)
-            return
-        button = row.operator(
-            KOMPASS_OT_pie_open.bl_idname, text=slot.label or target.name, icon=icon
-        )
+        target = find(slot.pie)
+        opener = LIVE if drawn(target) else KOMPASS_OT_pie_open.bl_idname
+        button = row.operator(opener, text=slot.label or target.name, icon=icon)
         button.pie = slot.pie
 
 
@@ -97,6 +103,32 @@ def apply(settings, properties):
             flags = getattr(known, "is_enum_flag", False)
             setattr(settings, name, set(value) if flags else value)
     except (AttributeError, KeyError, TypeError, ValueError):
+        return False
+    return True
+
+
+def run(context, slot):
+    """Do what a tool or operator slot holds. Return whether Blender did."""
+    if isinstance(slot, model.ToolSlot):
+        if tools.label(context, slot.space_type, slot.tool) is None:
+            return False
+        bpy.ops.wm.tool_set_by_id(name=slot.tool, space_type=slot.space_type)
+        return True
+    known = operator_type(slot.idname)
+    if known is None:
+        return False
+    module, _, name = slot.idname.partition(".")
+    try:
+        settings = {
+            key: set(value)
+            if getattr(known.properties[key], "is_enum_flag", 0)
+            else value
+            for key, value in slot.properties.items()
+        }
+        getattr(getattr(bpy.ops, module), name)("INVOKE_DEFAULT", **settings)
+    # A setting this Blender does not know, or an operator that cannot run
+    # where the pointer is.
+    except (KeyError, RuntimeError, TypeError, ValueError):
         return False
     return True
 

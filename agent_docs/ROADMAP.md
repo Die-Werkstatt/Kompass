@@ -38,6 +38,8 @@ Milestone 1, pies open from shortcuts (#5).
 - [ ] Website download: a release `.zip` link that installs when dragged into
       Blender, plus an `index.json` from `extension server-generate` for
       updates. No installer app. Then a listing on extensions.blender.org.
-- [ ] Milestone 4, the Kompass edition: a pie drawn by Kompass with 12 slots,
-      only if its spike says so (#8, #22). Until then a pie of 12 slots shows
-      in the editor and cannot be opened.
+- [ ] Milestone 4, the Kompass edition: a pie drawn by Kompass with 12 slots
+      (#8, #22). On disk: a shortcut opens the drawn pie for a pie of 12, and
+      for a pie of 8 with Kompass Pie on in the preferences. Left: the closing
+      motion, a disabled look for slots that cannot run, a ground behind the
+      title, blind-hit testing by hand (#22).

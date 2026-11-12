@@ -16,10 +16,7 @@ import gpu
 
 from ..core import layout, model
 from . import editor, paint
-from .stage import Stage
-
-# Seconds between two frames of an animation.
-FRAME = 1 / 60
+from .stage import FRAME, Stage
 
 
 @dataclass

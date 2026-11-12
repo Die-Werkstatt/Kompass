@@ -15,6 +15,9 @@ import bpy
 from ..core import layout, model
 from . import paint
 
+# Seconds between two frames of an animation.
+FRAME = 1 / 60
+
 
 def _share(since, now):
     """Return how much of an animation that began at since is done, 0 to 1."""

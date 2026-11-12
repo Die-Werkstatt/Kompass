@@ -1,8 +1,8 @@
 # Kompass
 
 Kompass is a Blender extension (GPL-3.0-or-later) for artists who want their
-own pie menus. A pie of 8 slots opens as Blender's pie menu on its shortcut; a
-pie of 12 only shows in the editor so far. Slots are filled in the editor.
+own pie menus. A pie of 8 slots opens as Blender's pie menu on its shortcut, or
+as the pie Kompass draws, as a pie of 12 always does. Slots are filled in the editor.
 
 ## Stack
 - Blender 5.2 LTS is the minimum version. It ships Python 3.13.
@@ -20,7 +20,7 @@ pie of 12 only shows in the editor so far. Slots are filled in the editor.
     loaded from `pies.json`, `pie.py` opens one as a native pie menu,
     `keymaps.py` gives each its shortcut, `tools.py` reads the tool list,
     `files.py` exports and imports, `preferences.py` lists the pies, `editor.py`
-    is the editor, `shortcuts.py` and `slots.py` its panel and menu, `canvas.py` its pie.
+    is the editor, `shortcuts.py`, `slots.py`, `canvas.py` its panel, menu and pie; `live.py` opens the drawn pie, `stage.py` moves it.
 - `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
   pie file. `tests/smoke/` runs inside Blender: `checks.py` without a window,
   `interface.py` with one, pressing shortcuts through simulated events.
