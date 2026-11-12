@@ -84,7 +84,7 @@ def _draw():
     on = any(_input.lit.values())
     moving = _stage.paint(canvas, shown, editor.depth(), on, editor.selected())
     if _input.dragged is not None and on:
-        paint.draw_carried(canvas, _stage.look, _input.dragged[2])
+        _draw_carried(canvas, _stage.look, _input.dragged[2])
     if moving and not bpy.app.timers.is_registered(_tick):
         bpy.app.timers.register(_tick, first_interval=FRAME)
 
@@ -106,6 +106,34 @@ def _tick():
     elif slot is not None:
         editor.click(slot)
     editor.redraw(bpy.context)
+
+
+def _draw_carried(canvas, look, carried):
+    """Draw the dragged slot's label beside the pointer and outline the slot
+    a release would swap it with."""
+    widths = [width for _, _, width in look.labels]
+    target = look.picked
+    if target is not None:
+        left, bottom = layout.slot_corner(target, len(widths), widths[target])
+        right, top = left + widths[target], bottom + layout.slot_height(len(widths))
+        box = [(left, bottom), (right, bottom), (right, top), (left, top)]
+        canvas.line([*box, box[0]], paint.SIGNAL, 2)
+    text_width = paint.measure(carried)
+    width = layout.slot_width(text_width)
+    # Below and right of the pointer, which stays free to aim.
+    left, top = look.pointer[0] + 12, look.pointer[1] - 12
+    right, bottom = left + width, top - layout.CARRIED_HEIGHT
+    box = [(left, bottom), (right, bottom), (right, top), (left, top)]
+    canvas.fill(box, paint.GROUND)
+    canvas.line([*box, box[0]], paint.WHITE, 1)
+    pad = layout.LABEL_PAD
+    baseline = bottom + layout.CARRIED_HEIGHT / 2 - 4
+    if text_width > width - 2 * pad:
+        canvas.label(carried, (left + pad, right - pad), baseline, paint.WHITE, 0)
+    else:
+        canvas.text(
+            carried, (left + right) / 2, baseline, paint.LABEL_SIZE, paint.WHITE
+        )
 
 
 def _follow(context, location):
@@ -132,8 +160,8 @@ class _Part:
         if self.slot < 0:
             return -1
         # Blender picks the gizmo by bearing at any distance; a click
-        # counts only close to a slot.
-        return layout.slot_clicked(*_stage.pointer, _widths(editor.shown()))
+        # counts for the slot the pie would pick.
+        return layout.slot_picked(*_stage.pointer, _widths(editor.shown()))
 
     def invoke(self, _context, _event):
         slot = self._near()

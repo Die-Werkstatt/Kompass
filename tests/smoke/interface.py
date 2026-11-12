@@ -190,7 +190,8 @@ def steps():
     yield from pick(x + 2 * FLICK, y)
     assert editor.selected() == east, editor.selected()
     assert not bpy.ops.kompass.slot_open.poll()
-    yield from click(x + 5 * FLICK // 2, y + 2 * FLICK)
+    # Between the east and the north-east slot.
+    yield from click(x + 290, y + 78)
     assert editor.selected() is None, editor.selected()
     yield from pick(x, y + int(bottom) + 10)
     assert editor.shown().id == "select" and editor.selected() == mesh
@@ -386,13 +387,13 @@ def steps():
     assert editor.shown().shortcut == select.shortcut
 
     # In preview a click selects nothing. A click on a tool slot changes
-    # nothing, a click far below Mesh does nothing, a click just below its
-    # box opens it.
+    # nothing, a click between two slots does nothing, a click below the
+    # box of Mesh opens it.
     assert bpy.ops.kompass.editor_preview() == {"FINISHED"}
     assert editor.selected() is None
     yield from click(x + 2 * FLICK, y)
     assert editor.shown().id == "select" and editor.selected() is None
-    yield from click(x, y - 2 * FLICK)
+    yield from click(x + 290, y - 78)
     assert editor.shown().id == "select"
     yield from click(x, y + int(bottom) - 12)
     assert editor.shown().id == "mesh" and editor.in_sub_pie()
@@ -446,7 +447,7 @@ def steps():
     assert bpy.ops.kompass.editor_show(pie="wide") == {"FINISHED"}
     yield PAUSE / 2
     left, bottom = layout.slot_corner(1, 12)
-    yield from click(x + int(left) + 60, y + int(bottom) + layout.SLOT_HEIGHT + 10)
+    yield from click(x + int(left) + 60, y + int(bottom) + layout.slot_height(12) + 10)
     assert editor.shown().id == "broken" and editor.depth() == 2, editor.shown().id
 
     # Disabling with the editor open leaves nothing registered.

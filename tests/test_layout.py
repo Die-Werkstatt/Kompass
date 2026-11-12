@@ -10,7 +10,7 @@ W, E, S, N, NW, NE, SW, SE = range(8)
 
 def test_bearings_follow_the_slot_order():
     assert dict(zip(SLOT_DIRECTIONS, layout.BEARINGS)) == {
-        "W": 270, "E": 90, "S": 180, "N": 0, "NW": 315, "NE": 45, "SW": 225, "SE": 135
+        "W": 270, "E": 90, "S": 180, "N": 0, "NW": 309, "NE": 51, "SW": 231, "SE": 129
     }  # fmt: skip
 
 
@@ -26,7 +26,7 @@ def test_north_and_south_slots_are_centred():
     for slot in (N, S):
         assert layout.slot_corner(slot, 8)[0] == pytest.approx(-layout.SLOT_WIDTH / 2)
     assert layout.slot_corner(N, 8)[1] == pytest.approx(layout.PIE_RADIUS)
-    top_of_south = layout.slot_corner(S, 8)[1] + layout.SLOT_HEIGHT
+    top_of_south = layout.slot_corner(S, 8)[1] + layout.MIDDLE_HEIGHT
     assert top_of_south == pytest.approx(-layout.PIE_RADIUS)
 
 
@@ -35,8 +35,31 @@ def test_slots_do_not_overlap():
     for a, (ax, ay) in enumerate(corners):
         for bx, by in corners[a + 1 :]:
             apart_x = abs(ax - bx) >= layout.SLOT_WIDTH
-            apart_y = abs(ay - by) >= layout.SLOT_HEIGHT
+            apart_y = abs(ay - by) >= layout.MIDDLE_HEIGHT
             assert apart_x or apart_y
+
+
+def _gaps(count, height):
+    """Return the shortest way from each box to the next one around the pie."""
+    order = sorted(range(count), key=lambda slot: layout.bearings(count)[slot])
+    corners = [layout.slot_corner(slot, count) for slot in order]
+    gaps = []
+    for slot, (ax, ay) in enumerate(corners):
+        bx, by = corners[(slot + 1) % count]
+        gap_x = abs(ax - bx) - layout.SLOT_WIDTH
+        gap_y = abs(ay - by) - height
+        gaps.append(math.hypot(max(gap_x, 0), max(gap_y, 0)))
+    return gaps
+
+
+def test_eight_slots_keep_equal_gaps():
+    assert _gaps(8, layout.MIDDLE_HEIGHT) == pytest.approx([44] * 8, abs=1.2)
+
+
+def test_slots_are_taller_in_a_smaller_pie():
+    assert [layout.slot_height(count) for count in (4, 8, 12)] == [96, 72, 48]
+    # A slot of a pie of 4 is a square whatever its label.
+    assert layout.slot_width(40, 4) == layout.slot_width(400, 4) == layout.SQUARE
 
 
 def test_bearing_runs_clockwise_from_north():
@@ -60,28 +83,6 @@ def test_the_nearest_slot_is_selected_outside_the_ring():
     assert layout.slot_at(-5, 100, 8) == N
 
 
-def test_highlight_follows_distance_and_bearing():
-    widths = [layout.SLOT_WIDTH] * 8
-    assert layout.highlight(0, 10, N, widths) == 0
-    # North's box spans y 150 to 182.
-    assert layout.highlight(0, 160, N, widths) == pytest.approx(1)
-    # The selected slot keeps 0.3 near the edge of its slice.
-    assert layout.highlight(60, 160, N, widths) == pytest.approx(0.3)
-    # Between two slots both are lit a little, and a slot across the pie not.
-    assert 0 < layout.highlight(72, 148, NE, widths) < 0.3
-    assert 0 < layout.highlight(72, 148, N, widths) < 0.3
-    assert layout.highlight(0, 160, S, widths) == 0
-
-
-def test_highlight_fades_out_at_the_click_reach():
-    widths = [layout.SLOT_WIDTH] * 8
-    assert layout.highlight(0, 138, N, widths) == pytest.approx(0.5)
-    assert layout.highlight(0, 182 + 12, N, widths) == pytest.approx(0.5)
-    for y in (125, 100, 60, 207, 400):
-        assert layout.highlight(0, y, N, widths) == 0
-        assert layout.slot_clicked(0, y, widths) is None
-
-
 def test_ticks_every_five_degrees_with_eight_long_ones():
     ticks = layout.ticks()
     assert len(ticks) == 72
@@ -94,7 +95,7 @@ def test_ticks_every_five_degrees_with_eight_long_ones():
 def test_fit_shrinks_the_pie_to_the_smaller_side():
     assert layout.fit(2000, 2000, 8) == 1
     assert layout.fit(342, 2000, 8) == pytest.approx(0.5)
-    assert layout.fit(2000, 105, 8) == pytest.approx(0.25)
+    assert layout.fit(2000, 117, 8) == pytest.approx(0.25)
 
 
 def test_slots_open_from_closer_to_the_centre():
@@ -122,21 +123,41 @@ def test_slot_under_is_the_box_not_the_bearing():
     assert layout.slot_under(left + layout.SLOT_WIDTH + 5, 0, widths) == E
 
 
-def test_click_counts_near_a_slot_only():
+def test_click_near_a_slot_counts_for_it():
+    widths = [layout.SLOT_WIDTH] * 8
+    left, bottom = layout.slot_corner(NE, 8)
+    assert layout.slot_picked(left + 5, bottom + 5, widths) == NE
+    # Left of the box the line from the centre misses it.
+    assert layout.enters(left - 10, bottom + 60, NE, widths) is None
+    assert layout.slot_picked(left - 10, bottom + 60, widths) == NE
+
+
+def test_click_beyond_a_slot_picks_what_the_line_crosses():
     widths = [layout.SLOT_WIDTH] * 8
     left, bottom = layout.slot_corner(E, 8)
-    right = left + layout.SLOT_WIDTH
-    assert layout.slot_clicked(left + 5, bottom + 5, widths) == E
-    assert layout.slot_clicked(right + layout.CLICK_REACH, bottom + 5, widths) == E
-    assert (
-        layout.slot_clicked(right + layout.CLICK_REACH + 1, bottom + 5, widths) is None
-    )
-    # Past the corner the distance is the diagonal.
-    assert layout.slot_clicked(right + 20, bottom - 20, widths) is None
-    # Between two slots of a pie of 12 the nearer one takes it.
+    assert layout.slot_picked(left + layout.SLOT_WIDTH + 100, 0, widths) == E
+    # The line enters the box where the box begins.
+    assert layout.enters(2 * left, 0, E, widths) == pytest.approx(0.5)
+    assert layout.enters(left - 1, 0, E, widths) is None
+    # Between two slots it crosses neither.
+    x, y = layout.point(300, 75)
+    assert layout.slot_picked(x, y, widths) is None
+    # Of two slots it crosses, the one it enters first counts.
     twelve = [layout.SLOT_WIDTH] * 12
-    assert layout.slot_clicked(200, 30, twelve) == 3
-    assert layout.slot_clicked(200, 40, twelve) == 2
+    x, y = layout.point(250, 59)
+    assert layout.slot_under(x, y, twelve) is None
+    assert layout.enters(x, y, 2, twelve) < layout.enters(x, y, 1, twelve)
+    assert layout.slot_picked(x, y, twelve) == 2
+
+
+def test_the_line_lets_go_beyond_its_reach():
+    widths = [layout.SLOT_WIDTH] * 8
+    assert layout.slot_picked(layout.LINE_REACH, 0, widths) == E
+    assert layout.slot_picked(layout.LINE_REACH + 1, 0, widths) is None
+    # It leaves the pointer at a steady speed and slows into the dial.
+    assert layout.pulled(0) == 0 and layout.pulled(1) == 1
+    assert layout.pulled(0.2) == pytest.approx(2 * layout.pulled(0.1))
+    assert layout.pulled(0.9) - layout.pulled(0.8) < layout.pulled(0.1)
 
 
 def test_slot_width_follows_the_label():
@@ -228,15 +249,11 @@ def test_twelve_slots_mirror_left_to_right():
         assert ly == pytest.approx(ry)
 
 
-def test_twelve_slots_keep_equal_gaps():
-    corners = [layout.slot_corner(slot, 12) for slot in range(12)]
-    for slot, (ax, ay) in enumerate(corners):
-        bx, by = corners[(slot + 1) % 12]
-        gap_x = abs(ax - bx) - layout.SLOT_WIDTH
-        gap_y = abs(ay - by) - layout.SLOT_HEIGHT
-        # The shortest way from one box to the next.
-        gap = math.hypot(max(gap_x, 0), max(gap_y, 0))
-        assert gap == pytest.approx(37, abs=1)
+def test_twelve_slots_keep_two_gaps():
+    # Wider beside north and south than between the slots stacked near east
+    # and west.
+    gaps = _gaps(12, layout.WIDE_HEIGHT)
+    assert gaps == pytest.approx([34, 24, 24, 24, 24, 34] * 2, abs=1)
 
 
 def test_twelve_slots_do_not_overlap_at_any_width():
@@ -249,7 +266,7 @@ def test_twelve_slots_do_not_overlap_at_any_width():
         for i, (ax, ay, aw) in enumerate(boxes):
             for bx, by, bw in boxes[i + 1 :]:
                 apart_x = bx >= ax + aw or ax >= bx + bw
-                assert apart_x or abs(ay - by) >= layout.SLOT_HEIGHT
+                assert apart_x or abs(ay - by) >= layout.WIDE_HEIGHT
 
 
 def test_fill_follows_the_stronger_axis():
@@ -272,7 +289,7 @@ def test_a_pie_of_twelve_needs_more_room():
 
 
 def test_keep_in_moves_a_pie_off_the_edge():
-    # A pie of 8 needs 342 units to each side and 210 up and down.
+    # A pie of 8 needs 342 units to each side and 234 up and down.
     assert layout.keep_in(500, 400, (1000, 800), 8) == (500, 400)
-    assert layout.keep_in(10, 790, (1000, 800), 8) == (342, 590)
-    assert layout.keep_in(10, 10, (600, 800), 8) == (300, 210)
+    assert layout.keep_in(10, 790, (1000, 800), 8) == (342, 566)
+    assert layout.keep_in(10, 10, (600, 800), 8) == (300, 234)

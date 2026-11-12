@@ -45,17 +45,18 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
 - [ ] Click an empty slot, Add: a search opens. Choose a result: the slot
       holds it. Label, Icon and Settings in the menu each open their dialog.
 - [ ] Move the pointer around the dial: the needle and the outer arrow
-      follow it, and the nearest slot lights up red, stronger further out.
+      follow it. On a slot, or beyond it in line with the dial, the slot is
+      red.
 - [ ] Move the pointer into the dial: the needle turns into a red disc with
       a white border, the long ticks shorten and the outer arrow fades. Move
       out: it turns back.
 - [ ] Click LASSO: it gets a white outline and a menu opens beside it. Click
-      far from every slot: the outline is gone.
+      between two slots, away from both: the outline is gone.
 - [ ] Rest the pointer on MESH: nothing opens. Click it and choose Open: the
       Mesh pie shows. Click the dial: Select is back, MESH still outlined.
 - [ ] Press SELECT BOX, move to LASSO and release: a SELECT BOX box follows
       the pointer, LASSO is outlined red, and the two change places. Drag a
-      slot onto an empty one: it moves there. Release far from every slot:
+      slot onto an empty one: it moves there. Release between two slots:
       nothing changes.
 - [ ] Press LASSO, move onto MESH and wait: Mesh opens with LASSO still at
       the pointer. Release on an empty slot: LASSO is there and gone from
@@ -93,7 +94,13 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       onto a slot and let go: the pie Kompass draws opens under the pointer
       and the slot is picked. Tap the keys: it stays open; click a slot.
 - [ ] Open it and rest on MESH: Mesh opens around the pointer. Esc: Select is
-      back. Esc again, or a click far from every slot: the pie is gone.
+      back. Esc again, or a click between two slots: the pie is gone.
+- [ ] Open it and move beyond a slot: a red line runs from the dial through
+      the slot to the pointer, with a white dot where it meets the slot, and
+      a click picks the slot. Between two slots the line is dashed. Far
+      from the pie the line flies into the dial, and a click closes the pie.
+- [ ] A pie of 4 has square slots, a pie of 8 slots 72 px high with even
+      gaps around the ring, a pie of 12 slots 48 px high.
 - [ ] Open it in a corner of the viewport: the whole pie is inside. Over a
       bright scene: the dial and slots are readable.
 - [ ] Open it with the pointer still: the dial shows the red disc at once.

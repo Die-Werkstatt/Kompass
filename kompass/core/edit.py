@@ -104,9 +104,9 @@ def resize(pies, pie_id, count):
     for index, (bearing, content) in enumerate(
         zip(bearings(len(pie.slots)), pie.slots)
     ):
-        # A diagonal is 45 degrees in a pie of 8 and 42 in a pie of 12.
+        # A diagonal is 51 degrees in a pie of 8 and 42 in a pie of 12.
         near = min(range(count), key=lambda place: _turn(places[place], bearing))
-        if _turn(places[near], bearing) <= 3:
+        if _turn(places[near], bearing) <= 10:
             slots[near] = content
         elif content is not None:
             raise ValueError(

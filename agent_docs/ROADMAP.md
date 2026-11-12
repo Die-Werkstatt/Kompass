@@ -39,7 +39,6 @@ Milestone 1, pies open from shortcuts (#5).
       updates. No installer app. Then a listing on extensions.blender.org.
 - [ ] Milestone 4, the Kompass edition: a pie drawn by Kompass with 12 slots
       (#8, #22). On disk: a shortcut opens the drawn pie for a pie of 12, and
-      for a pie of 8 with Kompass Pie on in the preferences. Left: blind-hit
-      testing by hand, and whether a release picks by direction at any
-      distance instead of within 24 px (#22; Sandro decides after modeling
-      with it).
+      for a pie of 8 with Kompass Pie on in the preferences. A line from the
+      dial to the pointer shows the slot a click or release picks. Left:
+      blind-hit testing by hand (#22).

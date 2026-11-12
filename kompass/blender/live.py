@@ -34,7 +34,7 @@ class _Open:
     # has its centre in the region.
     trail: list[model.Pie]
     centres: list[tuple[float, float]] = field(default_factory=list)
-    stage: Stage = field(default_factory=Stage)
+    stage: Stage = field(default_factory=lambda: Stage(line=True))
     handle: object = None
     timer: object = None
     moving: bool = True
@@ -216,7 +216,7 @@ class KOMPASS_OT_pie_live(bpy.types.Operator):
             # Letting go of the keys on the dial leaves the pie open for a click.
             return self._back(shown, at) if click else {"RUNNING_MODAL"}
         widths = [width for _, _, width in paint.labels(current)]
-        slot = layout.slot_clicked(*pointer, widths)
+        slot = layout.slot_picked(*pointer, widths)
         content = None if slot is None else current.slots[slot]
         if isinstance(content, model.SubPieSlot):
             self._enter(shown, slot)

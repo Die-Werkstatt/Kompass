@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kompass pick line</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* One dark look, as the pie over a Blender viewport: controls above, the viewport as the stage, the verdict below it. */
+:root {
+  color-scheme: dark;
+  --ground: #0e0e0e;
+  --surface: #1a1a19;
+  --line: #2c2c2c;
+  --stone: #8f8d88;
+  --ink: #f1f0ec;
+  --signal: #f2542d;
+  --viewport: #3b3b3a;
+  /* Barlow is the Kompass label face; Plex Sans carries the page text as in the other Kompass prototypes. */
+  --label: "Barlow", "IBM Plex Sans", "Segoe UI", sans-serif;
+  --text: "IBM Plex Sans", "Segoe UI", Helvetica, sans-serif;
+}
+html, body { background: var(--ground); color: var(--ink); }
+body {
+  font: 15px/1.5 var(--text);
+  padding-block: 20px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 1040px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { font: 600 22px/1.2 var(--label); letter-spacing: 0.04em; text-transform: uppercase; margin: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 28px; }
+fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+legend { float: left; color: var(--stone); font-size: 13px; margin-right: 8px; padding: 0; }
+button {
+  font: 500 13px/1 var(--text); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); padding: 8px 12px; cursor: pointer; border-radius: 0;
+}
+button[aria-pressed="true"] { background: var(--signal); border-color: var(--signal); color: #fff; }
+button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.stage { position: relative; background: var(--viewport); border: 1px solid var(--line); touch-action: none; }
+canvas { display: block; width: 100%; height: min(68vh, 620px); cursor: crosshair; }
+.verdict { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 4px 28px; margin: 0; }
+.verdict div { display: flex; gap: 10px; min-width: 0; }
+.verdict dt { color: var(--stone); flex: none; width: 92px; }
+.verdict dd { margin: 0; min-width: 0; font-weight: 600; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.scroll { overflow-x: auto; }
+th, td { text-align: left; padding: 7px 14px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--stone); font-weight: 400; }
+td:first-child { white-space: nowrap; font-weight: 600; }
+tr.on td { color: var(--signal); }
+tr.on td:first-child::after { content: "  ·  shown"; font-weight: 400; }
+</style>
+</head>
+<body>
+
+<main>
+  <h1>Kompass pick line</h1>
+
+  <div class="controls">
+    <fieldset id="rule">
+      <legend>A click picks</legend>
+      <button type="button" data-v="near">Within 24 px</button>
+      <button type="button" data-v="line">What the line crosses</button>
+      <button type="button" data-v="bearing">Nearest direction</button>
+    </fieldset>
+    <fieldset id="show">
+      <legend>Line</legend>
+      <button type="button" data-v="always">Always</button>
+      <button type="button" data-v="past">Past a slot</button>
+      <button type="button" data-v="never">Hidden</button>
+    </fieldset>
+    <fieldset id="limit">
+      <legend>Line lets go at</legend>
+      <button type="button" data-v="400">400 px</button>
+      <button type="button" data-v="550">550 px</button>
+      <button type="button" data-v="0">Never</button>
+    </fieldset>
+    <fieldset id="height">
+      <legend>Slot height</legend>
+      <button type="button" data-v="32">32 px</button>
+      <button type="button" data-v="36">36 px</button>
+      <button type="button" data-v="40">40 px</button>
+      <button type="button" data-v="44">44 px</button>
+      <button type="button" data-v="48">48 px</button>
+      <button type="button" data-v="72">72 px</button>
+      <button type="button" data-v="square">Square</button>
+    </fieldset>
+    <fieldset id="count">
+      <legend>Slots</legend>
+      <button type="button" data-v="4">4</button>
+      <button type="button" data-v="8">8</button>
+      <button type="button" data-v="12">12</button>
+    </fieldset>
+  </div>
+
+  <div class="stage"><canvas id="pie" aria-label="A Kompass pie over a viewport. Move the pointer and click."></canvas></div>
+
+  <dl class="verdict">
+    <div><dt>A click here</dt><dd id="now">closes the pie</dd></div>
+    <div><dt>Last click</dt><dd id="last">none yet</dd></div>
+  </dl>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Rule</th><th>Pointer beyond a slot</th><th>Pointer between two slots</th></tr></thead>
+      <tbody>
+        <tr data-v="near"><td>Within 24 px</td><td>Closes the pie past 24 px. This is Kompass today.</td><td>Closes the pie past 24 px of both.</td></tr>
+        <tr data-v="line"><td>What the line crosses</td><td>Picks the slot, until the line lets go. Then it closes the pie.</td><td>Closes the pie, unless within 24 px of a slot.</td></tr>
+        <tr data-v="bearing"><td>Nearest direction</td><td>Picks the slot, at any distance.</td><td>Picks the nearer of the two. Only the dial closes. This is Blender's pie.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  // The numbers of kompass/core/layout.py.
+  var RING = 55, DIAL = 52, SLOT_W = 120, SLOT_MAX = 180, SLOT_H = 32, REACH = 24, PAD = 12;
+  var NAMES = {
+    4: ["Loop Cut", "Bevel", "Inset", "Extrude"],
+    8: ["Loop Cut", "Bevel", "Inset", "Extrude", "Knife", "Subdivide", "Merge at Center", "Bridge Edge Loops"],
+    12: ["Extrude", "Subdivide", "Bevel", "Loop Cut", "Bridge Edge Loops", "Fill", "Inset", "Dissolve Edges", "Merge at Center", "Knife", "Separate", "Shade Smooth"]
+  };
+  var DIRS = [270, 90, 180, 0, 315, 45, 225, 135];
+  var WIDE = [0, 42, 68, 90, 112, 138, 180, 222, 248, 270, 292, 318];
+  var C = { ground: "#0e0e0e", line: "#2c2c2c", stone: "#8f8d88", ink: "#f1f0ec", signal: "#f2542d", white: "#ffffff" };
+
+  // The slot height a pie of each size starts with.
+  var HEIGHTS = { 4: "square", 8: 72, 12: 48 };
+  // The line starts clear of the outer arrow, whose tip is 16 beyond the ticks.
+  var START = DIAL + 22;
+  var state = { rule: "line", show: "always", count: 8, limit: 400, height: 72, pointer: null, flash: null };
+  // How much of the line is out of the dial, 0 to 1, and when it was last moved.
+  var out = 1, stamp = 0, still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var LEAVE = 0.22, RETURN = 0.1, GLOW = 0.12, pending = false;
+  // How far the orange has grown along the line, 0 to 1, and where it grows from.
+  var lit = 0, contact = 1, gone = false;
+  try {
+    var saved = JSON.parse(localStorage.getItem("pick-line") || "{}");
+    ["rule", "show", "count", "limit"].forEach(function (k) { if (saved[k] !== undefined) state[k] = saved[k]; });
+    state.height = HEIGHTS[state.count];
+  } catch (e) {}
+
+  var canvas = document.getElementById("pie"), ctx = canvas.getContext("2d");
+  var size = { w: 0, h: 0, scale: 1 }, boxes = [];
+
+  // The bearing of the north-east slot of 8 that leaves the same gap to north as to east.
+  function diagonal() {
+    var w = state.height === "square" ? SQUARE : SLOT_W, lo = 20, hi = 70;
+    for (var n = 0; n < 30; n++) {
+      var mid = (lo + hi) / 2, a = mid * Math.PI / 180;
+      var across = (150 + w / 2) * Math.sin(a) - w, up = (150 + SLOT_H / 2) * Math.cos(a) - SLOT_H;
+      if (across < up) lo = mid; else hi = mid;
+    }
+    return Math.round(lo);
+  }
+  function bearings() {
+    if (state.count > 8) return WIDE;
+    if (state.count < 8) return DIRS.slice(0, state.count);
+    var d = diagonal();
+    return [270, 90, 180, 0, 360 - d, d, 180 + d, 180 - d];
+  }
+  var SQUARE = 96;
+  // A pie of 12 stacks its slots near east and west, so taller slots need a wider ring to stay apart.
+  function radius() {
+    if (state.count <= 8) return 150;
+    return Math.max(170, Math.ceil((SLOT_H + 12) / Math.cos(68 * Math.PI / 180) - SLOT_H / 2));
+  }
+  // The label of a square slot, broken into lines that fit it.
+  function wrap(text) {
+    var lines = [""];
+    text.split(" ").forEach(function (word) {
+      var last = lines[lines.length - 1], joined = last ? last + " " + word : word;
+      if (last && ctx.measureText(joined).width + joined.length * 0.96 > SQUARE - 2 * PAD) lines.push(word);
+      else lines[lines.length - 1] = joined;
+    });
+    return lines;
+  }
+  function point(d, b) { var a = b * Math.PI / 180; return [Math.sin(a) * d, Math.cos(a) * d]; }
+
+  function measure() {
+    var square = state.height === "square";
+    SLOT_H = square ? SQUARE : state.height;
+    ctx.font = "600 12px Barlow, 'IBM Plex Sans', sans-serif";
+    boxes = NAMES[state.count].map(function (name, i) {
+      var text = name.toUpperCase();
+      var tw = ctx.measureText(text).width + text.length * 0.96;
+      var w = square ? SQUARE : Math.min(SLOT_MAX, Math.max(SLOT_W, Math.ceil(tw) + 2 * PAD));
+      var b = bearings()[i], p = point(radius(), b), out = point(1, b);
+      return { lines: square ? wrap(text) : [text], w: w, left: p[0] - w / 2 + out[0] * w / 2, bottom: p[1] - SLOT_H / 2 + out[1] * SLOT_H / 2, bearing: b };
+    });
+  }
+
+  function gap(x, y, s) {
+    return Math.hypot(Math.max(s.left - x, 0, x - s.left - s.w), Math.max(s.bottom - y, 0, y - s.bottom - SLOT_H));
+  }
+  function near(x, y) {
+    var best = null, reach = REACH;
+    boxes.forEach(function (s, i) { var d = gap(x, y, s); if (d <= reach) { best = i; reach = d; } });
+    return best;
+  }
+  // Where the line from the centre to x, y enters a slot's box, as a share of the line, or null.
+  function enters(x, y, s) {
+    var t0 = 0, t1 = 1, lo = [s.left, s.bottom], hi = [s.left + s.w, s.bottom + SLOT_H], d = [x, y];
+    for (var a = 0; a < 2; a++) {
+      if (Math.abs(d[a]) < 1e-9) { if (lo[a] > 0 || hi[a] < 0) return null; continue; }
+      var n = lo[a] / d[a], f = hi[a] / d[a];
+      if (n > f) { var k = n; n = f; f = k; }
+      t0 = Math.max(t0, n); t1 = Math.min(t1, f);
+      if (t0 > t1) return null;
+    }
+    return t0;
+  }
+  function crossed(x, y) {
+    var best = null, at = 2;
+    boxes.forEach(function (s, i) { var t = enters(x, y, s); if (t !== null && t < at) { best = i; at = t; } });
+    return best === null ? null : { slot: best, t: at };
+  }
+  function apart(a, b) { return Math.abs((a - b + 540) % 360 - 180); }
+  function byBearing(x, y) {
+    var h = (Math.atan2(x, y) * 180 / Math.PI + 360) % 360, best = 0;
+    boxes.forEach(function (s, i) { if (apart(h, s.bearing) < apart(h, boxes[best].bearing)) best = i; });
+    return best;
+  }
+
+  // Whether the line still holds on to the pointer.
+  function attached() {
+    var p = state.pointer;
+    return !p || state.rule !== "line" || !state.limit || Math.hypot(p[0], p[1]) <= state.limit;
+  }
+
+  // What a click at the pointer does: {dial}, {slot, contact} or {} for closing.
+  function pick() {
+    var p = state.pointer;
+    if (!p) return {};
+    if (Math.hypot(p[0], p[1]) <= RING) return { dial: true };
+    var close = near(p[0], p[1]);
+    if (state.rule === "near") return close === null ? {} : { slot: close };
+    if (state.rule === "bearing") return { slot: byBearing(p[0], p[1]) };
+    var on = close !== null && gap(p[0], p[1], boxes[close]) === 0;
+    if (on) {
+      var t = enters(p[0], p[1], boxes[close]);
+      return { slot: close, contact: [p[0] * t, p[1] * t] };
+    }
+    if (!attached()) return { gone: true };
+    var hit = crossed(p[0], p[1]);
+    if (hit) return { slot: hit.slot, contact: [p[0] * hit.t, p[1] * hit.t] };
+    return close === null ? {} : { slot: close };
+  }
+
+  function px(x, y) { return [size.w / 2 + x * size.scale, size.h / 2 - y * size.scale]; }
+  function path(points, close) {
+    ctx.beginPath();
+    points.forEach(function (q, i) { var s = px(q[0], q[1]); if (i) ctx.lineTo(s[0], s[1]); else ctx.moveTo(s[0], s[1]); });
+    if (close) ctx.closePath();
+  }
+  function turned(points, b) {
+    var a = b * Math.PI / 180, sin = Math.sin(a), cos = Math.cos(a);
+    return points.map(function (q) { return [q[0] * cos + q[1] * sin, q[1] * cos - q[0] * sin]; });
+  }
+  function mix(a, b, t) {
+    var out = "#";
+    for (var i = 1; i < 7; i += 2) {
+      var v = Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t);
+      out += ("0" + v.toString(16)).slice(-2);
+    }
+    return out;
+  }
+
+  function drawGrid() {
+    ctx.strokeStyle = "rgba(255,255,255,0.045)"; ctx.lineWidth = 1;
+    var step = 48 * size.scale;
+    for (var x = (size.w / 2) % step; x < size.w; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size.h); ctx.stroke(); }
+    for (var y = (size.h / 2) % step; y < size.h; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size.w, y); ctx.stroke(); }
+  }
+
+  // The line leaves the pointer at a steady speed and slows into the dial.
+  function pulled(q) {
+    if (q <= 0.4) return q * 1.6;
+    var u = (q - 0.4) / 0.6;
+    return 0.64 + 0.36 * (1 - Math.pow(1 - u, 3));
+  }
+
+  function stroke(a, b, solid) {
+    if (b - a <= 0.001) return;
+    var p = state.pointer, far = Math.hypot(p[0], p[1]);
+    var from = [p[0] / far * START, p[1] / far * START];
+    function at(t) { return [from[0] + (p[0] - from[0]) * t, from[1] + (p[1] - from[1]) * t]; }
+    ctx.strokeStyle = solid ? C.signal : "rgba(143,141,136,0.7)";
+    ctx.lineWidth = 1.5 * size.scale;
+    ctx.setLineDash(solid ? [] : [4 * size.scale, 4 * size.scale]);
+    path([at(a), at(b)]); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawLine(result) {
+    var p = state.pointer;
+    if (!p || state.show === "never" || result.dial) return;
+    var far = Math.hypot(p[0], p[1]);
+    if (far <= START) return;
+    var picked = result.slot !== undefined;
+    var onBox = picked && gap(p[0], p[1], boxes[result.slot]) === 0;
+    if (state.show === "past" && !result.gone && lit === 0 && (!picked || onBox)) return;
+    var tip = 1 - pulled(1 - out);
+    if (tip <= 0) return;
+    // The orange grows out of the contact point, toward the pointer and toward the dial.
+    var grown = 1 - Math.pow(1 - lit, 3);
+    var a = contact * (1 - grown), b = contact + (1 - contact) * grown;
+    stroke(0, Math.min(a, tip), false);
+    stroke(Math.min(a, tip), Math.min(b, tip), true);
+    stroke(Math.min(b, tip), tip, false);
+  }
+
+  function drawDial(result) {
+    var p = state.pointer, inside = !!result.dial;
+    var heading = p && Math.hypot(p[0], p[1]) >= 8 ? (Math.atan2(p[0], p[1]) * 180 / Math.PI + 360) % 360 : 0;
+    var c = px(0, 0);
+    ctx.beginPath(); ctx.arc(c[0], c[1], RING * size.scale, 0, Math.PI * 2);
+    ctx.fillStyle = C.ground; ctx.fill();
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1.5 * size.scale; ctx.stroke();
+    var lit = result.slot === undefined ? null : Math.round(boxes[result.slot].bearing / 5) * 5 % 360;
+    for (var b = 0; b < 360; b += 5) {
+      var major = b % 45 === 0, on = b === lit;
+      var len = major && !inside ? 12 : 5;
+      ctx.strokeStyle = on ? C.signal : major ? C.ink : "rgba(143,141,136,0.55)";
+      ctx.lineWidth = (on ? 3 : major ? 2 : 1) * size.scale;
+      path([point(DIAL - len, b), point(DIAL, b)]); ctx.stroke();
+    }
+    if (inside) {
+      ctx.beginPath(); ctx.arc(c[0], c[1], (DIAL - 22) * 0.75 * size.scale, 0, Math.PI * 2);
+      ctx.fillStyle = C.signal; ctx.fill();
+      ctx.strokeStyle = C.white; ctx.lineWidth = 3 * size.scale; ctx.stroke();
+    } else {
+      var L = DIAL - 22, half = DIAL * 0.15;
+      ctx.fillStyle = C.signal; path(turned([[0, DIAL + 16], [5, DIAL + 8], [-5, DIAL + 8]], heading), true); ctx.fill();
+      path(turned([[0, L], [half, 3], [-half, 3]], heading), true); ctx.fill();
+      ctx.fillStyle = C.ink; path(turned([[-half, -3], [half, -3], [0, -L]], heading), true); ctx.fill();
+    }
+    tag("MODELING", RING + 14, 12, C.ink);
+    tag("CLOSE", -(RING + 26), 11, inside ? C.ink : "rgba(143,141,136,0.75)");
+  }
+
+  function tag(text, y, fs, colour) {
+    ctx.font = "600 " + fs * size.scale + "px Barlow, 'IBM Plex Sans', sans-serif";
+    var half = ctx.measureText(text).width / size.scale / 2 + 8;
+    ctx.fillStyle = C.ground; path([[-half, y - 5], [half, y - 5], [half, y + fs + 2], [-half, y + fs + 2]], true); ctx.fill();
+    ctx.fillStyle = colour; ctx.textAlign = "center";
+    var at = px(0, y); ctx.fillText(text, at[0], at[1]);
+  }
+
+  // Kompass today: the highlight fades with the distance from the slot and is gone at 24 px.
+  function strength(i, result) {
+    if (result.slot !== i) return 0;
+    var p = state.pointer;
+    if (state.rule !== "near") return 1;
+    return Math.max(0.3, 1 - gap(p[0], p[1], boxes[i]) / REACH);
+  }
+
+  function drawSlots(result) {
+    boxes.forEach(function (s, i) {
+      var amount = strength(i, result);
+      var a = px(s.left, s.bottom + SLOT_H), w = s.w * size.scale, h = SLOT_H * size.scale;
+      ctx.fillStyle = mix(C.ground, C.signal, amount); ctx.fillRect(a[0], a[1], w, h);
+      ctx.strokeStyle = mix(C.line, C.signal, amount); ctx.lineWidth = 1; ctx.strokeRect(a[0] + 0.5, a[1] + 0.5, w - 1, h - 1);
+      if (state.flash && state.flash.slot === i) { ctx.strokeStyle = C.white; ctx.lineWidth = 2; ctx.strokeRect(a[0], a[1], w, h); }
+      ctx.font = "600 " + 12 * size.scale + "px Barlow, 'IBM Plex Sans', sans-serif";
+      try { ctx.letterSpacing = 0.96 * size.scale + "px"; } catch (e) {}
+      ctx.fillStyle = mix(C.ink, C.white, amount); ctx.textAlign = "center";
+      s.lines.forEach(function (line, n) {
+        var down = (n - (s.lines.length - 1) / 2) * 15 + 4;
+        ctx.fillText(line, a[0] + w / 2, a[1] + h / 2 + down * size.scale);
+      });
+      try { ctx.letterSpacing = "0px"; } catch (e) {}
+    });
+    if (result.contact && state.show !== "never") {
+      var c = px(result.contact[0], result.contact[1]);
+      ctx.beginPath(); ctx.arc(c[0], c[1], 3.5 * size.scale, 0, Math.PI * 2);
+      ctx.fillStyle = C.white; ctx.fill();
+    }
+  }
+
+  function drawLimit() {
+    if (state.rule !== "line" || !state.limit || state.show === "never") return;
+    var c = px(0, 0);
+    ctx.beginPath(); ctx.arc(c[0], c[1], state.limit * size.scale, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(241,240,236,0.14)"; ctx.lineWidth = 1;
+    ctx.setLineDash([2, 6]); ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  function describe(result) {
+    if (result.gone) return "closes the pie, the line let go";
+    if (result.dial) return "closes the pie, on the dial";
+    if (result.slot === undefined) return "closes the pie";
+    return "runs " + NAMES[state.count][result.slot];
+  }
+
+  // Move a share toward 0 or 1 over that many seconds. Return it.
+  function toward(value, target, seconds, passed) {
+    var step = still ? 1 : passed / seconds;
+    return target ? Math.min(1, value + step) : Math.max(0, value - step);
+  }
+
+  function draw() {
+    var result = pick(), p = state.pointer;
+    var hold = attached() ? 1 : 0, glow = result.slot !== undefined ? 1 : 0;
+    // A line that let go keeps its colour on the way in, and comes back in the colour it now has.
+    if (result.gone) glow = lit < 1 && lit > 0 ? 1 : lit;
+    else if (gone) lit = glow;
+    gone = !!result.gone;
+    if (result.slot !== undefined) {
+      // Where the line meets the picked slot, as a share of the line from the dial to the pointer.
+      var far = Math.hypot(p[0], p[1]), t = enters(p[0], p[1], boxes[result.slot]);
+      contact = t === null ? 1 : Math.max(0, Math.min(1, (t * far - START) / Math.max(1, far - START)));
+    }
+    if (out !== hold || lit !== glow) {
+      var time = performance.now(), passed = stamp ? (time - stamp) / 1000 : 0;
+      out = toward(out, hold, hold ? RETURN : LEAVE, passed);
+      lit = toward(lit, glow, GLOW, passed);
+      stamp = out === hold && lit === glow ? 0 : time;
+      if (stamp && !pending) { pending = true; requestAnimationFrame(function () { pending = false; draw(); }); }
+    }
+    ctx.setTransform(devicePixelRatio || 1, 0, 0, devicePixelRatio || 1, 0, 0);
+    ctx.clearRect(0, 0, size.w, size.h);
+    drawGrid();
+    drawLimit();
+    drawLine(result);
+    drawDial(result);
+    drawSlots(result);
+    document.getElementById("now").textContent = state.pointer ? describe(result) : "move the pointer over the pie";
+  }
+
+  function resize() {
+    var r = canvas.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+    size.w = r.width; size.h = r.height;
+    canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+    // Room beyond the slots on every side, since the point is to go past them.
+    measure();
+    var tall = 2 * (radius() + SLOT_H * 1.5 + 40);
+    size.scale = Math.min(1, r.width / (r.width < 700 ? 700 : 980), r.height / Math.max(600, tall));
+    measure(); draw();
+  }
+
+  function locate(event) {
+    var r = canvas.getBoundingClientRect();
+    state.pointer = [(event.clientX - r.left - size.w / 2) / size.scale, (size.h / 2 - (event.clientY - r.top)) / size.scale];
+  }
+  canvas.addEventListener("pointermove", function (e) { locate(e); draw(); });
+  canvas.addEventListener("pointerdown", function (e) { locate(e); draw(); });
+  canvas.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") { state.pointer = null; draw(); } });
+  canvas.addEventListener("click", function (e) {
+    locate(e);
+    var result = pick();
+    document.getElementById("last").textContent = describe(result).replace(/^runs /, "ran ").replace(/^closes/, "closed");
+    state.flash = result;
+    draw();
+    setTimeout(function () { state.flash = null; draw(); }, 260);
+  });
+
+  function sync() {
+    ["rule", "show", "count", "limit", "height"].forEach(function (group) {
+      document.querySelectorAll("#" + group + " button").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.dataset.v === String(state[group])));
+      });
+    });
+    document.querySelectorAll("tbody tr").forEach(function (row) { row.className = row.dataset.v === state.rule ? "on" : ""; });
+    try { localStorage.setItem("pick-line", JSON.stringify({ rule: state.rule, show: state.show, count: state.count, limit: state.limit })); } catch (e) {}
+  }
+  document.querySelector(".controls").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    var group = b.parentElement.id;
+    var number = group === "count" || group === "limit" || (group === "height" && b.dataset.v !== "square");
+    state[group] = number ? Number(b.dataset.v) : b.dataset.v;
+    if (group === "count") state.height = HEIGHTS[state.count];
+    sync(); resize();
+  });
+
+  // The resting frame shows the case in question: the pointer beyond a slot.
+  function start() {
+    sync(); resize();
+    if (!state.pointer) { state.pointer = [330, 205]; draw(); }
+  }
+  window.addEventListener("resize", resize);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(start); else start();
+  start();
+})();
+</script>
+</body>
+</html>
