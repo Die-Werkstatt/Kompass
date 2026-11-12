@@ -85,7 +85,7 @@ def test_wrong_slot_count_is_rejected():
     def change(data):
         data["pies"][0]["slots"].append(None)
 
-    assert rejected(change) == 'pie "select" has 9 slots, expected 8 or 12'
+    assert rejected(change) == 'pie "select" has 9 slots, expected 4, 8 or 12'
 
 
 def test_a_pie_of_twelve_slots_round_trips():
@@ -192,3 +192,12 @@ def test_starter_pies_load():
     path = Path(__file__).parent.parent / "kompass" / "starter.json"
     text = path.read_text(encoding="utf-8")
     assert model.dumps(model.loads(text)) == text
+
+
+def test_a_pie_of_four_slots_round_trips():
+    data = json.loads(EXAMPLE)
+    data["pies"][0]["slots"] = data["pies"][0]["slots"][:4]
+    (select, _) = model.loads(json.dumps(data))
+    assert len(select.slots) == 4
+    assert model.slot_name(select, 3) == "N"
+    assert json.loads(model.dumps(model.loads(json.dumps(data)))) == data

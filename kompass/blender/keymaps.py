@@ -32,6 +32,13 @@ CONTEXTS = (
     ("Window", "EMPTY", "Everywhere"),
 )
 
+
+def context(shortcut):
+    """Return what the editor calls the place where the shortcut opens its pie."""
+    names = {keymap: name for keymap, _, name in CONTEXTS}
+    return names.get(shortcut.keymap, shortcut.keymap)
+
+
 _items = []
 # One line per shortcut that could not be set.
 problems = []

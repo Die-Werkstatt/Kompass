@@ -292,6 +292,14 @@ def steps():
     assert editor.shown().slots[9] == eight[west] and editor.selected() is None
     assert bpy.ops.kompass.pie_slots(count=8) == {"FINISHED"}
     assert editor.shown().slots == eight
+    # A new pie takes 4 slots, and 8 again.
+    assert bpy.ops.kompass.pie_add() == {"FINISHED"}
+    assert bpy.ops.kompass.pie_slots(count=4) == {"FINISHED"}
+    assert len(editor.shown().slots) == 4
+    yield PAUSE / 2
+    assert bpy.ops.kompass.pie_slots(count=8) == {"FINISHED"}
+    assert bpy.ops.kompass.pie_delete() == {"FINISHED"}
+    assert bpy.ops.kompass.editor_show(pie="select") == {"FINISHED"}
     editor.select(west)
 
     # Settings shows the operator's settings on a keymap item that no key

@@ -65,11 +65,11 @@ BEARINGS = tuple(_BEARINGS[direction] for direction in SLOT_DIRECTIONS)
 
 def bearings(count):
     """Return the bearing of each slot of a pie of that many slots."""
-    return BEARINGS if count == NATIVE_SLOTS else WIDE_BEARINGS
+    return WIDE_BEARINGS if count > NATIVE_SLOTS else BEARINGS[:count]
 
 
 def radius(count):
-    return PIE_RADIUS if count == NATIVE_SLOTS else WIDE_RADIUS
+    return WIDE_RADIUS if count > NATIVE_SLOTS else PIE_RADIUS
 
 
 def _half(count):

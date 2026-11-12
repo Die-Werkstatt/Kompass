@@ -102,3 +102,10 @@ def test_resize_refuses_to_drop_a_filled_slot():
     filled = edit.place(wide, "select", 2, SELECT.slots[0])
     with pytest.raises(ValueError, match="slot 3 has no place in a pie of 8 slots"):
         edit.resize(filled, "select", 8)
+
+
+def test_resize_to_four_keeps_west_east_south_north():
+    few = edit.resize(EXAMPLE, "select", 4)[0]
+    assert few.slots == SELECT.slots[:4]
+    model.validate(edit.resize(EXAMPLE, "select", 4))
+    assert edit.resize(edit.resize(EXAMPLE, "select", 4), "select", 8) == EXAMPLE

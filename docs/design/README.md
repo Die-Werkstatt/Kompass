@@ -15,6 +15,7 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 | Slot labels | Barlow SemiBold, capitals, tracking 0.08 em |
 | Slots | square corners; ground `#0E0E0E`, outline `#2C2C2C` |
 | Slot placement | one rule for every slot count and width: the box sits on the ring at its bearing, then moves out by half its width times the bearing's sine and half its height times its cosine |
+| 4 slots | west, east, south and north of the 8, ring 150 px |
 | 8 slots | bearings every 45°, ring 150 px |
 | 12 slots | bearings 0°, 42°, 68°, 90°, 112°, 138°, 180°, 222°, 248°, 270°, 292°, 318°, ring 170 px: every pair of 120 px neighbours is 37 px apart. Equal 30° steps would leave about 15 px near north and south and 81 px near east and west, because wide boxes sit side by side there and stack here |
 | Slot width | at least 120 px; grows to fit the label plus 12 px padding each side, up to 180 px |
@@ -79,7 +80,7 @@ A long label slides while the pointer is within 24 px of its slot.
 
 Sandro decided on 11 Nov 2026 that the pie Kompass draws holds 12 slots (#8).
 Blender's own pie menu holds 8, so a pie of 12 always opens as the pie Kompass draws.
-A pie of 8 opens as Blender's pie menu unless Kompass Pie is on in the add-on's preferences.
+A pie of 4 or 8 opens as Blender's pie menu unless Kompass Pie is on in the add-on's preferences.
 
 ## The pie in an editor
 

@@ -294,7 +294,7 @@ class KOMPASS_PT_pies(bpy.types.Panel):
         if on_canvas is not None:
             row = self.layout.row(align=True)
             row.label(text="Slots")
-            for count in (model.NATIVE_SLOTS, model.WIDE_SLOTS):
+            for count in model.SLOT_COUNTS:
                 button = row.operator(
                     KOMPASS_OT_pie_slots.bl_idname,
                     text=str(count),
@@ -303,9 +303,13 @@ class KOMPASS_PT_pies(bpy.types.Panel):
                 button.count = count
         column = self.layout.column(align=True)
         for pie in storage.pies:
-            button = column.operator(
+            row = column.split(factor=0.55, align=True)
+            button = row.operator(
                 KOMPASS_OT_editor_show.bl_idname,
                 text=pie.name,
                 depress=pie is on_canvas,
             )
             button.pie = pie.id
+            # Where its shortcut opens it. A pie without one is a sub-pie.
+            where = "" if pie.shortcut is None else keymaps.context(pie.shortcut)
+            row.label(text=where)
