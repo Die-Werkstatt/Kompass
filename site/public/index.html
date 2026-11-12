@@ -283,55 +283,70 @@ p { margin: 0 }
   // Geometry: radius, slot size and the clamped centre for the current pie.
   Demo.prototype.layout = function () {
     var s = this.s, w = this.w, h = this.h;
-    var bw = w < 520 ? 88 : w < 760 ? 104 : 118, bh = w < 520 ? 28 : 32;
+    var bw = w < 520 ? 88 : w < 760 ? 104 : 118;
     var R = Math.max(92, Math.min(150, w * 0.16, h * 0.2));
     var items = this.pie().items, n = Object.keys(items).length, wide = n > 8;
+    // Slot sizes of kompass/core/layout.py at 120 px wide: 4 slots are 96 px squares, 8 are 72 px high, 12 are 48 px high.
+    var u = bw / 120, square = n <= 4, bh = (square ? 96 : n <= 8 ? 72 : 48) * u;
     // Slot width: at least bw, grows to fit the label plus padding, at most 1.5 bw (120 / 12 / 180 px at full size); on narrow stages slots keep bw and long labels scroll.
     var fs = w < 520 ? 11 : w < 760 ? 12 : 13, pad = 12 * bw / 120, ws = {}, tws = {}, mw = bw;
     Object.keys(items).forEach(function (key) {
       var tw = textW(items[key].label.toUpperCase(), fs);
-      tws[key] = tw; ws[key] = Math.min(bw * (w < 520 ? 1 : 1.5), Math.max(bw, Math.ceil(tw + 2 * pad))); mw = Math.max(mw, ws[key]);
+      tws[key] = tw; ws[key] = square ? bh : Math.min(bw * (w < 520 ? 1 : 1.5), Math.max(bw, Math.ceil(tw + 2 * pad))); mw = Math.max(mw, ws[key]);
     });
-    // Twelve slots sit on the equal-gap bearings and a 170 px ring (scaled with the slot); other counts > 8 get the smallest ring that clears.
-    R = n === 12 && items[42] ? 170 * bw / 120 : wide ? Math.max(R, ringR(n, mw, bh)) : Math.max(92, Math.min(R, w / 2 - mw - 2));
+    // Twelve slots sit on the equal-gap bearings and a 170 px ring (scaled with the slot).
+    R = wide ? 170 * u : Math.max(92, Math.min(R, w / 2 - mw - 2));
     if (s.stack.length) R *= 0.78;
     var fx = w * 0.075, cx = Math.min(Math.max(s.cx, R + mw + 2 + fx), w - R - mw - 2 - fx);
     var cy = Math.min(Math.max(s.cy, R + bh + 26), h - R - bh - 30);
     if (w < 2 * (R + mw + 2 + fx)) cx = w / 2;
     var k = Math.min(1, w / 700) * (s.stack.length ? 0.72 : 1);
-    s.ccx = cx; s.ccy = cy; s.R = R; s.bw = bw; s.bh = bh; s.k = k; s.fs = fs; s.pad = pad; s.innerR = 46 * k + 9;
+    s.ccx = cx; s.ccy = cy; s.R = R; s.bw = bw; s.bh = bh; s.k = k; s.fs = fs; s.pad = pad; s.innerR = 46 * k + 9; s.u = u;
     var rects = {};
     Object.keys(items).forEach(function (key) {
-      var deg = +key, p = P(cx, cy, R, deg), sw = ws[key], over = Math.max(0, tws[key] + 2 * pad - sw);
+      var deg = +key, b = bearing(deg, n), p = P(cx, cy, R, b), sw = ws[key], over = square ? 0 : Math.max(0, tws[key] + 2 * pad - sw);
       // One rule for every count and width: the slot's inner edge touches the ring point.
-      var a = deg * Math.PI / 180;
-      rects[deg] = { x: p[0] - sw / 2 + Math.sin(a) * sw / 2, y: p[1] - bh / 2 - Math.cos(a) * bh / 2, w: sw, h: bh, sub: items[key].sub, over: over };
+      var a = b * Math.PI / 180;
+      rects[deg] = { x: p[0] - sw / 2 + Math.sin(a) * sw / 2, y: p[1] - bh / 2 - Math.cos(a) * bh / 2, w: sw, h: bh, b: b, sub: items[key].sub, over: over,
+        lines: square ? wrap(items[key].label.toUpperCase(), fs, sw - 2 * pad) : [items[key].label.toUpperCase()] };
     });
     s.rects = rects;
   };
+
+  // A pie of 8 puts its diagonals 51 degrees from north and south, which leaves the same gap to the axis slots on both sides.
+  function bearing(key, n) { return n === 8 && key % 90 === 45 ? [51, 129, 231, 309][Math.floor(key / 90)] : key; }
+  // The label of a square slot, broken into lines that fit it.
+  function wrap(text, fs, room) {
+    var lines = [""];
+    text.split(" ").forEach(function (word) {
+      var last = lines[lines.length - 1], joined = last ? last + " " + word : word;
+      if (last && textW(joined, fs) > room) lines.push(word); else lines[lines.length - 1] = joined;
+    });
+    return lines;
+  }
+  // Where the line from the centre to (dx, dy) enters a slot's box, as a share of the line, or null.
+  function enters(r, cx, cy, dx, dy) {
+    var t0 = 0, t1 = 1, lo = [r.x - cx, r.y - cy], hi = [r.x - cx + r.w, r.y - cy + r.h], v = [dx, dy];
+    for (var a = 0; a < 2; a++) {
+      if (Math.abs(v[a]) < 1e-9) { if (lo[a] > 0 || hi[a] < 0) return null; continue; }
+      var n = lo[a] / v[a], f = hi[a] / v[a];
+      if (n > f) { var q = n; n = f; f = q; }
+      t0 = Math.max(t0, n); t1 = Math.min(t1, f);
+      if (t0 > t1) return null;
+    }
+    return t0;
+  }
+  // The pick line's numbers from kompass/core/layout.py, in px at a 120 px slot width and in seconds.
+  var LINE_REACH = 400, LINE_START = 22, LINE_LEAVE = 0.22, LINE_RETURN = 0.1, LINE_GLOW = 0.12, REACH = 24;
 
   // Distance from a point to a slot's box, 0 on the box.
   function gap(r, x, y) { return Math.hypot(Math.max(r.x - x, 0, x - r.x - r.w), Math.max(r.y - y, 0, y - r.y - r.h)); }
   var measure = document.createElement("canvas").getContext("2d");
   function textW(str, fs) { measure.font = "600 " + fs + "px Barlow, sans-serif"; return measure.measureText(str).width + str.length * fs * 0.08; }
 
-  // Smallest radius at which n evenly spaced slots keep a 6 px gap (Kompass holds up to 12).
-  var ringCache = {};
-  function ringR(n, bw, bh) {
-    var key = n + "/" + bw + "/" + bh;
-    if (ringCache[key]) return ringCache[key];
-    for (var R = 90; R < 400; R += 2) {
-      var rs = [];
-      for (var k = 0; k < n; k++) { var a = k * 2 * Math.PI / n; rs.push([(R + bw / 2) * Math.sin(a), -(R + bh / 2) * Math.cos(a)]); }
-      var ok = rs.every(function (A, i) { return rs.every(function (B, j) { return j <= i || Math.abs(A[0] - B[0]) >= bw + 6 || Math.abs(A[1] - B[1]) >= bh + 6; }); });
-      if (ok) break;
-    }
-    return (ringCache[key] = R);
-  }
-
   // The area where a root pie opens without being pushed: its sub-pies are planned to land inside it too.
   Demo.prototype.safe = function () {
-    var w = this.w, h = this.h, bw = w < 520 ? 88 : w < 760 ? 104 : 118, bh = w < 520 ? 28 : 32;
+    var w = this.w, h = this.h, bw = w < 520 ? 88 : w < 760 ? 104 : 118, bh = 72 * bw / 120;
     var R = Math.min(Math.max(92, Math.min(150, w * 0.16, h * 0.2)), w / 2 - bw - 2);
     var a = { x0: R + bw + 2, x1: w - R - bw - 2, y0: R + bh + 26, y1: h - R - bh - 30 };
     if (a.x1 < a.x0) a.x0 = a.x1 = w / 2;
@@ -352,8 +367,10 @@ p { margin: 0 }
     d.layout();
     var dx = x - s.ccx, dy = y - s.ccy, dist = Math.hypot(dx, dy);
     s.angle = dist < 8 ? s.angle : (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
-    var was = s.dir;
-    s.dir = dist > s.innerR ? d.nearest(s.angle) : null;
+    var was = s.dir, wasGone = s.gone, hit = dist > s.innerR ? d.pick(dx, dy) : { key: null };
+    s.dir = hit.key; s.at = hit.t === undefined ? null : hit.t; s.gone = !!hit.gone;
+    // A line that let go comes back in the colour it now has.
+    if (wasGone && !s.gone) s.lit = s.dir === null ? 0 : 1;
     if (s.dir !== was && d.opts.onHover) d.opts.onHover(s.dir === null ? null : s.stack.map(function (k) { return d.pies[k].name; }).concat(d.pie().items[s.dir].label));
     // Resting on a sub-pie slot for 100 ms opens the sub-pie at the pointer.
     var hit = null;
@@ -363,8 +380,19 @@ p { margin: 0 }
     } else { clearTimeout(s.timer); s.pending = null; }
     if (!hit) s.suppress = null;
   };
+  // What a click at (dx, dy) from the centre picks: the slot under the pointer, else the first slot the line from the dial
+  // enters, else the nearest slot within 24 px. Past 400 px the line has let go and only the slot under the pointer counts.
+  Demo.prototype.pick = function (dx, dy) {
+    var s = this.s, keys = Object.keys(s.rects), close = null, reach = REACH * s.u, best = null, at = 2;
+    keys.forEach(function (k) { var g = gap(s.rects[k], s.ccx + dx, s.ccy + dy); if (g <= reach) { close = k; reach = g; } });
+    if (close !== null && reach === 0) return { key: +close, t: enters(s.rects[close], s.ccx, s.ccy, dx, dy) };
+    if (Math.hypot(dx, dy) > LINE_REACH * s.u) return { key: null, gone: true };
+    keys.forEach(function (k) { var t = enters(s.rects[k], s.ccx, s.ccy, dx, dy); if (t !== null && t < at) { best = k; at = t; } });
+    if (best !== null) return { key: +best, t: at };
+    return { key: close === null ? null : +close };
+  };
   Demo.prototype.openAt = function (x, y) {
-    var s = this.s; s.open = true; s.closing = false; s.o = 0; s.t = 0; s.ghost = null; s.stack = []; s.centres = []; s.suppress = null; s.scroll = {}; s.cx = x; s.cy = y; s.angle = null; s.shown = null; s.dir = null;
+    var s = this.s; s.out = 1; s.lit = 0; s.gone = false; s.open = true; s.closing = false; s.o = 0; s.t = 0; s.ghost = null; s.stack = []; s.centres = []; s.suppress = null; s.scroll = {}; s.cx = x; s.cy = y; s.angle = null; s.shown = null; s.dir = null;
     this.track(x, y);
     if (this.opts.onOpen) this.opts.onOpen();
   };
@@ -417,6 +445,25 @@ p { margin: 0 }
       el("path", { d: "M" + (cx - W) + " " + (cy + 3) + "H" + (cx + W) + "L" + cx + " " + (cy + L) + "Z", fill: C.ink }, n);
     }
     if (e > 0 && L > 0) el("circle", { cx: cx, cy: cy, r: L * 0.75 * e, fill: C.signal, stroke: C.hot, "stroke-width": 3 * clamp01(e * 2) });
+  };
+  // The pick line runs from just past the dial's outer arrow to the pointer: dashed grey, red from where it meets the picked
+  // slot, growing out of that point toward both ends. Past 400 px it lets go and slides back into the dial.
+  Demo.prototype.drawLine = function (cx, cy) {
+    var s = this.s, C = this.C, el = this.el.bind(this);
+    var dx = s.px - cx, dy = s.py - cy, far = Math.hypot(dx, dy), start = 46 * s.k + 6 + LINE_START;
+    if (far <= start || far <= s.innerR) return;
+    // The line leaves the pointer at a steady speed and slows into the dial.
+    var q = 1 - s.out, pulled = q <= 0.4 ? q * 1.6 : 0.64 + 0.36 * (1 - Math.pow(1 - (q - 0.4) / 0.6, 3)), tip = 1 - pulled;
+    if (tip <= 0) return;
+    var c = s.at === null || s.dir === null ? 1 : clamp01((s.at * far - start) / Math.max(1, far - start));
+    var grown = 1 - Math.pow(1 - s.lit, 3), a = Math.min(c * (1 - grown), tip), b = Math.min(c + (1 - c) * grown, tip);
+    function at(t) { var l = start + (far - start) * t; return [cx + dx / far * l, cy + dy / far * l]; }
+    function part(t0, t1, red) {
+      if (t1 - t0 <= 0.001) return;
+      var p0 = at(t0), p1 = at(t1);
+      el("line", { x1: p0[0], y1: p0[1], x2: p1[0], y2: p1[1], stroke: red ? C.signal : C.stone, "stroke-opacity": red ? 1 : 0.7, "stroke-width": 1.5, "stroke-dasharray": red ? "none" : "4 4" });
+    }
+    part(0, a, false); part(a, b, true); part(b, tip, false);
   };
   Demo.prototype.drawCursor = function (x, y) {
     var C = this.C;
@@ -474,8 +521,9 @@ p { margin: 0 }
       // Opening fades in, the dial grows from 92% and slots travel out from 88% of their distance; closing reverses it.
       var eo = easeOut(s.o), pull = lerp(0.88, 1, eo), e = easeIO(s.t);
       var pg = el("g", { opacity: eo }); d.pieG = pg; d.layer = pg;
+      d.drawLine(cx, cy);
       d.layer = el("g", { transform: "translate(" + cx + " " + cy + ") scale(" + lerp(0.92, 1, eo) + ") translate(" + (-cx) + " " + (-cy) + ")" });
-      d.drawDial(cx, cy, s.shown, dir, e);
+      d.drawDial(cx, cy, s.shown, dir === null ? null : Math.round(s.rects[dir].b / 5) * 5 % 360, e);
       d.layer = pg;
       var lab = el("text", { x: cx, y: cy + (s.innerR + 22) * pull, "text-anchor": "middle", fill: mix(C.stone, C.ink, e), opacity: lerp(0.7, 1, e), "font-size": 11, "letter-spacing": "0.12em", "font-family": "Barlow, sans-serif", "font-weight": 600, stroke: C.ground, "stroke-width": 3, "paint-order": "stroke" });
       lab.textContent = s.stack.length ? "BACK" : "CLOSE";
@@ -483,19 +531,13 @@ p { margin: 0 }
         var ttl = el("text", { x: cx, y: cy - (s.innerR + 18) * pull, "text-anchor": "middle", fill: C.ink, "font-size": 12, "font-weight": 600, "letter-spacing": "0.14em", "font-family": "Barlow, sans-serif", stroke: C.ground, "stroke-width": 3, "paint-order": "stroke" });
         ttl.textContent = d.pie().name.toUpperCase();
       }
-      var pd = Math.hypot(s.px - cx, s.py - cy);
-      var radial = Math.max(0, Math.min(1, (pd - s.innerR) / Math.max(20, (R - s.innerR) * 0.6)));
       var fs = s.fs;
       var now = performance.now();
       Object.keys(items).forEach(function (key) {
         var deg = +key, it = items[key], r0 = s.rects[deg];
         var r = { w: r0.w, h: r0.h, x: cx + (r0.x + r0.w / 2 - cx) * pull - r0.w / 2, y: cy + (r0.y + r0.h / 2 - cy) * pull - r0.h / 2 };
         var hot = deg === dir;
-        var near = s.shown === null ? 0 : Math.max(0, 1 - Math.abs(((s.shown - deg) % 360 + 540) % 360 - 180) / (360 / Math.max(n, 2)));
-        var amt = near * near * radial * (hot ? 1 : 0.55);
-        if (hot) amt = Math.max(amt, 0.3);
-        // The highlight fades with the pointer's distance from the slot's box and is gone at 24 px, the reach of a click.
-        amt *= Math.max(0, 1 - gap(r0, s.px, s.py) / 24);
+        var amt = hot ? 1 : 0;
         var txt = mix(C.ink, C.hot, amt);
         if (it.sub) {
           // Sub-pie slots: grey highlight; while the pointer rests on one, red fills it away from the centre until the sub-pie opens.
@@ -522,9 +564,17 @@ p { margin: 0 }
           el("rect", { x: r.x + s.pad, y: r.y, width: r.w - 2 * s.pad, height: r.h }, cp);
           ta.x = r.x + s.pad - (s.scroll[d.pieKey() + deg] || { off: 0 }).off; ta["text-anchor"] = "start"; ta["clip-path"] = "url(#" + cid + ")";
         }
-        var t = el("text", ta);
-        t.textContent = it.label.toUpperCase();
+        var lines = r0.lines;
+        if (lines.length === 1) { el("text", ta).textContent = lines[0]; }
+        else lines.forEach(function (line, n) {
+          ta.y = r.y + r.h / 2 + fs * 0.36 + (n - (lines.length - 1) / 2) * fs * 1.25;
+          el("text", ta).textContent = line;
+        });
       });
+      // Where the line meets the picked slot.
+      if (dir !== null && s.at !== null && s.lit > 0) {
+        el("circle", { cx: cx + (s.px - cx) * s.at, cy: cy + (s.py - cy) * s.at, r: 3.5, fill: C.hot, opacity: s.lit });
+      }
       d.layer = null;
     }
     if (d.ghost && !d.user && !(d.holdUntil > performance.now())) d.drawCursor(s.px, s.py);
@@ -595,12 +645,16 @@ p { margin: 0 }
         if (d.pendingOpen) { var po = d.pendingOpen; d.pendingOpen = null; d.lastActive = now; d.openAt(po[0], po[1]); d.track(s.px, s.py); }
       }
       if (s.pending) d.dirty = true;
+      // The line slides out of the dial and back, and its red grows in, at the pick line's speeds.
+      var sec = reduce ? 1 : dt / 1000, hold = s.gone ? 0 : 1, glow = s.gone ? s.lit : s.dir === null ? 0 : 1;
+      if (s.out !== hold) { s.out = hold ? Math.min(1, s.out + sec / LINE_RETURN) : Math.max(0, s.out - sec / LINE_LEAVE); d.dirty = true; }
+      if (s.lit !== glow) { s.lit = glow ? Math.min(1, s.lit + sec / LINE_GLOW) : Math.max(0, s.lit - sec / LINE_GLOW); d.dirty = true; }
       // Long labels: wait 400 ms on hover, slide left at 40 px/s to the end, ease back (60 ms time constant) on leave.
       var pk = d.pieKey();
       Object.keys(s.rects).forEach(function (deg) {
         var r = s.rects[deg]; if (!r.over) return;
         var sc = s.scroll[pk + deg] || (s.scroll[pk + deg] = { off: 0, since: 0 }), prev = sc.off;
-        if (+deg === s.dir && !s.closing && gap(r, s.px, s.py) < 24) { sc.since = sc.since || now; sc.off = reduce ? 0 : Math.min(r.over, Math.max(sc.off, (now - sc.since - 400) * 0.04)); }
+        if (+deg === s.dir && !s.closing) { sc.since = sc.since || now; sc.off = reduce ? 0 : Math.min(r.over, Math.max(sc.off, (now - sc.since - 400) * 0.04)); }
         else { sc.since = 0; sc.off = sc.off < 0.3 ? 0 : sc.off * Math.exp(-dt / 60); }
         if (sc.off !== prev) d.dirty = true;
       });
@@ -639,10 +693,9 @@ p { margin: 0 }
       if (d.pendingOpen) { d.pendingOpen = p; d.track(p[0], p[1]); return; }
       if (!d.s.open || d.s.closing) { d.openAt(p[0], p[1]); d.downAt = Date.now(); d.dragging = true; return; }
       d.track(p[0], p[1]);
-      // A click away from the dial and every slot closes the pie instead of picking by direction.
-      var s = d.s, m = 24, inDial = Math.hypot(p[0] - s.ccx, p[1] - s.ccy) <= s.innerR;
-      var nearSlot = Object.keys(s.rects).some(function (k) { return gap(s.rects[k], p[0], p[1]) < m; });
-      if (!inDial && !nearSlot) { d.close(); return; }
+      // A click that picks no slot closes the pie; on the dial it goes back.
+      var s = d.s, inDial = Math.hypot(p[0] - s.ccx, p[1] - s.ccy) <= s.innerR;
+      if (!inDial && s.dir === null) { d.close(); return; }
       if (!d.choose()) d.back();
     });
     // Moving the pointer is not interaction for the idle timers: only clicks, keys and opening a sub-pie are.
@@ -911,8 +964,8 @@ p { margin: 0 }
   ];
   var KOMPASS_PIES = [
     [{ root: { name: "Sculpt", items: {
-      0: { label: "Draw" }, 36: { label: "Clay Strips" }, 72: { label: "Crease" }, 108: { label: "Grab" }, 144: { label: "Snake Hook" },
-      180: { label: "Smooth" }, 216: { label: "Flatten" }, 252: { label: "Inflate" }, 288: { label: "Pinch" }, 324: { label: "Mask" } } } }, [108, 288, 36, 180]],
+      0: { label: "Draw" }, 45: { label: "Clay Strips" }, 90: { label: "Grab" }, 135: { label: "Snake Hook" },
+      180: { label: "Smooth" }, 225: { label: "Flatten" }, 270: { label: "Inflate" }, 315: { label: "Mask" } } } }, [90, 270, 45, 180]],
     [{ root: { name: "View", items: { 0: { label: "Top" }, 42: { label: "Front" }, 68: { label: "Camera" }, 90: { label: "Right" },
       112: { label: "Selected" }, 138: { label: "Local" }, 180: { label: "Bottom" }, 222: { label: "Back" }, 248: { label: "Ortho" },
       270: { label: "Left" }, 292: { label: "Frame All" }, 318: { label: "Perspective" } } } }, [318, 68, 138, 248, 0]]
