@@ -13,6 +13,7 @@ from . import (
     editor,
     files,
     keymaps,
+    live,
     pie,
     preferences,
     shortcuts,
@@ -23,6 +24,7 @@ from . import (
 _CLASSES = (
     preferences.KompassPreferences,
     pie.KOMPASS_OT_pie_open,
+    live.KOMPASS_OT_pie_live,
     files.KOMPASS_OT_pies_export,
     files.KOMPASS_OT_pies_import,
     editor.KompassTree,
@@ -65,6 +67,7 @@ def register():
 
 
 def unregister():
+    live.close()
     canvas.unregister()
     keymaps.unregister()
     for cls in reversed(_CLASSES):

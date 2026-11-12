@@ -46,10 +46,8 @@ class Look:
     # What labels() gave for the pie, and how far each long label has slid.
     labels: tuple[tuple[str, float, float], ...]
     slide: dict[int, float]
-    # The slot the editor's panel acts on.
+    # The slot the editor's menu acts on.
     selected: int | None
-    # The label of the slot being dragged to another.
-    carried: str | None
 
     @property
     def dial(self):
@@ -59,16 +57,9 @@ class Look:
 class Canvas:
     """Turns canvas units into the pixels of a region."""
 
-    def __init__(self, context, count):
-        """count is how many slots the pie has that must fit."""
-        region = context.region
-        self.size = region.width, region.height
-        # The sidebar lies over the right of the canvas.
-        sidebar = next(r for r in context.area.regions if r.type == "UI")
-        width = region.width - (sidebar.width if sidebar.width > 1 else 0)
-        scale = context.preferences.system.ui_scale
-        self.scale = scale * layout.fit(width / scale, region.height / scale, count)
-        self.centre = width / 2, region.height / 2
+    def __init__(self, size, centre, scale):
+        """size is the region's, centre the pie's in it, both in pixels."""
+        self.size, self.centre, self.scale = size, centre, scale
         # What is drawn next is this opaque, and this size around origin.
         self.opacity = 1.0
         self.zoom = 1.0
@@ -140,6 +131,18 @@ class Canvas:
         blf.disable(FONT, blf.CLIPPING)
 
 
+def fitted(context, count):
+    """Return the editor's canvas for a pie of count slots: centred in what
+    the sidebar leaves of the region and as large as fits."""
+    region = context.region
+    # The sidebar lies over the right of the canvas.
+    sidebar = next(r for r in context.area.regions if r.type == "UI")
+    width = region.width - (sidebar.width if sidebar.width > 1 else 0)
+    scale = context.preferences.system.ui_scale
+    scale *= layout.fit(width / scale, region.height / scale, count)
+    return Canvas((region.width, region.height), (width / 2, region.height / 2), scale)
+
+
 def labels(shown):
     """Return the label, its width and the slot's width for each slot."""
     blf.size(FONT, LABEL_SIZE)
@@ -189,6 +192,8 @@ def _draw_dial(canvas, look, opened):
     lit = None
     if selected is not None:
         lit = layout.tick_at(layout.bearings(count)[selected])
+    # Over a scene the dial needs a ground of its own, as the slots have.
+    canvas.fill(_circle(ring), GROUND)
     canvas.line(_circle(ring), LINE, 1.5)
     for bearing, inner, outer, major in layout.ticks(dial, hover):
         on = bearing == lit
@@ -274,9 +279,9 @@ def _draw_slot(canvas, look, slot, content, pull):
         canvas.text(text, (left + right) / 2, baseline, LABEL_SIZE, colour)
 
 
-def draw_carried(canvas, look):
-    """Draw the dragged slot beside the pointer and outline the slot a
-    release would swap it with."""
+def draw_carried(canvas, look, carried):
+    """Draw the dragged slot's label beside the pointer and outline the slot
+    a release would swap it with."""
     widths = [width for _, _, width in look.labels]
     target = layout.slot_clicked(*look.pointer, widths)
     if target is not None:
@@ -285,7 +290,7 @@ def draw_carried(canvas, look):
         box = [(left, bottom), (right, bottom), (right, top), (left, top)]
         canvas.line([*box, box[0]], SIGNAL, 2)
     blf.size(FONT, LABEL_SIZE)
-    text_width = blf.dimensions(FONT, look.carried)[0]
+    text_width = blf.dimensions(FONT, carried)[0]
     width = layout.slot_width(text_width)
     # Below and right of the pointer, which stays free to aim.
     left, top = look.pointer[0] + 12, look.pointer[1] - 12
@@ -296,9 +301,9 @@ def draw_carried(canvas, look):
     pad = layout.LABEL_PAD
     baseline = bottom + layout.SLOT_HEIGHT / 2 - 4
     if text_width > width - 2 * pad:
-        canvas.label(look.carried, (left + pad, right - pad), baseline, WHITE, 0)
+        canvas.label(carried, (left + pad, right - pad), baseline, WHITE, 0)
     else:
-        canvas.text(look.carried, (left + right) / 2, baseline, LABEL_SIZE, WHITE)
+        canvas.text(carried, (left + right) / 2, baseline, LABEL_SIZE, WHITE)
 
 
 def label(context, slot):

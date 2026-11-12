@@ -269,3 +269,10 @@ def test_highlighted_tick_is_the_nearest():
 
 def test_a_pie_of_twelve_needs_more_room():
     assert layout.fit(700, 2000, 12) < layout.fit(700, 2000, 8) == 1
+
+
+def test_keep_in_moves_a_pie_off_the_edge():
+    # A pie of 8 needs 342 units to each side and 210 up and down.
+    assert layout.keep_in(500, 400, (1000, 800), 8) == (500, 400)
+    assert layout.keep_in(10, 790, (1000, 800), 8) == (342, 590)
+    assert layout.keep_in(10, 10, (600, 800), 8) == (300, 210)

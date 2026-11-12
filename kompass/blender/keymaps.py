@@ -4,7 +4,7 @@
 
 import bpy
 
-from ..core.model import MODIFIERS, NATIVE_SLOTS
+from ..core.model import MODIFIERS
 from . import pie, storage
 
 _KEYS = frozenset(bpy.types.KeyMapItem.bl_rna.properties["type"].enum_items.keys())
@@ -48,11 +48,6 @@ def register():
         if shortcut is None:
             continue
         unknown = _unknown(shortcut)
-        if len(stored.slots) > NATIVE_SLOTS:
-            unknown = (
-                f"Blender's pie menu holds {NATIVE_SLOTS} slots, "
-                f"it has {len(stored.slots)}"
-            )
         if unknown:
             problems.append(f'Pie "{stored.name}" has no shortcut: {unknown}')
             continue
@@ -60,7 +55,7 @@ def register():
             name=shortcut.keymap, space_type=shortcut.space_type
         )
         item = keymap.keymap_items.new(
-            pie.KOMPASS_OT_pie_open.bl_idname,
+            pie.LIVE if pie.drawn(stored) else pie.KOMPASS_OT_pie_open.bl_idname,
             shortcut.key,
             "PRESS",
             **{name: True for name in shortcut.modifiers},
@@ -72,6 +67,10 @@ def register():
 def store(pies):
     """Save the pies and bind their shortcuts."""
     storage.save(pies)
+    rebind()
+
+
+def rebind():
     unregister()
     register()
 
@@ -105,7 +104,7 @@ def taken_by(shortcut):
         if (
             item.active
             and item.type == shortcut.key
-            and item.idname != pie.KOMPASS_OT_pie_open.bl_idname
+            and item.idname not in {pie.KOMPASS_OT_pie_open.bl_idname, pie.LIVE}
             # -1 is a modifier that may be held or not.
             and all(
                 getattr(item, name) in {-1, name in shortcut.modifiers}

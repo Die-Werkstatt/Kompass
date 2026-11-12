@@ -72,12 +72,24 @@ def radius(count):
     return PIE_RADIUS if count == NATIVE_SLOTS else WIDE_RADIUS
 
 
+def _half(count):
+    """Return half the width and height the whole pie needs, with a margin."""
+    return radius(count) + SLOT_MAX_WIDTH + 12, radius(count) + SLOT_HEIGHT * 1.5 + 12
+
+
 def fit(width, height, count):
     """Return the factor, at most 1, that fits the pie into that many units."""
-    # Half of what the whole pie needs, with a margin.
-    half_width = radius(count) + SLOT_MAX_WIDTH + 12
-    half_height = radius(count) + SLOT_HEIGHT * 1.5 + 12
+    half_width, half_height = _half(count)
     return min(1, width / (2 * half_width), height / (2 * half_height))
+
+
+def keep_in(x, y, size, count):
+    """Return the centre nearest to x, y that keeps the whole pie inside an
+    area of that size, its middle where the pie is larger."""
+    return tuple(
+        length / 2 if length < 2 * half else min(max(at, half), length - half)
+        for at, length, half in zip((x, y), size, _half(count))
+    )
 
 
 def point(distance, bearing):

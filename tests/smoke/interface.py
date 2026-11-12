@@ -14,6 +14,9 @@ from pathlib import Path
 import addon_utils
 import bpy
 
+sys.path.insert(0, str(Path(__file__).parent))
+import drawn
+
 PIES = Path(__file__).parent.parent / "data" / "interface.json"
 # Seconds Blender gets to handle the events of one step.
 PAUSE = 1.0
@@ -70,7 +73,6 @@ def steps():
     assert bpy.ops.kompass.pies_import(filepath=str(PIES)) == {"FINISHED"}
     assert keymaps.problems == [
         'Pie "Broken key" has no shortcut: Blender has no key "NOT_A_KEY"',
-        'Pie "Wide" has no shortcut: Blender\'s pie menu holds 8 slots, it has 12',
     ], keymaps.problems
 
     select = storage.pies[0]
@@ -115,6 +117,8 @@ def steps():
     yield PAUSE
     assert cube.data.polygons[0].use_smooth
 
+    yield from drawn.steps(addon, view3d)
+
     # In Edit Mode the pie of the Mesh keymap opens on the same keys; its
     # west slot subdivides with two cuts.
     bpy.context.view_layer.objects.active = cube
@@ -143,7 +147,7 @@ def steps():
     paint = importlib.import_module(addon + ".blender.paint")
     here = {"window": editor_window, "area": editor_area, "region": canvas}
     with bpy.context.temp_override(**here):
-        scale = paint.Canvas(bpy.context, 8).scale
+        scale = paint.fitted(bpy.context, 8).scale
     centre = x, y
 
     def at(x, y):

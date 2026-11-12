@@ -76,9 +76,25 @@ A click on a tool or operator slot does nothing, and so does a click further tha
 A long label slides while the pointer is within 24 px of its slot.
 
 Sandro decided on 11 Nov 2026 that the pie Kompass draws holds 12 slots (#8).
-Blender's own pie menu holds 8, so a pie of 12 gets no shortcut and a slot that leads to one is disabled there until Kompass draws the live pie (#22).
-The canvas shows a pie of 12 as the table above gives it.
-The editor cannot make a pie of 12 yet: it comes from a pie file.
+Blender's own pie menu holds 8, so a pie of 12 always opens as the pie Kompass draws.
+A pie of 8 opens as Blender's pie menu unless Kompass Pie is on in the add-on's preferences.
+
+## The pie in an editor
+
+A shortcut opens the drawn pie under the pointer, moved as far as keeps it inside the editor.
+It behaves as the tables above give it, with these additions:
+
+| Event | Behaviour |
+|---|---|
+| Shortcut let go within 250 ms, or before the pointer moved 6 px | the pie stays open for a click |
+| Shortcut let go later, within 24 px of a slot | the slot is picked |
+| Click within 24 px of a slot | the slot is picked |
+| Click on the dial, Esc or right-click | goes back one pie; closes the first |
+| Click anywhere else | closes the pie |
+| A sub-pie opens | its centre is the pointer |
+| A slot that cannot run here is picked | the pie closes and Blender reports it |
+
+Not in the drawn pie yet: the closing motion, a disabled look for a slot that cannot run, and a ground behind the title and the text below the dial.
 
 ## Editor host
 
@@ -118,6 +134,7 @@ Not checked: a `.blend` saved with the Kompass window, opened without Kompass in
 ## Open questions
 
 - Whether 12 slots can be hit blind with a flick: east and west are selected within 22°, their neighbours within 24°, against Blender's 45° (#22).
+  The drawn pie picks on release only within 24 px of a slot, not by bearing at any distance as Blender's does.
 - Signal red for the selected slot differs from Blender, where selection follows the user's theme.
   Sandro chose red on 10 Nov 2026.
 - The native pie cannot open sub-pies on hover: Blender's pie handler has no hover timer.
