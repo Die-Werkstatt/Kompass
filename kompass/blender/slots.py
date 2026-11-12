@@ -39,6 +39,7 @@ class KOMPASS_OT_slot_clear(editor.Edit, bpy.types.Operator):
 
 
 _SPACES = bpy.types.Space.bl_rna.properties["type"].enum_items
+_MODES = bpy.types.Context.bl_rna.properties["mode"].enum_items
 
 # What the search offers. Blender does not keep the strings of a list that a
 # function gives it.
@@ -48,8 +49,12 @@ _found = []
 def _find():
     """Fill _found with every tool, operator and other pie."""
     _found.clear()
-    for space_type, tool, name in tools.every():
+    for space_type, tool, name, modes in tools.every():
         where = _SPACES[space_type].name
+        # Two tools of one name differ by their mode: Extrude is a tool of
+        # armatures and curves, Extrude Region the one of meshes.
+        if 0 < len(modes) <= 2 and all(mode in _MODES for mode in modes):
+            where = ", ".join(_MODES[mode].name for mode in modes)
         _found.append((f"tool {space_type} {tool}", f"{name} (Tool, {where})", ""))
     for module in dir(bpy.ops):
         for name in dir(getattr(bpy.ops, module)):

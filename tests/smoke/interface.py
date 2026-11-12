@@ -292,6 +292,15 @@ def steps():
     kinds = {found[0].partition(" ")[0] for found in slots._found}
     assert kinds == {"tool", "operator", "pie"}, kinds
     assert "tool VIEW_3D builtin.select_box" in {found[0] for found in slots._found}
+    # A tool of one or two modes names them, a tool of many its editor.
+    names = {found[0]: found[1] for found in slots._found}
+    assert names["tool VIEW_3D builtin.extrude"] == (
+        "Extrude (Tool, Armature Edit, Curve Edit)"
+    )
+    assert names["tool VIEW_3D builtin.extrude_region"] == (
+        "Extrude Region (Tool, Mesh Edit)"
+    )
+    assert names["tool VIEW_3D builtin.select_box"] == "Select Box (Tool, 3D Viewport)"
     assert bpy.ops.kompass.slot_fill(found="operator mesh.subdivide") == {"FINISHED"}
     assert editor.shown().slots[west].idname == "mesh.subdivide"
     count = len(storage.pies)
