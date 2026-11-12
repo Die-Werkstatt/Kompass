@@ -50,6 +50,9 @@ LABEL_RETURN = 0.06
 MOTION = 0.12
 # How long the pointer rests on a sub-pie slot before the sub-pie opens.
 HOVER_DELAY = 0.1
+# How long a dragged slot is held on a sub-pie's dial before the pie that
+# opened it shows. Longer, since a drag across the pie passes the dial.
+BACK_DELAY = 0.3
 # A pie opens with its slots at this share of their distance from the centre
 # and its dial at this share of its size.
 OPEN_PULL = 0.88

@@ -227,7 +227,29 @@ def steps():
     yield PAUSE / 2
     assert editor.shown().slots[north] == carried and editor.selected() == north
     assert storage.pies[0].slots[east] is None
+    # Dragged from there and held on the dial, it is taken back to Select,
+    # and let go on the slot it came from it is there again.
+    path = [drop, drop, (drop[0], drop[1] - 20), (x + 3, y), (x, y)]
+    for step, place in enumerate(path):
+        kind, value = ("LEFTMOUSE", "PRESS") if step == 1 else ("MOUSEMOVE", "NOTHING")
+        editor_window.event_simulate(type=kind, value=value, x=place[0], y=place[1])
+        yield PAUSE / 4
+    yield PAUSE
+    assert editor.shown().id == "select", editor.shown().id
+    for place in ((start[0] - 5, start[1]), start):
+        editor_window.event_simulate(
+            type="MOUSEMOVE", value="NOTHING", x=place[0], y=place[1]
+        )
+        yield PAUSE / 4
+    editor_window.event_simulate(
+        type="LEFTMOUSE", value="RELEASE", x=start[0], y=start[1]
+    )
+    yield PAUSE / 2
+    assert editor.shown().slots[east] == carried and editor.selected() == east
+    assert storage.pies[1].slots[north] is None
     # The slot that opens Mesh cannot be put into Mesh.
+    editor.select(mesh)
+    assert bpy.ops.kompass.slot_open() == {"FINISHED"}
     editor.select(mesh, "select")
     try:
         bpy.ops.kompass.slot_swap(other=east)
@@ -235,12 +257,8 @@ def steps():
         assert "loop" in str(error), error
     else:
         raise AssertionError("a sub-pie slot went into its own sub-pie")
-    # Back on Select, the swap operator puts it where it was.
     yield from click(x, y)
     assert editor.shown().id == "select"
-    editor.select(north, "mesh")
-    assert bpy.ops.kompass.slot_swap(other=east) == {"FINISHED"}
-    assert editor.shown().slots[east] == carried
     editor.select(west)
 
     # The selected slot is emptied, filled from the search, and given a new
