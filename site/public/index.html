@@ -60,9 +60,10 @@ p { margin: 0 }
 
 /* ============ A · Dial ============ */
 .a-hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px 56px; align-items: center; padding-block: 40px 88px }
-.a-copy { display: grid; gap: 28px; align-content: center; container-type: inline-size }
-/* --chars is the title's longest line: a long title shrinks until it fits the column. */
-.a-copy h1 { --chars: 11; font-size: min(clamp(40px, 5.2vw, 72px), 100cqi / (var(--chars) * .72)); line-height: .95; letter-spacing: .02em; white-space: nowrap }
+.a-copy { display: grid; gap: 28px; align-content: center }
+.a-copy h1 { font-size: clamp(40px, 5.2vw, 72px); line-height: .95; letter-spacing: .02em; white-space: nowrap }
+/* The script sizes each line on its own so both lines span the same width. */
+.a-copy h1 span { display: block; width: max-content }
 .a-copy .lead { font-size: 18px; color: var(--stone); max-width: 30ch }
 .a-stagebox { display: grid; gap: 12px; min-width: 0 }
 /* The demo has no frame: it bleeds past the column and fades toward its edges. */
@@ -140,12 +141,24 @@ p { margin: 0 }
           (function () {
             var titles = [["Make pies", "for Blender"], ["Goodbye shortcut", "madness"], ["Life can", "be better"], ["Hello lazy", "Blender"],
               ["Build radials", "for Blender"], ["Find tools", "in Blender"], ["Ignore industry", "standards"], ["Look cool", "using Blender"]];
-            var last = -1; try { last = +sessionStorage.getItem("hero-title"); } catch (e) {}
+            var last = -1; try { last = +(sessionStorage.getItem("hero-title") || -1); } catch (e) {}
             var i = Math.floor(Math.random() * (titles.length - 1)); if (i >= last && last >= 0) i++;
             try { sessionStorage.setItem("hero-title", i); } catch (e) {}
             var h = document.getElementById("hero-title");
-            h.innerHTML = titles[i][0] + "<br>" + titles[i][1];
-            h.style.setProperty("--chars", Math.max(titles[i][0].length, titles[i][1].length));
+            h.innerHTML = "<span>" + titles[i][0] + "</span><span>" + titles[i][1] + "</span>";
+            // Both lines take the column's width, up to 460 px on a wide single column.
+            function fit() {
+              var width = Math.min(h.parentNode.clientWidth, 460);
+              Array.prototype.forEach.call(h.children, function (line) {
+                // Text width does not scale exactly with font size: a second pass corrects the first.
+                var size = 100;
+                for (var pass = 0; pass < 2; pass++) { line.style.fontSize = size + "px"; size *= width / line.getBoundingClientRect().width; }
+                line.style.fontSize = size + "px";
+              });
+            }
+            fit();
+            if (document.fonts) document.fonts.ready.then(fit);
+            if (window.ResizeObserver) new ResizeObserver(fit).observe(h.parentNode);
           })();
         </script>
         <p class="lead">Add and customize the tools you reach for most on radial menus.</p>
