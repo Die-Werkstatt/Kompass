@@ -4,6 +4,7 @@ How the pie looks and behaves on the Kompass editor canvas.
 [`pie-playground.html`](pie-playground.html) is a working mock-up: open it in a browser.
 Variant **G · Bearing needle** is the chosen design; D, E and F stay in the file for comparison.
 [`pie-motion.html`](pie-motion.html) adds the centre hover state and the motion below to variant G.
+[`pie-pick-line.html`](pie-pick-line.html) is the pick line and the slot sizes, with the rules and sizes that were not chosen left in for comparison.
 
 Blender draws the live pie menu itself, in the user's theme.
 Everything below applies to the editor canvas, which Kompass draws with `gpu` and `blf`.
@@ -15,10 +16,11 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 | Slot labels | Barlow SemiBold, capitals, tracking 0.08 em |
 | Slots | square corners; ground `#0E0E0E`, outline `#2C2C2C` |
 | Slot placement | one rule for every slot count and width: the box sits on the ring at its bearing, then moves out by half its width times the bearing's sine and half its height times its cosine |
-| 4 slots | west, east, south and north of the 8, ring 150 px |
-| 8 slots | bearings every 45°, ring 150 px |
-| 12 slots | bearings 0°, 42°, 68°, 90°, 112°, 138°, 180°, 222°, 248°, 270°, 292°, 318°, ring 170 px: every pair of 120 px neighbours is 37 px apart. Equal 30° steps would leave about 15 px near north and south and 81 px near east and west, because wide boxes sit side by side there and stack here |
-| Slot width | at least 120 px; grows to fit the label plus 12 px padding each side, up to 180 px |
+| 4 slots | west, east, south and north, ring 150 px; each slot is a square of 96 px and its label breaks into lines |
+| 8 slots | west, east, south and north, and diagonals 51° off north and south, ring 150 px, slots 72 px high: a diagonal of 120 px is 43 px from north or south and 45 px from east or west. At 45° it would be 28 px and 60 px (Sandro, 12 Nov 2026) |
+| 12 slots | bearings 0°, 42°, 68°, 90°, 112°, 138°, 180°, 222°, 248°, 270°, 292°, 318°, ring 170 px, slots 48 px high: neighbours of 120 px are 34 px apart beside north and south and 24 px elsewhere. Equal 30° steps would leave the slots near north and south nearly touching, because wide boxes sit side by side there and stack near east and west |
+| Slot width | at least 120 px; grows to fit the label plus 12 px padding each side, up to 180 px; 96 px in a pie of 4 |
+| Pick line | 1.5 px from 22 px beyond the dial's ticks to the pointer: signal red where it picks a slot, stone dashes of 4 px where it picks none; a white dot of 3.5 px radius where it meets the picked slot |
 | Long label | clipped at the padding |
 | Sub-pie marker | signal-red triangle in a slot's top-right corner |
 | Sub-pie slot | outline `#5A5955`; grey highlight `#4A4946` instead of signal red |
@@ -39,11 +41,15 @@ It differs from the table above in the font, which is Blender's interface font w
 |---|---|
 | Pointer moves | needle and outer arrow follow it; easing time constant 45 ms, shortest arc |
 | Pointer within 8 px of the centre | needle holds its last heading |
-| Pointer outside the dial ring | the slot with the nearest bearing is selected; with 12 slots the slices near east and west are narrower |
+| Pointer outside the dial ring | a line runs from the dial to the pointer. The slot the pointer is on is picked, else the first slot the line crosses, else the nearest within 24 px (Sandro, 12 Nov 2026) |
+| The line picks a slot | signal red grows out of the contact point toward the pointer and the dial in 120 ms, ease-out cubic |
+| The line loses its slot | the red shrinks back into the contact point and the line is dashed |
+| Pointer further than 400 px from the centre | the line lets go: its end leaves the pointer at a steady speed and slows into the dial, 220 ms in all. No slot is picked but the one the pointer is on |
+| Pointer back within 400 px | the line grows out to the pointer in 100 ms, in the colour it has there |
 | Pointer inside the dial ring | no slot is selected; the dial turns to its hover state in 120 ms, ease-in-out cubic |
 | Pointer leaves the dial ring | the hover state reverses from wherever it is |
-| Highlight on a tool slot | signal red, strength rises with distance past the ring and closeness to the needle; the selected slot keeps at least 30%; off the slot's box it fades with the distance and is gone at 24 px, where a click stops counting for the slot (Sandro, 11 Nov 2026) |
-| Highlight on a sub-pie slot | the same strength in grey |
+| Highlight on a tool slot | the picked slot is signal red, and the dial's tick nearest its bearing with it |
+| Highlight on a sub-pie slot | the same in grey |
 | Pointer rests on a sub-pie slot | signal red fills the slot away from the centre over 100 ms and its outline turns red: east slots fill left to right, west right to left, north upward, south downward, other slots along the stronger axis of their bearing, so 42° fills upward and 45° and 68° sideways |
 | The fill completes | the sub-pie opens, centred on the pointer |
 | Pointer rests on a slot with a clipped label | after 400 ms the label slides left at 40 px/s until its end shows |
@@ -53,7 +59,7 @@ It differs from the table above in the font, which is Blender's interface font w
 | Click on a tool slot | runs the tool and closes the pie |
 | Press, drag over 250 ms, release on a slot | same as a click |
 | Click on the dial, Esc or right-click | back one level; closes the pie at the root |
-| Click neither on the dial nor within 24 px of a slot | closes the pie; native Blender pies pick by direction at any distance instead (Sandro, 11 Nov 2026) |
+| Click where no slot is picked | closes the pie. Native Blender pies pick by direction at any distance instead |
 | Return from a sub-pie | the slot that opened it does not reopen until the pointer leaves it |
 | Opening a sub-pie | the needle keeps its heading; it does not reset to north |
 | Opening a sub-pie | the parent pie fades and shrinks to 90% around the pointer while the sub-pie opens, both in 120 ms |
@@ -68,7 +74,8 @@ A dragged slot that rests on a sub-pie slot for 0.1 s is taken into that sub-pie
 A dragged slot held on a sub-pie's dial for 0.3 s is taken back to the pie that sub-pie was opened from.
 A sub-pie slot dragged into its own sub-pie is refused, since the pies would form a loop.
 The canvas is black (Sandro, 11 Nov 2026); slots keep their ground.
-On the canvas today: the highlight and the selection by bearing, the centre hover state, slot width and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
+On the canvas today: the highlight and the picking, the centre hover state, slot sizes and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
+The canvas draws no pick line.
 A sub-pie left through its centre fades out as the disc.
 The needle and arrow follow the pointer without easing.
 A sub-pie opens in the middle of the canvas, not on the pointer.
@@ -76,8 +83,8 @@ A slot that is under the pointer when its pie arrives does not open until the po
 Reduced motion is Blender's Preferences > Interface > Reduce Motion; the 100 ms before a sub-pie opens stay.
 With it a long label jumps to its end after the 400 ms.
 Not on the canvas: the closing motion, since nothing closes a pie there, press-drag-release, Esc and right-click.
-A click on a tool or operator slot does nothing, and so does a click further than 24 px from every slot, since nothing closes a pie there.
-A long label slides while the pointer is within 24 px of its slot.
+A click on a tool or operator slot does nothing, and so does a click that picks no slot, since nothing closes a pie there.
+A long label slides while its slot is the picked one.
 
 Sandro decided on 11 Nov 2026 that the pie Kompass draws holds 12 slots (#8).
 Blender's own pie menu holds 8, so a pie of 12 always opens as the pie Kompass draws.
@@ -91,8 +98,8 @@ It behaves as the tables above give it, with these additions:
 | Event | Behaviour |
 |---|---|
 | Shortcut let go within 250 ms, or before the pointer moved 6 px | the pie stays open for a click |
-| Shortcut let go later, within 24 px of a slot | the slot is picked |
-| Click within 24 px of a slot | the slot is picked |
+| Shortcut let go later | the picked slot runs, as on a click |
+| Click with a slot picked | the slot runs |
 | Click on the dial, Esc or right-click | goes back one pie; closes the first |
 | Click anywhere else | closes the pie |
 | A sub-pie opens | its centre is the pointer |
@@ -140,8 +147,7 @@ Not checked: a `.blend` saved with the Kompass window, opened without Kompass in
 
 ## Open questions
 
-- Whether 12 slots can be hit blind with a flick: east and west are selected within 22°, their neighbours within 24°, against Blender's 45° (#22).
-  The drawn pie picks on release only within 24 px of a slot, not by bearing at any distance as Blender's does.
+- Whether 12 slots can be hit blind with a flick: the line picks a slot only where it crosses its box, and between two slots it picks none (#22).
 - Signal red for the selected slot differs from Blender, where selection follows the user's theme.
   Sandro chose red on 10 Nov 2026.
 - The native pie cannot open sub-pies on hover: Blender's pie handler has no hover timer.

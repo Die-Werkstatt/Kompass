@@ -73,7 +73,11 @@ def steps(addon, view3d):
     scale, centre = live._open.scale, live._open.centres[-1]
     on = (
         round(area.x + centre[0] + (left + width / 2) * scale),
-        round(area.y + centre[1] + (bottom + layout.SLOT_HEIGHT / 2) * scale),
+        round(
+            area.y
+            + centre[1]
+            + (bottom + layout.slot_height(len(mesh.slots)) / 2) * scale
+        ),
     )
     yield from move(*on)
     key("LEFTMOUSE", "PRESS", *on)
@@ -84,9 +88,11 @@ def steps(addon, view3d):
     key("ESC", "RELEASE", x, y - 175)
     yield PAUSE
     assert [pie.id for pie in live._open.trail] == ["select"]
-    yield from move(x + 300, y + 150)
-    key("LEFTMOUSE", "PRESS", x + 300, y + 150)
-    key("LEFTMOUSE", "RELEASE", x + 300, y + 150)
+    # Between the east and the north-east slot the line crosses neither.
+    yield from move(x + 290, y + 78)
+    assert live._open.stage.look.picked is None
+    key("LEFTMOUSE", "PRESS", x + 290, y + 78)
+    key("LEFTMOUSE", "RELEASE", x + 290, y + 78)
     yield PAUSE
     # It has faded out and is off the editor.
     assert live._open is None and live._closing is None
@@ -101,6 +107,29 @@ def steps(addon, view3d):
     key("LEFTMOUSE", "RELEASE", x + 200, y)
     yield PAUSE
     assert live._open is None and tool() == "builtin.select_lasso", tool()
+
+    # A click beyond a slot picks the slot the line from the dial crosses.
+    # Further than the line reaches it lets go, and the click closes the pie.
+    for beyond, picked in ((-380, "builtin.select_box"), (420, "builtin.select_box")):
+        key("Q", "PRESS", x, y, **held)
+        key("Q", "RELEASE", x, y, **held)
+        yield PAUSE
+        yield from move(x + beyond, y)
+        yield PAUSE
+        line = live._open.stage.look.line
+        assert (line.contact is None, line.tip) == (beyond > 0, float(beyond < 0)), line
+        key("LEFTMOUSE", "PRESS", x + beyond, y)
+        key("LEFTMOUSE", "RELEASE", x + beyond, y)
+        yield PAUSE
+        assert live._open is None and tool() == picked, tool()
+    key("Q", "PRESS", x, y, **held)
+    key("Q", "RELEASE", x, y, **held)
+    yield PAUSE
+    yield from move(x + 200, y)
+    key("LEFTMOUSE", "PRESS", x + 200, y)
+    key("LEFTMOUSE", "RELEASE", x + 200, y)
+    yield PAUSE
+    assert tool() == "builtin.select_lasso", tool()
     key("Q", "PRESS", x, y, **held)
     key("Q", "RELEASE", x, y, **held)
     yield PAUSE

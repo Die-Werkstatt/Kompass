@@ -9,20 +9,35 @@ docs/design/pie-playground.html and of docs/design/pie-motion.html.
 
 import math
 
-from .model import NATIVE_SLOTS, SLOT_DIRECTIONS
+from .model import FEW_SLOTS, NATIVE_SLOTS, SLOT_DIRECTIONS
 
 PIE_RADIUS = 150
-# The radius of a pie of 12 slots, and their bearings. With these every two
-# neighbours of SLOT_WIDTH are 37 apart; at equal angles the slots near
-# north and south would nearly touch.
+# The radius of a pie of 12 slots, and their bearings. With these two
+# neighbours of SLOT_WIDTH are 34 apart beside north and south and 24
+# elsewhere; at equal angles the slots near north and south would nearly touch.
 WIDE_RADIUS = 170
 WIDE_BEARINGS = (0, 42, 68, 90, 112, 138, 180, 222, 248, 270, 292, 318)
 # A slot grows from SLOT_WIDTH to fit its label, up to SLOT_MAX_WIDTH.
 SLOT_WIDTH = 120
 SLOT_MAX_WIDTH = 180
-SLOT_HEIGHT = 32
+# A slot of a pie of 4 is a square of this side; its label breaks into lines.
+SQUARE = 96
+# The fewer slots a pie has, the taller they are (Sandro, 12 Nov 2026).
+MIDDLE_HEIGHT = 72
+WIDE_HEIGHT = 48
+# The box of a slot that is dragged in the editor.
+CARRIED_HEIGHT = 32
 # A click this close to a slot counts for it.
 CLICK_REACH = 24
+# The line from the dial to the pointer starts this far beyond the tips of
+# the ticks, clear of the outer arrow, and lets go of a pointer further than
+# LINE_REACH from the centre.
+LINE_START = 22
+LINE_REACH = 400
+LINE_DASH = 4
+# How long the line takes to fly into the dial and to come back out.
+LINE_LEAVE = 0.22
+LINE_RETURN = 0.1
 # How far a pressed slot is moved before it counts as dragged.
 DRAG_START = 6
 # The room between a slot's side and its label.
@@ -61,8 +76,10 @@ OPEN_DIAL = 0.92
 PARENT_SHRINK = 0.9
 SUB_PIE_SHRINK = 0.88
 
-_BEARINGS = {"N": 0, "NE": 45, "E": 90, "SE": 135, "S": 180, "SW": 225, "W": 270}
-_BEARINGS["NW"] = 315
+# At 51 degrees a diagonal slot of SLOT_WIDTH is 43 from north or south and
+# 45 from east or west; at 45 degrees it would be 28 and 60.
+_BEARINGS = {"N": 0, "NE": 51, "E": 90, "SE": 129, "S": 180, "SW": 231, "W": 270}
+_BEARINGS["NW"] = 309
 BEARINGS = tuple(_BEARINGS[direction] for direction in SLOT_DIRECTIONS)
 
 
@@ -75,9 +92,16 @@ def radius(count):
     return WIDE_RADIUS if count > NATIVE_SLOTS else PIE_RADIUS
 
 
+def slot_height(count):
+    if count <= FEW_SLOTS:
+        return SQUARE
+    return MIDDLE_HEIGHT if count <= NATIVE_SLOTS else WIDE_HEIGHT
+
+
 def _half(count):
     """Return half the width and height the whole pie needs, with a margin."""
-    return radius(count) + SLOT_MAX_WIDTH + 12, radius(count) + SLOT_HEIGHT * 1.5 + 12
+    wide, tall = SLOT_MAX_WIDTH + 12, slot_height(count) + 12
+    return radius(count) + wide, radius(count) + tall
 
 
 def fit(width, height, count):
@@ -100,8 +124,11 @@ def point(distance, bearing):
     return math.sin(angle) * distance, math.cos(angle) * distance
 
 
-def slot_width(label):
-    """Return the width of a slot whose label is that wide."""
+def slot_width(label, count=NATIVE_SLOTS):
+    """Return the width of a slot of a pie of count slots whose label is
+    that wide."""
+    if count <= FEW_SLOTS:
+        return SQUARE
     return min(SLOT_MAX_WIDTH, max(SLOT_WIDTH, math.ceil(label) + 2 * LABEL_PAD))
 
 
@@ -117,8 +144,9 @@ def slot_corner(slot, count, width=SLOT_WIDTH, pull=1.0):
     bearing = bearings(count)[slot]
     x, y = point(radius(count) * pull, bearing)
     out_x, out_y = point(1, bearing)
+    height = slot_height(count)
     left = x - width / 2 + out_x * width / 2
-    bottom = y - SLOT_HEIGHT / 2 + out_y * SLOT_HEIGHT / 2
+    bottom = y - height / 2 + out_y * height / 2
     return left, bottom
 
 
@@ -128,8 +156,7 @@ def slot_under(x, y, widths):
     widths is the width of each slot.
     """
     for slot, width in enumerate(widths):
-        left, bottom = slot_corner(slot, len(widths), width)
-        if left < x < left + width and bottom < y < bottom + SLOT_HEIGHT:
+        if _gap(x, y, slot, len(widths), width) == 0:
             return slot
     return None
 
@@ -139,18 +166,59 @@ def _gap(x, y, slot, count, width):
     left, bottom = slot_corner(slot, count, width)
     return math.hypot(
         max(left - x, 0, x - left - width),
-        max(bottom - y, 0, y - bottom - SLOT_HEIGHT),
+        max(bottom - y, 0, y - bottom - slot_height(count)),
     )
 
 
-def slot_clicked(x, y, widths):
-    """Return the slot nearest to a click, or None beyond CLICK_REACH of all."""
+def enters(x, y, slot, widths):
+    """Return how far along the line from the centre to x, y the box of
+    slot begins, 0 to 1, or None where the line misses it."""
+    left, bottom = slot_corner(slot, len(widths), widths[slot])
+    sides = (left, left + widths[slot]), (bottom, bottom + slot_height(len(widths)))
+    first, last = 0.0, 1.0
+    for along, (low, high) in zip((x, y), sides):
+        if along == 0:
+            if low > 0 or high < 0:
+                return None
+            continue
+        near, far = sorted((low / along, high / along))
+        first, last = max(first, near), min(last, far)
+        if first > last:
+            return None
+    return first
+
+
+def slot_picked(x, y, widths):
+    """Return the slot a click at x, y picks, or None.
+
+    It is the slot the pointer is on, else the first one the line from the
+    centre to the pointer crosses, else the nearest within CLICK_REACH. A
+    pointer beyond LINE_REACH picks only the slot it is on.
+    """
+    under = slot_under(x, y, widths)
+    if under is not None or math.hypot(x, y) > LINE_REACH:
+        return under
+    crossed = [
+        (share, slot)
+        for slot in range(len(widths))
+        if (share := enters(x, y, slot, widths)) is not None
+    ]
+    if crossed:
+        return min(crossed)[1]
     nearest, reach = None, CLICK_REACH
     for slot, width in enumerate(widths):
         distance = _gap(x, y, slot, len(widths), width)
         if distance <= reach:
             nearest, reach = slot, distance
     return nearest
+
+
+def pulled(share):
+    """Return how far the line that let go has flown into the dial, 0 to 1,
+    after that share of its time: steady at first, slowing at the end."""
+    if share <= 0.4:
+        return share * 1.6
+    return 0.64 + 0.36 * ease_out((share - 0.4) / 0.6)
 
 
 def slide(offset, over, selected, step):
@@ -187,28 +255,6 @@ def slot_at(x, y, count, ring=RING_RADIUS):
         return None
     heading = bearing_to(x, y)
     return min(range(count), key=lambda slot: _apart(heading, bearings(count)[slot]))
-
-
-def highlight(x, y, slot, widths, ring=RING_RADIUS):
-    """Return how strongly slot is lit, 0 to 1, for a pointer at x, y.
-
-    It rises with the distance past the ring and with how close the pointer's
-    bearing is to the slot's. The selected slot keeps at least 0.3. Off the
-    slot's box all of it fades, to nothing at CLICK_REACH, where a click stops
-    counting for the slot.
-    """
-    count = len(widths)
-    distance = math.hypot(x, y)
-    close = 1 - _gap(x, y, slot, count, widths[slot]) / CLICK_REACH
-    if distance <= ring or close <= 0:
-        return 0.0
-    reach = max(20, (radius(count) - ring) * 0.6)
-    radial = min(1.0, (distance - ring) / reach)
-    apart = _apart(bearing_to(x, y), bearings(count)[slot])
-    near = max(0.0, 1 - apart / (360 / count))
-    if slot_at(x, y, count, ring) == slot:
-        return max(0.3, near * near * radial) * close
-    return near * near * radial * 0.55 * close
 
 
 def ticks(dial=DIAL_RADIUS, hover=0.0):

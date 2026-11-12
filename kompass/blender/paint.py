@@ -28,6 +28,20 @@ SUB_PIE_LIT = (0.290, 0.286, 0.275, 1)
 # Blender's own interface font.
 FONT = 0
 LABEL_SIZE = 12
+# From one line of a label to the next.
+LINE_HEIGHT = 15
+
+
+@dataclass(frozen=True)
+class Line:
+    """The line from the dial to the pointer, in shares of that way."""
+
+    # Where it ends: 1 at the pointer, less while it flies into the dial.
+    tip: float
+    # The part in signal red; the rest is dashed.
+    lit: tuple[float, float]
+    # Where it meets the slot a click picks, or None where it meets none.
+    contact: float | None
 
 
 @dataclass(frozen=True)
@@ -50,6 +64,9 @@ class Look:
     selected: int | None
     # The slots that cannot run where the pie is open.
     disabled: frozenset[int] = frozenset()
+    # The slot a click picks, and the line that shows it in an open pie.
+    picked: int | None = None
+    line: Line | None = None
 
     @property
     def dial(self):
@@ -108,6 +125,16 @@ class Canvas:
             shader
         )
 
+    def dashes(self, start, end, colour, width):
+        """Draw a dashed line between two points."""
+        length = math.dist(start, end)
+        for n in range(math.ceil(length / (2 * layout.LINE_DASH))):
+            ends = [
+                tuple(a + (b - a) * min(1, at / length) for a, b in zip(start, end))
+                for at in (2 * n * layout.LINE_DASH, (2 * n + 1) * layout.LINE_DASH)
+            ]
+            self.line(ends, colour, width)
+
     def text(self, text, x, y, size, colour):
         """Draw text centred on x with its baseline at y."""
         blf.size(FONT, size * self.zoom * self.scale)
@@ -148,14 +175,35 @@ def fitted(context, count):
     return Canvas((region.width, region.height), (width / 2, region.height / 2), scale)
 
 
-def labels(shown):
-    """Return the label, its width and the slot's width for each slot."""
+def measure(text):
     blf.size(FONT, LABEL_SIZE)
+    return blf.dimensions(FONT, text)[0]
+
+
+def _lines(text, count):
+    """Return the label as the lines it is drawn in: one, or in the square
+    slot of a small pie as many as its words need."""
+    if count > model.FEW_SLOTS:
+        return [text]
+    lines = [""]
+    for word in text.split():
+        joined = f"{lines[-1]} {word}".strip()
+        if lines[-1] and measure(joined) > layout.SQUARE - 2 * layout.LABEL_PAD:
+            lines.append(word)
+        else:
+            lines[-1] = joined
+    return lines
+
+
+def labels(shown):
+    """Return the label, the width of its longest line and the slot's width
+    for each slot."""
+    count = len(shown.slots)
     result = []
     for content in shown.slots:
         text = "" if content is None else label(bpy.context, content).upper()
-        width = blf.dimensions(FONT, text)[0]
-        result.append((text, width, layout.slot_width(width)))
+        width = max(measure(line) for line in _lines(text, count))
+        result.append((text, width, layout.slot_width(width, count)))
     return tuple(result)
 
 
@@ -172,9 +220,40 @@ def draw(canvas, look, opened):
     canvas.opacity *= opened
     _draw_dial(canvas, look, opened)
     pull = layout.OPEN_PULL + (1 - layout.OPEN_PULL) * opened
+    if look.line is not None:
+        _draw_line(canvas, look, False)
     for slot, content in enumerate(look.pie.slots):
         _draw_slot(canvas, look, slot, content, pull)
+    if look.line is not None:
+        _draw_line(canvas, look, True)
     canvas.opacity = 1.0
+
+
+def _draw_line(canvas, look, contact):
+    """Draw the line under the slots, or its contact point over them."""
+    x, y = look.pointer
+    far = math.hypot(x, y)
+    start = (layout.DIAL_RADIUS * look.dial + layout.LINE_START) / far
+
+    def at(share):
+        along = start + (1 - start) * share
+        return x * along, y * along
+
+    line = look.line
+    if contact:
+        if line.contact is not None and line.contact <= line.tip:
+            dot = [
+                (at(line.contact)[0] + dx, at(line.contact)[1] + dy)
+                for dx, dy in _circle(3.5)
+            ]
+            canvas.fill(dot, WHITE)
+        return
+    low, high = line.lit
+    grey = (*STONE[:3], 0.7)
+    canvas.dashes(at(0), at(low), grey, 1.5)
+    if high > low:
+        canvas.line([at(low), at(high)], SIGNAL, 1.5)
+    canvas.dashes(at(high), at(line.tip), grey, 1.5)
 
 
 def _draw_dial(canvas, look, opened):
@@ -191,12 +270,9 @@ def _draw_dial(canvas, look, opened):
             (0.0, 0.0),
         )
     count = len(look.pie.slots)
-    selected = None
-    if look.pointer is not None:
-        selected = layout.slot_at(*look.pointer, count, ring)
     lit = None
-    if selected is not None:
-        lit = layout.tick_at(layout.bearings(count)[selected])
+    if look.picked is not None:
+        lit = layout.tick_at(layout.bearings(count)[look.picked])
     # Over a scene the dial needs a ground of its own, as the slots have.
     canvas.fill(_circle(ring), GROUND)
     canvas.line(_circle(ring), LINE, 1.5)
@@ -249,17 +325,12 @@ def _draw_tag(canvas, text, y, size, colour):
 
 def _draw_slot(canvas, look, slot, content, pull):
     count = len(look.pie.slots)
-    amount = 0.0
-    if look.pointer is not None:
-        ring = layout.RING_RADIUS * look.dial
-        widths = [width for _, _, width in look.labels]
-        amount = layout.highlight(*look.pointer, slot, widths, ring)
     disabled = slot in look.disabled
-    if disabled:
-        amount = 0.0
-    text, text_width, width = look.labels[slot]
+    amount = float(slot == look.picked and not disabled)
+    text, _, width = look.labels[slot]
+    height = layout.slot_height(count)
     left, bottom = layout.slot_corner(slot, count, width, pull)
-    right, top = left + width, bottom + layout.SLOT_HEIGHT
+    right, top = left + width, bottom + height
     box = [(left, bottom), (right, bottom), (right, top), (left, top)]
     sub_pie = isinstance(content, model.SubPieSlot)
     fill = 0.0
@@ -269,7 +340,6 @@ def _draw_slot(canvas, look, slot, content, pull):
         canvas.fill(box, _mix(GROUND, SUB_PIE_LIT, amount))
         if fill > 0:
             x0, y0, x1, y1 = layout.filled(slot, count, fill)
-            height = layout.SLOT_HEIGHT
             part = [
                 (left + x0 * width, bottom + y0 * height),
                 (left + x1 * width, bottom + y0 * height),
@@ -289,40 +359,15 @@ def _draw_slot(canvas, look, slot, content, pull):
     colour = WHITE if fill > 0 else _mix(INK, WHITE, amount)
     if disabled:
         colour = (*STONE[:3], 0.55)
-    baseline = bottom + layout.SLOT_HEIGHT / 2 - 4
     pad = layout.LABEL_PAD
-    if text_width > width - 2 * pad:
-        offset = look.slide.get(slot, 0.0)
-        canvas.label(text, (left + pad, right - pad), baseline, colour, offset)
-    else:
-        canvas.text(text, (left + right) / 2, baseline, LABEL_SIZE, colour)
-
-
-def draw_carried(canvas, look, carried):
-    """Draw the dragged slot's label beside the pointer and outline the slot
-    a release would swap it with."""
-    widths = [width for _, _, width in look.labels]
-    target = layout.slot_clicked(*look.pointer, widths)
-    if target is not None:
-        left, bottom = layout.slot_corner(target, len(widths), widths[target])
-        right, top = left + widths[target], bottom + layout.SLOT_HEIGHT
-        box = [(left, bottom), (right, bottom), (right, top), (left, top)]
-        canvas.line([*box, box[0]], SIGNAL, 2)
-    blf.size(FONT, LABEL_SIZE)
-    text_width = blf.dimensions(FONT, carried)[0]
-    width = layout.slot_width(text_width)
-    # Below and right of the pointer, which stays free to aim.
-    left, top = look.pointer[0] + 12, look.pointer[1] - 12
-    right, bottom = left + width, top - layout.SLOT_HEIGHT
-    box = [(left, bottom), (right, bottom), (right, top), (left, top)]
-    canvas.fill(box, GROUND)
-    canvas.line([*box, box[0]], WHITE, 1)
-    pad = layout.LABEL_PAD
-    baseline = bottom + layout.SLOT_HEIGHT / 2 - 4
-    if text_width > width - 2 * pad:
-        canvas.label(carried, (left + pad, right - pad), baseline, WHITE, 0)
-    else:
-        canvas.text(carried, (left + right) / 2, baseline, LABEL_SIZE, WHITE)
+    lines = _lines(text, count)
+    for row, line in enumerate(lines):
+        baseline = bottom + height / 2 - 4 + ((len(lines) - 1) / 2 - row) * LINE_HEIGHT
+        if measure(line) > width - 2 * pad:
+            offset = look.slide.get(slot, 0.0)
+            canvas.label(line, (left + pad, right - pad), baseline, colour, offset)
+        else:
+            canvas.text(line, (left + right) / 2, baseline, LABEL_SIZE, colour)
 
 
 def label(context, slot):

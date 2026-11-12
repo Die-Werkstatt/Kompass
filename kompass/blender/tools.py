@@ -20,19 +20,26 @@ def label(context, space_type, tool_id):
 
 
 def every():
-    """Return the space type, id and name of each tool of every editor."""
+    """Return the space type, id, name and modes of each tool of every editor.
+
+    The modes are those of the editor the tool is in, none for a tool that
+    is in all of them.
+    """
     found = {}
     try:
         from bl_ui.space_toolsystem_common import ToolSelectPanelHelper as Helper
 
         for toolbar in Helper.__subclasses__():
-            for _mode, tools in toolbar.tools_all():
+            for mode, tools in toolbar.tools_all():
                 # Without a context it gives the tools of every mode.
                 for item in Helper._tools_flatten_with_dynamic(tools, context=None):
                     if item is not None:
                         key = toolbar.bl_space_type, item.idname
-                        found.setdefault(key, item.label)
+                        found.setdefault(key, (item.label, set()))[1].add(mode)
     # Undocumented code may fail in any way; the search then has no tools.
     except Exception:  # noqa: BLE001
         return []
-    return [(space_type, tool, name) for (space_type, tool), name in found.items()]
+    return [
+        (space_type, tool, name, () if None in modes else tuple(sorted(modes)))
+        for (space_type, tool), (name, modes) in found.items()
+    ]

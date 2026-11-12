@@ -55,6 +55,14 @@ class Stage:
     look: paint.Look | None = None
     # The slots that cannot run where the pie is open.
     disabled: frozenset[int] = frozenset()
+    # Whether a line from the dial to the pointer shows what a click picks.
+    # How much of it is out of the dial and how much of it is lit, 0 to 1,
+    # where it met the last slot it picked and whether it has let go.
+    line: bool = False
+    out: float = 1.0
+    lit: float = 0.0
+    contact: float = 1.0
+    gone: bool = False
     # Where the last pie was drawn, in pixels.
     centre: tuple[float, float] = (0.0, 0.0)
     # The pie being left, where it was drawn, what it shrinks to and around
@@ -134,17 +142,41 @@ class Stage:
             for axis in (0, 1)
         )
 
-    def _slide(self, labels, pointer, now):
+    def _line(self, picked, widths, start, step):
+        """Move the line by step seconds. Return it, or None with the pointer
+        on the dial, and whether it is not at rest."""
+        far = math.hypot(*self.pointer)
+        if far <= start:
+            return None, False
+        gone = picked is None and far > layout.LINE_REACH
+        touch = None if picked is None else layout.enters(*self.pointer, picked, widths)
+        if touch is not None:
+            touch = min(1.0, max(0.0, (touch * far - start) / (far - start)))
+        if picked is not None:
+            self.contact = 1.0 if touch is None else touch
+        if self.gone and not gone:
+            # It comes back in the colour it has there.
+            self.lit = float(picked is not None)
+        self.gone = gone
+        # A line that let go keeps its colour on the way in.
+        glow = self.lit if gone else float(picked is not None)
+        if bpy.context.preferences.view.use_reduce_motion:
+            self.out, self.lit = float(not gone), glow
+        else:
+            leave = layout.LINE_LEAVE if gone else layout.LINE_RETURN
+            self.out = layout.toward(self.out, float(not gone), step / leave)
+            self.lit = layout.toward(self.lit, glow, step / layout.MOTION)
+        tip = 1 - layout.pulled(1 - self.out)
+        grown = layout.ease_out(self.lit)
+        low = min(tip, self.contact * (1 - grown))
+        high = min(tip, self.contact + (1 - self.contact) * grown)
+        line = paint.Line(tip, (low, high), touch)
+        return line, self.out != float(not gone) or self.lit != glow
+
+    def _slide(self, labels, selected, now, step):
         """Move the labels that are too long. Return whether one is not at rest."""
-        selected = None
-        if pointer is not None:
-            widths = [width for _, _, width in labels]
-            selected = layout.slot_clicked(*pointer, widths)
         if selected != self.selected:
             self.selected, self.selected_since = selected, now
-        # A draw after a long rest is not a long step.
-        step = min(0.05, now - self.drawn)
-        self.drawn = now
         sliding = False
         for slot, (_, text_width, width) in enumerate(labels):
             over = text_width - (width - 2 * layout.LABEL_PAD)
@@ -183,7 +215,19 @@ class Stage:
             slot, since = self.rest
             filling = slot, min(1.0, (now - since) / layout.HOVER_DELAY)
         labels = paint.labels(shown)
-        sliding = self._slide(labels, pointer, now)
+        widths = [width for _, _, width in labels]
+        picked = None
+        if pointer is not None and not inside:
+            picked = layout.slot_picked(*pointer, widths)
+        # A draw after a long rest is not a long step.
+        step = min(0.05, now - self.drawn)
+        self.drawn = now
+        sliding = self._slide(labels, picked, now, step)
+        line = None
+        if self.line and pointer is not None:
+            start = layout.DIAL_RADIUS * ring / layout.RING_RADIUS + layout.LINE_START
+            line, flying = self._line(picked, widths, start, step)
+            sliding = sliding or flying
         look = paint.Look(
             shown,
             depth,
@@ -195,6 +239,8 @@ class Stage:
             dict(self.slide),
             selected,
             self.disabled,
+            picked,
+            line,
         )
         opened = share(self.opened, now)
         if self.ghost is not None and opened < 1:

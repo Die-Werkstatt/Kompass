@@ -33,6 +33,34 @@ CONTEXTS = (
 )
 
 
+# The keymap of an editor, and the keymaps of its modes. In a mode Blender
+# looks for a key in the mode's keymap, then in the editor's, then in
+# "Window". Run in Blender 5.2.4; the manual does not give the order.
+_MODES = {
+    "3D View": (
+        "Object Mode",
+        "Mesh",
+        "Curve",
+        "Armature",
+        "Pose",
+        "Sculpt",
+        "Vertex Paint",
+        "Weight Paint",
+        "Image Paint",
+    ),
+    "Image": ("UV Editor",),
+}
+# Keymaps of Blender's that are searched with one of ours.
+_WITH = {"3D View": ("3D View Generic",), "Object Mode": ("Object Non-modal",)}
+
+
+def _before(keymap):
+    """Return the keymaps Blender looks in before that one."""
+    if keymap == "Window":
+        return [name for name, _, _ in CONTEXTS if name != "Window"]
+    return list(_MODES.get(keymap, ()))
+
+
 def context(shortcut):
     """Return what the editor calls the place where the shortcut opens its pie."""
     names = {keymap: name for keymap, _, name in CONTEXTS}
@@ -98,27 +126,24 @@ def text(shortcut):
     return " ".join([*held, key])
 
 
-def taken_by(shortcut):
-    """Return the name of what Blender runs on the shortcut in its keymap.
-
-    None when the keymap has nothing else on it. Keymaps that are active at
-    the same time, such as "Object Mode" beside "3D View", are not searched.
-    """
-    keymap = bpy.context.window_manager.keyconfigs.user.keymaps.get(shortcut.keymap)
-    if keymap is None:
-        return None
-    for item in keymap.keymap_items:
-        if (
-            item.active
-            and item.type == shortcut.key
-            and item.idname not in {pie.KOMPASS_OT_pie_open.bl_idname, pie.LIVE}
-            # -1 is a modifier that may be held or not.
-            and all(
-                getattr(item, name) in {-1, name in shortcut.modifiers}
-                for name in MODIFIERS
-            )
-        ):
-            return item.name
+def taken_by(shortcut, keymap=None):
+    """Return the name of what Blender runs on the shortcut's keys in that
+    keymap, the shortcut's own unless one is given, or None."""
+    keymap = keymap or shortcut.keymap
+    keymaps = bpy.context.window_manager.keyconfigs.user.keymaps
+    for name in (keymap, *_WITH.get(keymap, ())):
+        for item in getattr(keymaps.get(name), "keymap_items", ()):
+            if (
+                item.active
+                and item.type == shortcut.key
+                and item.idname not in {pie.KOMPASS_OT_pie_open.bl_idname, pie.LIVE}
+                # -1 is a modifier that may be held or not.
+                and all(
+                    getattr(item, held) in {-1, held in shortcut.modifiers}
+                    for held in MODIFIERS
+                )
+            ):
+                return item.name
     return None
 
 
@@ -135,6 +160,20 @@ def warnings(stored):
     for other in storage.pies:
         if other is not stored and other.shortcut == shortcut:
             found.append(f'Pie "{other.name}" has the same shortcut')
+    names = {keymap: name for keymap, _, name in CONTEXTS}
+    keys = shortcut.key, shortcut.modifiers
+    for keymap in _before(shortcut.keymap):
+        taken = taken_by(shortcut, keymap)
+        if taken:
+            found.append(f'In {names[keymap]} Blender runs "{taken}" instead')
+        for other in storage.pies:
+            there = other.shortcut
+            if (
+                there
+                and there.keymap == keymap
+                and (there.key, there.modifiers) == keys
+            ):
+                found.append(f'In {names[keymap]} pie "{other.name}" opens instead')
     return found
 
 

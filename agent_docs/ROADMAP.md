@@ -20,9 +20,8 @@ plan assumes Blender's own UI font and CC0 icons.
 
 Milestone 1, pies open from shortcuts (#5).
 
-- [ ] Search the keymaps that are active together, such as "Object Mode"
-      beside "3D View", when warning that a shortcut is taken, and decide
-      whether an edit in Blender's Keymap preferences is read back (#16)
+- [ ] Decide whether an edit of a pie's shortcut in Blender's Keymap
+      preferences is read back (#16)
 
 ## Later
 
@@ -31,8 +30,8 @@ Milestone 1, pies open from shortcuts (#5).
       shortcut and context; a slot's menu fills, labels and clears it and sets its
       icon and its operator's settings, and a drag swaps two (#19).
       Left in #18: needle easing, the closing motion, the canvas font (#10),
-      tool icons. Left in #19: preview of the real pie. Starter pies (#20) are `kompass/starter.json`, added from the
-      preferences: Modeling, Object, Merge, Snap, Modifiers.
+      tool icons. Starter pies (#20) are `kompass/starter.json`, added from
+      the preferences: Modeling, Object, Merge, Snap, Modifiers.
 - [ ] Milestone 3, release Native, the edition that opens Blender's own pie
       menu (#7)
 - [ ] Website download: a release `.zip` link that installs when dragged into
@@ -40,7 +39,6 @@ Milestone 1, pies open from shortcuts (#5).
       updates. No installer app. Then a listing on extensions.blender.org.
 - [ ] Milestone 4, the Kompass edition: a pie drawn by Kompass with 12 slots
       (#8, #22). On disk: a shortcut opens the drawn pie for a pie of 12, and
-      for a pie of 8 with Kompass Pie on in the preferences. Left: blind-hit
-      testing by hand, and whether a release picks by direction at any
-      distance instead of within 24 px (#22; Sandro decides after modeling
-      with it).
+      for a pie of 8 with Kompass Pie on in the preferences. A line from the
+      dial to the pointer shows the slot a click or release picks. Left:
+      blind-hit testing by hand (#22).
