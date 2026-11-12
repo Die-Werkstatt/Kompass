@@ -80,6 +80,14 @@ def steps():
     assert keymaps.taken_by(select.shortcut) is None
     frame_all = replace(select.shortcut, key="C", modifiers=frozenset({"shift"}))
     assert keymaps.taken_by(frame_all) == "Frame All", keymaps.taken_by(frame_all)
+    # Mesh has the keys of Select in Mesh Edit Mode, where Blender looks
+    # first, and E in the 3D Viewport would lose to Blender's E there.
+    assert keymaps.warnings(select) == ['In Mesh Edit Mode pie "Mesh" opens instead'], (
+        keymaps.warnings(select)
+    )
+    assert keymaps.warnings(storage.pies[1]) == []
+    extrude = replace(select.shortcut, key="E", modifiers=frozenset())
+    assert keymaps.taken_by(extrude, "Mesh"), keymaps.taken_by(extrude, "Mesh")
 
     # The splash screen of a new profile takes the first key press.
     tap("ESC")
@@ -353,7 +361,10 @@ def steps():
     bound = editor.shown().shortcut
     assert (bound.key, bound.modifiers) == ("C", {"shift"}), bound
     assert (bound.keymap, bound.space_type) == ("3D View", "VIEW_3D")
-    assert keymaps.warnings(editor.shown()) == ['Blender also has "Frame All" on it']
+    assert keymaps.warnings(editor.shown()) == [
+        'Blender also has "Frame All" on it',
+        'In Sculpt Mode Blender runs "Activate Brush Asset" instead',
+    ], keymaps.warnings(editor.shown())
     assert any(item.type == "C" for _, item in keymaps._items)
     yield from press("ESC")
     assert editor.shown().shortcut == bound

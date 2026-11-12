@@ -20,9 +20,8 @@ plan assumes Blender's own UI font and CC0 icons.
 
 Milestone 1, pies open from shortcuts (#5).
 
-- [ ] Search the keymaps that are active together, such as "Object Mode"
-      beside "3D View", when warning that a shortcut is taken, and decide
-      whether an edit in Blender's Keymap preferences is read back (#16)
+- [ ] Decide whether an edit of a pie's shortcut in Blender's Keymap
+      preferences is read back (#16)
 
 ## Later
 

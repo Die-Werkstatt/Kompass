@@ -69,6 +69,10 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
 - [ ] Slots 4 on a pie with only west, east, south or north filled: it has
       those 4 slots and opens as Blender's pie menu with them. On a pie with
       a diagonal filled, Slots 4 reports that slot and changes nothing.
+- [ ] Two pies on Shift+Alt+Q, one in 3D Viewport and one in Mesh Edit
+      Mode: the Shortcut panel of the first reads that in Mesh Edit Mode the
+      other opens instead. A pie in 3D Viewport on E reads that in Mesh Edit
+      Mode Blender runs its own E instead.
 - [ ] The Shortcut panel reads Opens In beside the context, and the pie
       list shows that context beside each pie that has a shortcut.
 - [ ] Slots 12: the pie has 12 slots and every filled slot is where it was.
