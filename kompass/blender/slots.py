@@ -148,6 +148,34 @@ class KOMPASS_OT_slot_label(editor.Edit, bpy.types.Operator):
         return edit.place(pies, pie.id, editor.selected(), content)
 
 
+_ICONS = [
+    (name, name.replace("_", " ").title(), "", name, number)
+    for number, name in enumerate(pie.ICONS)
+]
+
+
+class KOMPASS_OT_slot_icon(editor.Edit, bpy.types.Operator):
+    """Search for an icon of Blender's to show beside the selected slot's name"""
+
+    bl_idname = "kompass.slot_icon"
+    bl_label = "Slot Icon"
+    bl_property = "icon"
+
+    icon: bpy.props.EnumProperty(items=_ICONS)
+
+    @classmethod
+    def poll(cls, _context):
+        return _held() is not None
+
+    def invoke(self, context, _event):
+        context.window_manager.invoke_search_popup(self)
+        return {"FINISHED"}
+
+    def edited(self, pies, pie):
+        content = replace(_held(), icon=None if self.icon == "NONE" else self.icon)
+        return edit.place(pies, pie.id, editor.selected(), content)
+
+
 def _plain(value):
     """Return a setting of Blender's as what a pie file holds."""
     if isinstance(value, (bool, int, float, str)):
@@ -241,6 +269,9 @@ class KOMPASS_MT_slot(bpy.types.Menu):
     bl_label = "Slot"
 
     def draw(self, _context):
+        # A menu opened by wm.call_menu executes its operators: without this
+        # the search and the dialogs never show.
+        self.layout.operator_context = "INVOKE_DEFAULT"
         self.layout.operator(
             KOMPASS_OT_slot_fill.bl_idname,
             text="Add" if _held() is None else "Replace",
@@ -249,6 +280,7 @@ class KOMPASS_MT_slot(bpy.types.Menu):
         self.layout.operator(KOMPASS_OT_slot_group.bl_idname, icon="ADD")
         self.layout.operator(KOMPASS_OT_slot_open.bl_idname, text="Open")
         self.layout.operator(KOMPASS_OT_slot_label.bl_idname, text="Label...")
+        self.layout.operator(KOMPASS_OT_slot_icon.bl_idname, text="Icon...")
         self.layout.operator(KOMPASS_OT_slot_settings.bl_idname, text="Settings...")
         self.layout.menu(KOMPASS_MT_slot_swap.bl_idname)
         self.layout.operator(KOMPASS_OT_slot_clear.bl_idname, text="Remove", icon="X")

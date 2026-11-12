@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from kompass.core import edit, model
 
 EXAMPLE = model.loads(
@@ -76,3 +78,19 @@ def test_swap_exchanges_two_slots():
         SELECT.slots[n] for n in (1, 2, 3, 4, 6, 7)
     ]
     assert edit.swap(pies, "select", 5, 0) == EXAMPLE
+
+
+def test_resize_keeps_each_slot_in_its_direction():
+    wide = edit.resize(EXAMPLE, "select", 12)[0]
+    # West, east, south and north of 8 are slots 10, 4, 7 and 1 of 12.
+    assert [wide.slots[index] for index in (9, 3, 6, 0)] == list(SELECT.slots[:4])
+    assert sum(slot is not None for slot in wide.slots) == 4
+    assert edit.resize((wide, MESH), "select", 8) == EXAMPLE
+
+
+def test_resize_refuses_to_drop_a_filled_slot():
+    wide = edit.resize(EXAMPLE, "select", 12)
+    # Slot 3 of 12 lies at 68 degrees, where a pie of 8 has nothing.
+    filled = edit.place(wide, "select", 2, SELECT.slots[0])
+    with pytest.raises(ValueError, match="slot 3 has no place in a pie of 8 slots"):
+        edit.resize(filled, "select", 8)

@@ -203,6 +203,19 @@ def steps():
     assert bpy.ops.kompass.slot_clear() == {"FINISHED"}
     assert editor.shown().slots[west] is None
     assert not bpy.ops.kompass.slot_clear.poll()
+
+    # Add in the slot's menu lies under the pointer when the menu opens. It
+    # opens the search, and Enter puts the first result in the slot.
+    yield from click(x - 2 * FLICK, y)
+    yield from click(x - 2 * FLICK, y)
+    for letter in "LASSO":
+        editor_window.event_simulate(type=letter, value="PRESS", unicode=letter)
+        editor_window.event_simulate(type=letter, value="RELEASE")
+    yield PAUSE
+    editor_window.event_simulate(type="RET", value="PRESS")
+    editor_window.event_simulate(type="RET", value="RELEASE")
+    yield PAUSE
+    assert editor.shown().slots[west] is not None
     slots = importlib.import_module(addon + ".blender.slots")
     slots._find()
     kinds = {found[0].partition(" ")[0] for found in slots._found}
@@ -221,6 +234,20 @@ def steps():
     assert editor.shown().slots[west].label == "Cut"
     assert bpy.ops.kompass.slot_label(label="") == {"FINISHED"}
     assert editor.shown().slots[west].label is None
+
+    # The slot takes one of Blender's icons and loses it for NONE.
+    assert bpy.ops.kompass.slot_icon(icon="MOD_SUBSURF") == {"FINISHED"}
+    assert editor.shown().slots[west].icon == "MOD_SUBSURF"
+    assert bpy.ops.kompass.slot_icon(icon="NONE") == {"FINISHED"}
+    assert editor.shown().slots[west].icon is None
+
+    # The pie goes to 12 slots and back; west of 8 is slot 10 of 12.
+    eight = editor.shown().slots
+    assert bpy.ops.kompass.pie_slots(count=12) == {"FINISHED"}
+    assert editor.shown().slots[9] == eight[west] and editor.selected() is None
+    assert bpy.ops.kompass.pie_slots(count=8) == {"FINISHED"}
+    assert editor.shown().slots == eight
+    editor.select(west)
 
     # Settings shows the operator's settings on a keymap item that no key
     # reaches. OK stores the ones that were set and removes the item.

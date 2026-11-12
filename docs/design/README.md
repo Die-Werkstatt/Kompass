@@ -25,11 +25,11 @@ Everything below applies to the editor canvas, which Kompass draws with `gpu` an
 | Outer arrow | signal-red triangle outside the ring; turns with the needle |
 | Centre hover | the needle becomes a signal-red disc with a 3 px white border, radius 75% of the needle length; the 45° ticks shorten to the length of the 5° ticks; the outer arrow slides in onto the ring, shrinks and fades; the ring stays |
 | Sub-pie dial | 72% of the main dial |
-| Sub-pie title | pie name in capitals above the dial |
+| Title | pie name in capitals above the dial, in a pie and in a sub-pie |
 | Dial label | BACK in a sub-pie, CLOSE at the root, below the dial |
 | Colours | see [`../brand/README.md`](../brand/README.md) |
 
-`kompass/blender/paint.py` draws the slots, the dial, the needle, the outer arrow, the sub-pie title and the dial label.
+`kompass/blender/paint.py` draws the slots, the dial, the needle, the outer arrow, the title and the dial label.
 It differs from the table above in the font, which is Blender's interface font without tracking, because `blf` has no letter spacing and the font is undecided (#10).
 
 ## Behaviour
@@ -61,7 +61,7 @@ It differs from the table above in the font, which is Blender's interface font w
 
 The editor's canvas shows this behaviour while Preview is on.
 With it off nothing opens on hover.
-A click selects a slot, drawn with a 2 px white outline, and opens its menu: Add or Replace from a search, New Sub-Pie, Open, Label, Settings for an operator, Swap With and Remove.
+A click selects a slot, drawn with a 2 px white outline, and opens its menu: Add or Replace from a search, New Sub-Pie, Open, Label, Icon, Settings for an operator, Swap With and Remove.
 A filled slot that is pressed and moved more than 6 px is dragged: its box follows 12 px below and right of the pointer, the slot a release would swap it with has a 2 px signal-red outline, and a release anywhere else changes nothing.
 The canvas is black (Sandro, 11 Nov 2026); slots keep their ground.
 On the canvas today: the highlight and the selection by bearing, the centre hover state, slot width and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
