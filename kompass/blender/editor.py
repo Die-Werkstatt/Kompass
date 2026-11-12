@@ -302,6 +302,12 @@ class KOMPASS_PT_pies(bpy.types.Panel):
                 )
                 button.count = count
         column = self.layout.column(align=True)
+        opened = {
+            slot.pie
+            for pie in storage.pies
+            for slot in pie.slots
+            if isinstance(slot, model.SubPieSlot)
+        }
         for pie in storage.pies:
             row = column.split(factor=0.55, align=True)
             button = row.operator(
@@ -310,6 +316,11 @@ class KOMPASS_PT_pies(bpy.types.Panel):
                 depress=pie is on_canvas,
             )
             button.pie = pie.id
-            # Where its shortcut opens it. A pie without one is a sub-pie.
-            where = "" if pie.shortcut is None else keymaps.context(pie.shortcut)
-            row.label(text=where)
+            # Where its shortcut opens it. Without one a sub-pie slot has
+            # to, or nothing opens the pie.
+            if pie.shortcut is not None:
+                row.label(text=keymaps.context(pie.shortcut))
+            elif pie.id not in opened:
+                row.label(text="No Shortcut", icon="ERROR")
+            else:
+                row.label(text="")

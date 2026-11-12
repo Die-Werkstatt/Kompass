@@ -9,6 +9,7 @@ is and gets clicks without a modal operator.
 """
 
 import math
+import time
 from dataclasses import dataclass, field
 
 import bpy
@@ -28,6 +29,8 @@ class _Input:
     # its index and its label.
     pressed: tuple | None = None
     dragged: tuple | None = None
+    # Since when a dragged slot is held on a sub-pie's dial.
+    back: float | None = None
 
 
 _stage = Stage()
@@ -90,6 +93,12 @@ def _tick():
     """Draw the next frame of an animation, and open a sub-pie that is due."""
     if not any(_input.lit.values()):
         _stage.rest = None
+    if _input.back is not None:
+        if time.perf_counter() - _input.back < layout.BACK_DELAY:
+            return FRAME
+        # A dragged slot is taken back to the pie this one was opened from.
+        _input.back = None
+        editor.click(-1)
     slot = _stage.due()
     if slot is not None and _input.dragged is not None:
         # A dragged slot is taken into the sub-pie it rests on.
@@ -144,10 +153,18 @@ class _Part:
                 _input.dragged = editor.shown().id, slot, label
                 # Its own sub-pie does not open under it.
                 _stage.held = slot
+        held = _input.dragged is not None and editor.in_sub_pie()
+        if not (held and math.hypot(*pointer) <= _ring()):
+            _input.back = None
+        elif _input.back is None:
+            _input.back = time.perf_counter()
+            if not bpy.app.timers.is_registered(_tick):
+                bpy.app.timers.register(_tick, first_interval=FRAME)
         return {"RUNNING_MODAL"}
 
     def exit(self, context, cancel):
         dragged, _input.dragged, _input.pressed = _input.dragged, None, None
+        _input.back = None
         if cancel:
             return
         slot = self._near()

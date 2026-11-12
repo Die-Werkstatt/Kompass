@@ -60,6 +60,10 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
 - [ ] Press LASSO, move onto MESH and wait: Mesh opens with LASSO still at
       the pointer. Release on an empty slot: LASSO is there and gone from
       Select. Press MESH and move a little: Mesh does not open under it.
+- [ ] In Mesh, press LASSO, hold it on the dial: Select shows. Release on
+      an empty slot: LASSO is back in Select.
+- [ ] A pie that has no shortcut and that no slot opens reads No Shortcut
+      in the pie list.
 - [ ] Click a slot, Replace, type "subdiv", pick Subdivide (mesh.subdivide):
       the slot reads SUBDIVIDE. Click an empty slot: the menu says Add.
 - [ ] Slots 4 on a pie with only west, east, south or north filled: it has

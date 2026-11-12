@@ -65,6 +65,7 @@ With it off nothing opens on hover.
 A click selects a slot, drawn with a 2 px white outline, and opens its menu: Add or Replace from a search, New Sub-Pie, Open, Label, Icon, Settings for an operator, Swap With and Remove.
 A filled slot that is pressed and moved more than 6 px is dragged: its box follows 12 px below and right of the pointer, the slot a release would swap it with has a 2 px signal-red outline, and a release anywhere else changes nothing.
 A dragged slot that rests on a sub-pie slot for 0.1 s is taken into that sub-pie, where a release on a slot swaps the two across the pies.
+A dragged slot held on a sub-pie's dial for 0.3 s is taken back to the pie that sub-pie was opened from.
 A sub-pie slot dragged into its own sub-pie is refused, since the pies would form a loop.
 The canvas is black (Sandro, 11 Nov 2026); slots keep their ground.
 On the canvas today: the highlight and the selection by bearing, the centre hover state, slot width and long labels, the fill on sub-pie slots, opening a sub-pie on hover or by a click, the opening motion and both sub-pie handoffs work as above.
