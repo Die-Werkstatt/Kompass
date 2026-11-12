@@ -56,6 +56,18 @@ assert len(storage.pies) == 4
 reenable()
 assert len(storage.pies) == 4
 
+# Every slot of the starter pies names an operator of this Blender and
+# settings that it has.
+files = importlib.import_module(addon + ".blender.files")
+model = importlib.import_module(addon + ".core.model")
+pie_menu = importlib.import_module(addon + ".blender.pie")
+for starter in model.loads(files.STARTER.read_text(encoding="utf-8")):
+    for slot in starter.slots:
+        if isinstance(slot, model.OperatorSlot):
+            known = pie_menu.operator_type(slot.idname)
+            assert known is not None, slot.idname
+            assert set(slot.properties) <= set(known.properties.keys()), slot
+
 # The editor's pie operators change the pie on the canvas and the file.
 editor = importlib.import_module(addon + ".blender.editor")
 assert bpy.ops.kompass.pie_add() == {"FINISHED"}

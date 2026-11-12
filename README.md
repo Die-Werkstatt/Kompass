@@ -24,8 +24,9 @@ program first.
 To install a `.zip` by hand, drag it into Blender, or use Preferences >
 Get Extensions > the arrow menu at the top right > Install from Disk.
 
-Kompass starts with no pies. Preferences > Add-ons > Kompass > Import and
-pick `tests/data/example.json`, then hold Shift+Alt+Q in the 3D Viewport.
+Kompass starts with no pies. Preferences > Add-ons > Kompass > Add Starter
+Pies, then hold Shift+Alt+Q in the 3D Viewport: Object in Object Mode,
+Modeling in Edit Mode.
 
 ## Keep your pies
 

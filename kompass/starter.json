@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "pies": [
+    {
+      "id": "modeling",
+      "name": "Modeling",
+      "shortcut": {
+        "keymap": "Mesh",
+        "space_type": "EMPTY",
+        "key": "Q",
+        "modifiers": [
+          "shift",
+          "alt"
+        ]
+      },
+      "slots": [
+        {
+          "type": "operator",
+          "idname": "view3d.edit_mesh_extrude_move_normal",
+          "label": "Extrude"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.bevel"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.knife_tool",
+          "label": "Knife"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.loopcut_slide",
+          "label": "Loop Cut"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.subdivide"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.inset",
+          "label": "Inset"
+        },
+        {
+          "type": "sub_pie",
+          "pie": "merge"
+        },
+        {
+          "type": "sub_pie",
+          "pie": "snap"
+        }
+      ]
+    },
+    {
+      "id": "merge",
+      "name": "Merge",
+      "slots": [
+        {
+          "type": "operator",
+          "idname": "mesh.merge",
+          "properties": {
+            "type": "CURSOR"
+          },
+          "label": "At Cursor"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.merge",
+          "properties": {
+            "type": "COLLAPSE"
+          },
+          "label": "Collapse"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.remove_doubles",
+          "label": "By Distance"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.merge",
+          "properties": {
+            "type": "CENTER"
+          },
+          "label": "At Center"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.merge",
+          "properties": {
+            "type": "FIRST"
+          },
+          "label": "At First"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.merge",
+          "properties": {
+            "type": "LAST"
+          },
+          "label": "At Last"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.dissolve_mode",
+          "label": "Dissolve"
+        },
+        {
+          "type": "operator",
+          "idname": "mesh.edge_face_add",
+          "label": "Fill"
+        }
+      ]
+    },
+    {
+      "id": "snap",
+      "name": "Snap",
+      "slots": [
+        {
+          "type": "operator",
+          "idname": "view3d.snap_selected_to_cursor",
+          "properties": {
+            "use_offset": false
+          },
+          "label": "Selection to Cursor"
+        },
+        {
+          "type": "operator",
+          "idname": "view3d.snap_cursor_to_selected",
+          "label": "Cursor to Selected"
+        },
+        {
+          "type": "operator",
+          "idname": "view3d.snap_selected_to_grid",
+          "label": "Selection to Grid"
+        },
+        {
+          "type": "operator",
+          "idname": "wm.context_toggle",
+          "properties": {
+            "data_path": "tool_settings.use_snap"
+          },
+          "label": "Snapping On/Off"
+        },
+        {
+          "type": "operator",
+          "idname": "view3d.snap_cursor_to_center",
+          "label": "Cursor to Origin"
+        },
+        {
+          "type": "operator",
+          "idname": "view3d.snap_selected_to_active",
+          "label": "Selection to Active"
+        },
+        {
+          "type": "operator",
+          "idname": "view3d.snap_cursor_to_grid",
+          "label": "Cursor to Grid"
+        },
+        {
+          "type": "operator",
+          "idname": "view3d.snap_cursor_to_active",
+          "label": "Cursor to Active"
+        }
+      ]
+    },
+    {
+      "id": "object",
+      "name": "Object",
+      "shortcut": {
+        "keymap": "Object Mode",
+        "space_type": "EMPTY",
+        "key": "Q",
+        "modifiers": [
+          "shift",
+          "alt"
+        ]
+      },
+      "slots": [
+        {
+          "type": "operator",
+          "idname": "object.shade_smooth"
+        },
+        {
+          "type": "operator",
+          "idname": "object.shade_flat"
+        },
+        {
+          "type": "sub_pie",
+          "pie": "modifiers"
+        },
+        {
+          "type": "operator",
+          "idname": "object.editmode_toggle",
+          "label": "Edit Mode"
+        },
+        {
+          "type": "operator",
+          "idname": "object.origin_set",
+          "properties": {
+            "type": "ORIGIN_GEOMETRY"
+          },
+          "label": "Origin to Geometry"
+        },
+        {
+          "type": "operator",
+          "idname": "object.transform_apply",
+          "properties": {
+            "location": true,
+            "rotation": true,
+            "scale": true
+          },
+          "label": "Apply Transforms"
+        },
+        {
+          "type": "operator",
+          "idname": "object.align",
+          "label": "Align"
+        },
+        {
+          "type": "sub_pie",
+          "pie": "snap"
+        }
+      ]
+    },
+    {
+      "id": "modifiers",
+      "name": "Modifiers",
+      "slots": [
+        {
+          "type": "operator",
+          "idname": "object.modifier_add",
+          "properties": {
+            "type": "MIRROR"
+          },
+          "label": "Mirror"
+        },
+        {
+          "type": "operator",
+          "idname": "object.modifier_add",
+          "properties": {
+            "type": "BEVEL"
+          },
+          "label": "Bevel"
+        },
+        {
+          "type": "operator",
+          "idname": "object.modifier_add",
+          "properties": {
+            "type": "SOLIDIFY"
+          },
+          "label": "Solidify"
+        },
+        {
+          "type": "operator",
+          "idname": "object.modifier_add",
+          "properties": {
+            "type": "SUBSURF"
+          },
+          "label": "Subdivision"
+        },
+        {
+          "type": "operator",
+          "idname": "object.modifier_add",
+          "properties": {
+            "type": "ARRAY"
+          },
+          "label": "Array"
+        },
+        {
+          "type": "operator",
+          "idname": "object.modifier_add",
+          "properties": {
+            "type": "BOOLEAN"
+          },
+          "label": "Boolean"
+        },
+        {
+          "type": "operator",
+          "idname": "object.modifier_add",
+          "properties": {
+            "type": "WEIGHTED_NORMAL"
+          },
+          "label": "Weighted Normal"
+        },
+        {
+          "type": "operator",
+          "idname": "object.modifier_add",
+          "properties": {
+            "type": "TRIANGULATE"
+          },
+          "label": "Triangulate"
+        }
+      ]
+    }
+  ]
+}

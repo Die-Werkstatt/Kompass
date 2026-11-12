@@ -15,7 +15,7 @@ import gpu
 
 from ..core import layout, model
 from . import paint, pie
-from .stage import FRAME, Stage
+from .stage import FRAME, Stage, share
 
 # A shortcut held this long picks the slot it is released on.
 HOLD = 0.25
@@ -26,6 +26,7 @@ class _Open:
     space: type
     region: bpy.types.Region
     key: str
+    # When the pie opened, and once it fades out, when it closed.
     since: float
     # Where in the region the pointer was when the pie opened.
     start: tuple[float, float]
@@ -63,27 +64,67 @@ class _Open:
 
 # The pie that is open, or None. Blender shows one at a time.
 _open = None
+# The pie that fades out after it closed, or None.
+_closing = None
 
 
 def _draw():
-    shown = _open
+    shown = _open or _closing
     if shown is None or bpy.context.region != shown.region:
         return
     gpu.state.blend_set("ALPHA")
     size = shown.region.width, shown.region.height
     canvas = paint.Canvas(size, shown.centres[-1], shown.scale)
-    shown.moving = shown.stage.paint(canvas, shown.trail[-1], len(shown.trail), True)
+    if shown is _closing:
+        # A pie that closed before it was drawn has nothing to fade.
+        if shown.stage.look is not None:
+            left = 1 - share(shown.since, time.perf_counter())
+            paint.draw(canvas, shown.stage.look, layout.ease_out(left))
+        return
+    current = shown.trail[-1]
+    shown.stage.disabled = frozenset(
+        slot
+        for slot, content in enumerate(current.slots)
+        if content is not None and not pie.available(bpy.context, content)
+    )
+    shown.moving = shown.stage.paint(canvas, current, len(shown.trail), True)
 
 
 def close():
-    """Take the open pie off its editor, if one is open."""
-    global _open
+    """Close the open pie, if one is open. It fades out."""
+    global _open, _closing
+    drop()
     shown, _open = _open, None
     if shown is None:
         return
-    shown.space.draw_handler_remove(shown.handle, "WINDOW")
     bpy.context.window_manager.event_timer_remove(shown.timer)
+    _closing = shown
+    shown.since = time.perf_counter()
+    bpy.app.timers.register(_fade, first_interval=FRAME)
     shown.region.tag_redraw()
+
+
+def drop():
+    """Take the pie that fades out off its editor."""
+    global _closing
+    shown, _closing = _closing, None
+    if shown is None:
+        return
+    shown.space.draw_handler_remove(shown.handle, "WINDOW")
+    if bpy.app.timers.is_registered(_fade):
+        bpy.app.timers.unregister(_fade)
+    shown.region.tag_redraw()
+
+
+def _fade():
+    """Draw the next frame of the pie that fades out, or take it away."""
+    shown = _closing
+    done = shown.stage.look is None or share(shown.since, time.perf_counter()) >= 1
+    if done:
+        drop()
+        return None
+    shown.region.tag_redraw()
+    return FRAME
 
 
 class KOMPASS_OT_pie_live(bpy.types.Operator):
@@ -109,6 +150,7 @@ class KOMPASS_OT_pie_live(bpy.types.Operator):
         # With the pointer on a header or a toolbar the pie still opens.
         region = next(part for part in area.regions if part.type == "WINDOW")
         close()
+        drop()
         space = type(context.space_data)
         start = event.mouse_x - region.x, event.mouse_y - region.y
         shown = _Open(space, region, event.type, time.perf_counter(), start, [])
@@ -179,6 +221,8 @@ class KOMPASS_OT_pie_live(bpy.types.Operator):
         if isinstance(content, model.SubPieSlot):
             self._enter(shown, slot)
             shown.region.tag_redraw()
+            return {"RUNNING_MODAL"}
+        if slot in shown.stage.disabled:
             return {"RUNNING_MODAL"}
         close()
         if content is None:

@@ -10,6 +10,9 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 from ..core import model, store, transfer
 from . import keymaps, storage
 
+# The pies that come with Kompass, in the format of an exported file.
+STARTER = Path(__file__).parent.parent / "starter.json"
+
 
 class KOMPASS_OT_pies_export(bpy.types.Operator, ExportHelper):
     """Save pies to a file for Kompass to import"""

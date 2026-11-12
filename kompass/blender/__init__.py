@@ -68,6 +68,7 @@ def register():
 
 def unregister():
     live.close()
+    live.drop()
     canvas.unregister()
     keymaps.unregister()
     for cls in reversed(_CLASSES):

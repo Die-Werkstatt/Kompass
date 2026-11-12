@@ -107,16 +107,26 @@ def apply(settings, properties):
     return True
 
 
+def available(context, slot):
+    """Return whether what a slot holds can run where context is."""
+    if isinstance(slot, model.ToolSlot):
+        return tools.label(context, slot.space_type, slot.tool) is not None
+    if isinstance(slot, model.OperatorSlot):
+        if operator_type(slot.idname) is None:
+            return False
+        module, _, name = slot.idname.partition(".")
+        return getattr(getattr(bpy.ops, module), name).poll()
+    return True
+
+
 def run(context, slot):
     """Do what a tool or operator slot holds. Return whether Blender did."""
+    if not available(context, slot):
+        return False
     if isinstance(slot, model.ToolSlot):
-        if tools.label(context, slot.space_type, slot.tool) is None:
-            return False
         bpy.ops.wm.tool_set_by_id(name=slot.tool, space_type=slot.space_type)
         return True
     known = operator_type(slot.idname)
-    if known is None:
-        return False
     module, _, name = slot.idname.partition(".")
     try:
         settings = {

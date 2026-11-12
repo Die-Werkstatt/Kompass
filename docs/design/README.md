@@ -92,9 +92,12 @@ It behaves as the tables above give it, with these additions:
 | Click on the dial, Esc or right-click | goes back one pie; closes the first |
 | Click anywhere else | closes the pie |
 | A sub-pie opens | its centre is the pointer |
-| A slot that cannot run here is picked | the pie closes and Blender reports it |
+| A slot cannot run where the pie is open, such as Subdivide in Object Mode | its label is grey, it does not light up and a click or release on it does nothing |
+| A slot that Blender refuses to run is picked | the pie closes and Blender reports it |
+| The pie opens with the pointer on the dial | the dial shows the hover disc from the first frame, not the needle |
+| The pie closes | it fades out as the table above gives it, while the picked slot already runs |
 
-Not in the drawn pie yet: the closing motion, a disabled look for a slot that cannot run, and a ground behind the title and the text below the dial.
+The title and the text below the dial have a ground of their own.
 
 ## Editor host
 

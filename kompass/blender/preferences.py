@@ -22,7 +22,14 @@ class KompassPreferences(bpy.types.AddonPreferences):
         row.operator(editor.KOMPASS_OT_editor_open.bl_idname)
         row.operator(files.KOMPASS_OT_pies_import.bl_idname, text="Import")
         row.operator(files.KOMPASS_OT_pies_export.bl_idname, text="Export All")
-        layout.prop(self, "drawn")
+        row = layout.row()
+        row.prop(self, "drawn")
+        # Without the file browser.
+        row.operator_context = "EXEC_DEFAULT"
+        starter = row.operator(
+            files.KOMPASS_OT_pies_import.bl_idname, text="Add Starter Pies"
+        )
+        starter.filepath = str(files.STARTER)
         for stored in storage.pies:
             self._draw_pie(layout.box(), stored)
         layout.label(text=str(storage.path()), icon="FILE")

@@ -20,7 +20,7 @@ as the pie Kompass draws, as a pie of 12 always does. Slots are filled in the ed
     loaded from `pies.json`, `pie.py` opens one as a native pie menu,
     `keymaps.py` gives each its shortcut, `tools.py` reads the tool list,
     `files.py` exports and imports, `preferences.py` lists the pies, `editor.py`
-    is the editor, `shortcuts.py`, `slots.py`, `canvas.py` its panel, menu and pie; `live.py` opens the drawn pie, `stage.py` moves it.
+    is the editor, `shortcuts.py`, `slots.py`, `canvas.py` its panel, menu and pie; `live.py` opens the drawn pie, `stage.py` moves it. `starter.json`: the starter pies.
 - `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
   pie file. `tests/smoke/` runs inside Blender: `checks.py` without a window,
   `interface.py` with one, pressing shortcuts through simulated events.
