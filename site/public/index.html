@@ -60,8 +60,9 @@ p { margin: 0 }
 
 /* ============ A · Dial ============ */
 .a-hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px 56px; align-items: center; padding-block: 40px 88px }
-.a-copy { display: grid; gap: 28px; align-content: center }
-.a-copy h1 { font-size: clamp(40px, 5.2vw, 72px); line-height: .95; letter-spacing: .02em; white-space: nowrap }
+.a-copy { display: grid; gap: 28px; align-content: center; container-type: inline-size }
+/* --chars is the title's longest line: a long title shrinks until it fits the column. */
+.a-copy h1 { --chars: 11; font-size: min(clamp(40px, 5.2vw, 72px), 100cqi / (var(--chars) * .72)); line-height: .95; letter-spacing: .02em; white-space: nowrap }
 .a-copy .lead { font-size: 18px; color: var(--stone); max-width: 30ch }
 .a-stagebox { display: grid; gap: 12px; min-width: 0 }
 /* The demo has no frame: it bleeds past the column and fades toward its edges. */
@@ -133,7 +134,20 @@ p { margin: 0 }
     </header>
     <section class="a-hero">
       <div class="a-copy">
-        <h1>Make pies<br>for Blender</h1>
+        <h1 id="hero-title">Make pies<br>for Blender</h1>
+        <script>
+          // A different title on every load: never the one this tab showed last.
+          (function () {
+            var titles = [["Make pies", "for Blender"], ["Goodbye shortcut", "madness"], ["Life can", "be better"], ["Hello lazy", "Blender"],
+              ["Build radials", "for Blender"], ["Find tools", "in Blender"], ["Ignore industry", "standards"], ["Look cool", "using Blender"]];
+            var last = -1; try { last = +sessionStorage.getItem("hero-title"); } catch (e) {}
+            var i = Math.floor(Math.random() * (titles.length - 1)); if (i >= last && last >= 0) i++;
+            try { sessionStorage.setItem("hero-title", i); } catch (e) {}
+            var h = document.getElementById("hero-title");
+            h.innerHTML = titles[i][0] + "<br>" + titles[i][1];
+            h.style.setProperty("--chars", Math.max(titles[i][0].length, titles[i][1].length));
+          })();
+        </script>
         <p class="lead">Add and customize the tools you reach for most on radial menus.</p>
         <div class="actions"><a class="btn kompass" href="#download">Download Kompass</a></div>
       </div>
