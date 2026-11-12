@@ -186,3 +186,9 @@ def test_core_never_imports_bpy():
     for source in core.rglob("*.py"):
         text = source.read_text(encoding="utf-8")
         assert "import bpy" not in text and "from bpy" not in text, source.name
+
+
+def test_starter_pies_load():
+    path = Path(__file__).parent.parent / "kompass" / "starter.json"
+    text = path.read_text(encoding="utf-8")
+    assert model.dumps(model.loads(text)) == text

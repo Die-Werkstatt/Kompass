@@ -80,6 +80,13 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       back. Esc again, or a click far from every slot: the pie is gone.
 - [ ] Open it in a corner of the viewport: the whole pie is inside. Over a
       bright scene: the dial and slots are readable.
+- [ ] Open it with the pointer still: the dial shows the red disc at once.
+      Pick a slot: the pie fades out.
+- [ ] Add Starter Pies in the preferences. In Object Mode Shift+Alt+Q opens
+      Object; Modifiers > Bevel adds a Bevel modifier. In Edit Mode it opens
+      Modeling; Extrude, Bevel, Knife and Loop Cut start, and Merge > At
+      Center merges the selection. Open Select in Object Mode and rest on
+      MESH: SUBDIVIDE is grey and a click on it does nothing.
 - [ ] Turn Kompass Pie off. Give a pie 12 slots and a shortcut: it still
       opens as the drawn pie. Give it 8 slots again.
 - [ ] In the Shortcut panel click the shortcut and press Shift+C: the button

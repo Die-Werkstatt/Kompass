@@ -48,6 +48,8 @@ class Look:
     slide: dict[int, float]
     # The slot the editor's menu acts on.
     selected: int | None
+    # The slots that cannot run where the pie is open.
+    disabled: frozenset[int] = frozenset()
 
     @property
     def dial(self):
@@ -113,6 +115,8 @@ class Canvas:
         ((middle, bottom),) = self.pixels([(x, y)])
         blf.position(FONT, middle - blf.dimensions(FONT, text)[0] / 2, bottom, 0)
         blf.draw(FONT, text)
+        # Drawing text turns blending off, and what fades needs it.
+        gpu.state.blend_set("ALPHA")
 
     def label(self, text, span, y, colour, offset):
         """Draw a slot's label from the left of span, slid left by offset and
@@ -129,6 +133,7 @@ class Canvas:
         blf.position(FONT, start, bottom, 0)
         blf.draw(FONT, text)
         blf.disable(FONT, blf.CLIPPING)
+        gpu.state.blend_set("ALPHA")
 
 
 def fitted(context, count):
@@ -229,8 +234,17 @@ def _draw_dial(canvas, look, opened):
     canvas.zoom, canvas.origin = zoom, origin
     below = "BACK" if look.depth > 1 else "CLOSE"
     colour = _mix((*STONE[:3], 0.6), INK, hover)
-    canvas.text(below, 0, -(ring + 26) * pull, 11, colour)
-    canvas.text(look.pie.name.upper(), 0, (ring + 14) * pull, 12, INK)
+    _draw_tag(canvas, below, -(ring + 26) * pull, 11, colour)
+    _draw_tag(canvas, look.pie.name.upper(), (ring + 14) * pull, 12, INK)
+
+
+def _draw_tag(canvas, text, y, size, colour):
+    """Draw text centred above or below the dial, on a ground of its own."""
+    blf.size(FONT, size)
+    half = blf.dimensions(FONT, text)[0] / 2 + 6
+    box = [(-half, y - 5), (half, y - 5), (half, y + size + 2), (-half, y + size + 2)]
+    canvas.fill(box, GROUND)
+    canvas.text(text, 0, y, size, colour)
 
 
 def _draw_slot(canvas, look, slot, content, pull):
@@ -240,6 +254,9 @@ def _draw_slot(canvas, look, slot, content, pull):
         ring = layout.RING_RADIUS * look.dial
         widths = [width for _, _, width in look.labels]
         amount = layout.highlight(*look.pointer, slot, widths, ring)
+    disabled = slot in look.disabled
+    if disabled:
+        amount = 0.0
     text, text_width, width = look.labels[slot]
     left, bottom = layout.slot_corner(slot, count, width, pull)
     right, top = left + width, bottom + layout.SLOT_HEIGHT
@@ -270,6 +287,8 @@ def _draw_slot(canvas, look, slot, content, pull):
     if slot == look.selected:
         canvas.line([*box, box[0]], WHITE, 2)
     colour = WHITE if fill > 0 else _mix(INK, WHITE, amount)
+    if disabled:
+        colour = (*STONE[:3], 0.55)
     baseline = bottom + layout.SLOT_HEIGHT / 2 - 4
     pad = layout.LABEL_PAD
     if text_width > width - 2 * pad:

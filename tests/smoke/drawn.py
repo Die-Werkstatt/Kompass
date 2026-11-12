@@ -10,6 +10,7 @@ PAUSE = 1.0
 
 def steps(addon, view3d):
     live = importlib.import_module(addon + ".blender.live")
+    layout = importlib.import_module(addon + ".core.layout")
     preferences = bpy.context.preferences.addons[addon].preferences
     window, area = view3d()
     x, y = area.x + area.width // 2, area.y + area.height // 2
@@ -36,6 +37,8 @@ def steps(addon, view3d):
     key("Q", "PRESS", x, y, **held)
     yield PAUSE
     assert live._open is not None and live._open.trail[-1].id == "select"
+    # It opened under the pointer: the dial showed the disc from the first draw.
+    assert live._open.stage.hover_from == 1.0, live._open.stage.hover_from
     yield from move(x - 200, y, **held)
     key("Q", "RELEASE", x - 200, y, **held)
     yield PAUSE
@@ -56,6 +59,27 @@ def steps(addon, view3d):
     # The pointer rests a few pixels short of where it ends.
     rested = x - area.x, y - 175 - area.y
     assert math.dist(live._open.centres[-1], rested) <= 3, live._open.centres
+    # Subdivide cannot run in Object Mode: its slot is disabled and a click
+    # on it leaves the pie open.
+    mesh = live._open.trail[-1]
+    slot = next(
+        index
+        for index, content in enumerate(mesh.slots)
+        if getattr(content, "idname", None) == "mesh.subdivide"
+    )
+    assert live._open.stage.disabled == {slot}, live._open.stage.disabled
+    width = live._open.stage.look.labels[slot][2]
+    left, bottom = layout.slot_corner(slot, len(mesh.slots), width)
+    scale, centre = live._open.scale, live._open.centres[-1]
+    on = (
+        round(area.x + centre[0] + (left + width / 2) * scale),
+        round(area.y + centre[1] + (bottom + layout.SLOT_HEIGHT / 2) * scale),
+    )
+    yield from move(*on)
+    key("LEFTMOUSE", "PRESS", *on)
+    key("LEFTMOUSE", "RELEASE", *on)
+    yield PAUSE
+    assert [pie.id for pie in live._open.trail] == ["select", "mesh"]
     key("ESC", "PRESS", x, y - 175)
     key("ESC", "RELEASE", x, y - 175)
     yield PAUSE
@@ -64,7 +88,8 @@ def steps(addon, view3d):
     key("LEFTMOUSE", "PRESS", x + 300, y + 150)
     key("LEFTMOUSE", "RELEASE", x + 300, y + 150)
     yield PAUSE
-    assert live._open is None
+    # It has faded out and is off the editor.
+    assert live._open is None and live._closing is None
 
     # A click on a slot picks it. Right-click closes the pie.
     yield from move(x, y)

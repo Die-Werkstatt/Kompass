@@ -19,7 +19,7 @@ from . import paint
 FRAME = 1 / 60
 
 
-def _share(since, now):
+def share(since, now):
     """Return how much of an animation that began at since is done, 0 to 1."""
     if bpy.context.preferences.view.use_reduce_motion:
         return 1.0
@@ -53,6 +53,8 @@ class Stage:
     slide: dict[int, float] = field(default_factory=dict)
     drawn: float = 0.0
     look: paint.Look | None = None
+    # The slots that cannot run where the pie is open.
+    disabled: frozenset[int] = frozenset()
     # Where the last pie was drawn, in pixels.
     centre: tuple[float, float] = (0.0, 0.0)
     # The pie being left, where it was drawn, what it shrinks to and around
@@ -99,7 +101,7 @@ class Stage:
 
     def _hover(self, inside, now):
         """Return how far the centre is into its hover state, 0 to 1."""
-        step = _share(self.hover_since, now)
+        step = share(self.hover_since, now)
         hover = layout.toward(self.hover_from, self.hover_target, step)
         if inside != self.hover_target:
             # It turns around from wherever it is.
@@ -170,7 +172,12 @@ class Stage:
         self.centre = canvas.centre
         pointer = self.pointer if on else None
         ring = layout.RING_RADIUS * (layout.SUB_PIE_DIAL if depth > 1 else 1)
-        hover = self._hover(on and math.hypot(*self.pointer) <= ring, now)
+        inside = on and math.hypot(*self.pointer) <= ring
+        if self.opened == now:
+            # A pie that opens under the pointer shows the disc at once, not
+            # the needle on its way to it.
+            self.hover_from = self.hover_target = float(inside)
+        hover = self._hover(inside, now)
         filling = None
         if self.rest is not None:
             slot, since = self.rest
@@ -187,8 +194,9 @@ class Stage:
             labels,
             dict(self.slide),
             selected,
+            self.disabled,
         )
-        opened = _share(self.opened, now)
+        opened = share(self.opened, now)
         if self.ghost is not None and opened < 1:
             left = layout.ease_out(1 - opened)
             canvas.centre = self.ghost_centre
