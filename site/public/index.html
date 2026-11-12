@@ -112,6 +112,19 @@ p { margin: 0 }
 /* footer */
 .foot { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-block: 28px 96px; font-size: 13px; color: var(--stone); border-top: 1px solid var(--line) }
 
+/* download popup: opens over the page when a download starts */
+.getting { width: min(calc(100% - 32px), 520px); max-width: none; padding: 24px; margin: auto; border: 1px solid var(--line); background: var(--bg); color: var(--ink); box-shadow: 0 24px 80px rgb(0 0 0 / .7) }
+.getting[open] { display: grid; gap: 18px }
+.getting::backdrop { background: rgb(0 0 0 / .6); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px) }
+.getting header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px }
+.getting h2 { font-size: 26px; line-height: 1; letter-spacing: .14em }
+.getting .close { background: none; border: 0; padding: 6px 0; color: var(--stone); font: 500 14px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; cursor: pointer }
+.getting .close:hover { color: var(--ink) }
+.getting .lead { color: var(--stone) }
+.getting .lead b { color: var(--ink); font-weight: 500 }
+.getting .film { border: 1px solid var(--line); background: #0b0b0b; aspect-ratio: 16 / 9 }
+.getting .film svg { display: block; width: 100%; height: 100% }
+.getting .again { color: var(--stone); font-size: 14px }
 @media (max-width: 860px) {
   .a-hero { grid-template-columns: minmax(0, 1fr) }
   .plates { grid-template-columns: minmax(0, 1fr) }
@@ -182,7 +195,7 @@ p { margin: 0 }
             <div><dt>Navigation</dt><dd>Native</dd></div>
             <div><dt>Custom tools</dt><dd>Not supported</dd></div>
           </dl>
-          <a class="btn" href="/download/kompass.zip?repository=.%2Findex.json&amp;blender_version_min=5.2.0">Download Native</a>
+          <a class="btn" href="/download/kompass.zip?repository=.%2Findex.json&amp;blender_version_min=5.2.0" download data-getting>Download Native</a>
         </article>
         <article class="plate full">
           <div class="name"><h3>Kompass</h3></div>
@@ -199,6 +212,12 @@ p { margin: 0 }
       <p class="how">Drag the download button into Blender to install.</p>
     </section>
     <footer class="foot"><span>Kompass for Blender</span><span>GPL-3.0-or-later</span></footer>
+    <dialog class="getting" id="getting" aria-labelledby="getting-title">
+      <header><h2 id="getting-title">Download started</h2><button class="close" type="button">Close</button></header>
+      <p class="lead">Drag <b>kompass.zip</b> into Blender, then click OK.</p>
+      <div class="film"><svg viewBox="0 0 480 270" role="img" aria-label="A cursor drags kompass.zip from the Downloads folder into Blender. Blender asks to install from disk, and the cursor clicks OK."></svg></div>
+      <p class="again">Nothing downloading? <a href="/download/kompass.zip" download>Download again</a></p>
+    </dialog>
   </div>
 </div>
 
@@ -974,6 +993,118 @@ p { margin: 0 }
     requestAnimationFrame(loop);
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot); else boot();
+})();
+</script>
+<script>
+// The download popup: shows how to install the .zip while it downloads.
+(function () {
+  var dlg = document.getElementById("getting"), svg = dlg.querySelector("svg"), NS = "http://www.w3.org/2000/svg";
+  if (!dlg.showModal) return;
+  // Blender 5.2's default theme, for the window and its Install from Disk dialog.
+  var BL = { top: "#181818", header: "#303030", view: "#3d3d3d", grid: "#4a4a4a", dlg: "#181818", dlgLine: "#242424", item: "#545454", text: "#d9d9d9", dim: "#a6a6a6", sel: "#4772b3" };
+  var FONT = "IBM Plex Sans, Helvetica Neue, sans-serif";
+  function el(tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; }
+  function text(s, x, y, size, fill, parent, extra) { var t = el("text", Object.assign({ x: x, y: y, "font-size": size, fill: fill, "font-family": FONT }, extra || {}), parent); t.textContent = s; return t; }
+
+  // Blender's window: top bar, header, a viewport with a grid and the default cube.
+  var x = 150, y = 22, w = 314, h = 226;
+  el("rect", { x: x, y: y, width: w, height: h, rx: 4, fill: BL.top, stroke: "#2a2a2a" });
+  el("rect", { x: x + 7, y: y + 6, width: 8, height: 7, rx: 1.5, fill: BL.item });
+  ["File", "Edit", "Render", "Window", "Help"].reduce(function (cx, s) { text(s, cx, y + 12, 7.5, BL.dim); return cx + s.length * 4.4 + 9; }, x + 22);
+  el("rect", { x: x + 3, y: y + 18, width: w - 6, height: 12, rx: 2, fill: BL.header });
+  var vx = x + 3, vy = y + 32, vw = w - 6, vh = h - 35, cx = vx + vw / 2, cy = vy + vh / 2;
+  el("rect", { x: vx, y: vy, width: vw, height: vh, rx: 2, fill: BL.view });
+  var clip = el("clipPath", { id: "getting-vp" }); el("rect", { x: vx, y: vy, width: vw, height: vh }, clip);
+  var grid = el("g", { "clip-path": "url(#getting-vp)", stroke: BL.grid, "stroke-width": .6 });
+  var hx = cx, hy = vy + vh * .62;
+  for (var i = -12; i <= 12; i++) el("line", { x1: hx + i * 26, y1: hy - 40, x2: hx + i * 60, y2: hy + 90 }, grid);
+  for (var j = 0; j < 7; j++) { var yy = hy - 40 + Math.pow(j / 6, 1.6) * 130; el("line", { x1: vx, y1: yy, x2: vx + vw, y2: yy }, grid); }
+  el("line", { x1: vx, y1: hy, x2: vx + vw, y2: hy, stroke: "#8a3b3b", "stroke-width": .8 });
+  var c = { x: hx, y: hy - 18 }, s = 20;
+  [["M" + (c.x - s) + " " + (c.y - s * .5) + " L" + c.x + " " + (c.y - s) + " L" + (c.x + s) + " " + (c.y - s * .5) + " L" + c.x + " " + c.y + " Z", "#a8a8a8"],
+   ["M" + (c.x - s) + " " + (c.y - s * .5) + " L" + c.x + " " + c.y + " L" + c.x + " " + (c.y + s * 1.1) + " L" + (c.x - s) + " " + (c.y + s * .6) + " Z", "#7c7c7c"],
+   ["M" + (c.x + s) + " " + (c.y - s * .5) + " L" + c.x + " " + c.y + " L" + c.x + " " + (c.y + s * 1.1) + " L" + (c.x + s) + " " + (c.y + s * .6) + " Z", "#5f5f5f"]]
+    .forEach(function (f) { el("path", { d: f[0], fill: f[1] }); });
+  var hi = el("rect", { x: vx + 1, y: vy + 1, width: vw - 2, height: vh - 2, rx: 2, fill: "none", stroke: BL.sel, "stroke-width": 2, opacity: 0 });
+
+  // The Downloads folder, over Blender's left edge.
+  el("rect", { x: 16, y: 70, width: 150, height: 120, rx: 5, fill: "#1f1f1f", stroke: "#3a3a3a" });
+  el("path", { d: "M16 86 V75 a5 5 0 0 1 5 -5 H161 a5 5 0 0 1 5 5 V86 Z", fill: "#2a2a2a" });
+  text("Downloads", 26, 81.5, 7.5, "#bdbdbd");
+
+  // The .zip
+  var file = el("g", {});
+  el("path", { d: "M-11 -15 H5 L11 -9 V15 H-11 Z", fill: "#e9e7e1" }, file);
+  el("path", { d: "M5 -15 V-9 H11", fill: "#bdbab3" }, file);
+  for (var k = 0; k < 6; k++) el("rect", { x: k % 2 ? -1 : -3, y: -13 + k * 3.4, width: 4, height: 2, fill: "#555" }, file);
+  el("rect", { x: -3.5, y: 6, width: 7, height: 6, rx: 1, fill: "none", stroke: "#555", "stroke-width": 1.2 }, file);
+  var label = text("kompass.zip", 0, 27, 7, BL.text, file, { "text-anchor": "middle" });
+
+  // Install from Disk, as Blender 5.2 draws it for a dropped extension.
+  var dw = 176, dh = 98, dx = cx - dw / 2, dy = cy - dh / 2, dg = el("g", { opacity: 0 });
+  el("rect", { x: dx, y: dy, width: dw, height: dh, rx: 5, fill: BL.dlg, stroke: BL.dlgLine }, dg);
+  text("Install from Disk", dx + 10, dy + 15, 8, BL.text, dg, { "font-weight": 500 });
+  text("User Repository", dx + 10, dy + 32, 7, BL.dim, dg);
+  el("rect", { x: dx + 10, y: dy + 37, width: dw - 20, height: 14, rx: 3, fill: "#282828", stroke: "#3d3d3d" }, dg);
+  text("User Default", dx + 16, dy + 47, 7, BL.text, dg);
+  el("path", { d: "M" + (dx + dw - 20) + " " + (dy + 42) + " l3 3 l3 -3", fill: "none", stroke: BL.dim, "stroke-width": 1 }, dg);
+  el("rect", { x: dx + 10, y: dy + 57, width: 9, height: 9, rx: 2, fill: BL.sel }, dg);
+  el("path", { d: "M" + (dx + 12) + " " + (dy + 61.5) + " l2 2 l3.5 -4", fill: "none", stroke: "#fff", "stroke-width": 1.3 }, dg);
+  text("Enable Add-on", dx + 24, dy + 64.5, 7, BL.text, dg);
+  var ok = el("rect", { x: dx + 10, y: dy + 74, width: dw - 20, height: 15, rx: 3, fill: BL.item }, dg);
+  text("OK", cx, dy + 84.5, 7.5, BL.text, dg, { "text-anchor": "middle" });
+
+  var cur = el("g", {});
+  el("path", { d: "M0 0 L0 15 L4 11.5 L6.6 17.2 L9 16.1 L6.5 10.6 L11.5 10.6 Z", fill: "#fff", stroke: "#000", "stroke-width": 1, "stroke-linejoin": "round" }, cur);
+
+  var ease = function (t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+  var seg = function (t, a, b) { return ease(Math.max(0, Math.min(1, (t - a) / (b - a)))); };
+  var lerp = function (a, b, t) { return a + (b - a) * t; };
+  function arc(p, q, t, lift) { return { x: lerp(p.x, q.x, t), y: lerp(p.y, q.y, t) - Math.sin(t * Math.PI) * lift }; }
+  // The file drops beside the cube, not on it, so the cube stays in view.
+  var start = { x: 60, y: 118 }, drop = { x: cx - 62, y: cy - 22 }, okAt = { x: cx + 14, y: dy + 82 }, rest = { x: 120, y: 210 };
+  var grab = { x: start.x + 2, y: start.y + 2 }, LOOP = 7200;
+
+  // One loop, in ms: reach the file, drag it in, drop, the dialog opens, click OK, rest.
+  function frame(t) {
+    var p, fx = start.x, fy = start.y, fo = 1, lift = 0;
+    if (t < 1100) { var r = seg(t, 200, 900); p = { x: lerp(rest.x, grab.x, r), y: lerp(rest.y, grab.y, r) }; }
+    else if (t < 2600) { p = arc(grab, { x: drop.x + 2, y: drop.y + 2 }, seg(t, 1100, 2500), 30); fx = p.x - 2; fy = p.y - 2; lift = 1; }
+    else { p = arc({ x: drop.x + 2, y: drop.y + 2 }, okAt, seg(t, 3300, 4100), 10); fx = drop.x; fy = drop.y; }
+    var dropped = seg(t, 2600, 2900), fs = (1 + lift * .08 * (1 - dropped)) * (1 - dropped * .6);
+    fo = 1 - dropped;
+    if (t >= 6300) { fo = seg(t, 6600, 7000); fx = start.x; fy = start.y; fs = 1; }
+    file.setAttribute("transform", "translate(" + fx + " " + fy + ") scale(" + fs + ")");
+    file.setAttribute("opacity", fo);
+    label.setAttribute("opacity", lift && t > 1300 ? 0 : 1);
+    hi.setAttribute("opacity", t > 1800 && t < 2700 ? 1 : 0);
+    var open = seg(t, 2800, 3100), shut = seg(t, 4500, 4700);
+    dg.setAttribute("opacity", open * (1 - shut));
+    dg.setAttribute("transform", "translate(" + cx + " " + cy + ") scale(" + (.94 + .06 * open) + ") translate(" + -cx + " " + -cy + ")");
+    var press = t > 4200 && t < 4450;
+    ok.setAttribute("fill", t > 4100 && t < 4500 ? (press ? BL.sel : "#666") : BL.item);
+    if (t >= 4500) { var back = seg(t, 5200, 6600); p = { x: lerp(okAt.x, rest.x, back), y: lerp(okAt.y, rest.y, back) }; }
+    var down = (t > 900 && t < 2600) || press;
+    cur.setAttribute("transform", "translate(" + p.x + " " + p.y + ") scale(" + (down ? .9 : 1) + ")");
+  }
+
+  var raf = 0, t0 = 0, still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function loop(now) { if (!t0) t0 = now; frame((now - t0) % LOOP); raf = requestAnimationFrame(loop); }
+  frame(still ? 4000 : 0);
+  dlg.addEventListener("close", function () { cancelAnimationFrame(raf); });
+  dlg.querySelector(".close").addEventListener("click", function () { dlg.close(); });
+  // A click on the backdrop lands on the dialog itself, outside its box.
+  dlg.addEventListener("click", function (e) {
+    var r = dlg.getBoundingClientRect();
+    if (e.target === dlg && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) dlg.close();
+  });
+  document.querySelectorAll("[data-getting]").forEach(function (a) {
+    a.addEventListener("click", function () {
+      if (dlg.open) return;
+      dlg.showModal();
+      if (!still) { t0 = 0; raf = requestAnimationFrame(loop); }
+    });
+  });
 })();
 </script>
 </body>
