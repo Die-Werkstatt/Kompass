@@ -69,6 +69,8 @@ def active_tool():
 
 
 def steps():
+    # Blender's pie menu first. drawn.py turns the Kompass pie on.
+    bpy.context.preferences.addons[addon].preferences.drawn = False
     # Importing binds the shortcuts at once, without a restart.
     assert bpy.ops.kompass.pies_import(filepath=str(PIES)) == {"FINISHED"}
     assert keymaps.problems == [

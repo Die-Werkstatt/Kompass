@@ -36,7 +36,10 @@ Milestone 1, pies open from shortcuts (#5).
       menu (#7)
 - [ ] Website download: a release `.zip` link that installs when dragged into
       Blender, plus an `index.json` from `extension server-generate` for
-      updates. No installer app. Then a listing on extensions.blender.org.
+      updates. No installer app. On disk: `build.py` makes Kompass and
+      Kompass Native, the site workflow attaches both to a release and the
+      site links each button to its edition. Left: the first release, then a
+      listing on extensions.blender.org.
 - [ ] Milestone 4, the Kompass edition: a pie drawn by Kompass with 12 slots
       (#8, #22). On disk: a shortcut opens the drawn pie for a pie of 12, and
       for a pie of 8 with Kompass Pie on in the preferences. A line from the

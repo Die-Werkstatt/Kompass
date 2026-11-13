@@ -1,6 +1,7 @@
 """Runs inside Blender, started by run.py with Kompass installed and enabled."""
 
 import importlib
+import importlib.util
 import shutil
 from pathlib import Path
 
@@ -8,6 +9,7 @@ import addon_utils
 import bpy
 
 EXAMPLE = Path(__file__).parent.parent / "data" / "example.json"
+WIDE = Path(__file__).parent.parent / "data" / "interface.json"
 
 # Iterating the collection itself yields add-on entries, not their names.
 names = bpy.context.preferences.addons.keys()
@@ -106,6 +108,28 @@ assert not path.exists()
 (kept,) = path.parent.glob("pies.invalid-*.json")
 assert kept.name in storage.problem
 
+# Kompass draws the pie unless told not to. Kompass Native has no drawn pie
+# and leaves a pie of 12 slots without its shortcut.
+if addon.endswith(".kompass"):
+    assert bpy.context.preferences.addons[addon].preferences.drawn
+    assert importlib.util.find_spec(addon + ".blender.live") is not None
+else:
+    assert importlib.util.find_spec(addon + ".blender.live") is None
+    assert not hasattr(bpy.types, "KOMPASS_OT_pie_live")
+    assert bpy.ops.kompass.pies_import(filepath=str(WIDE)) == {"FINISHED"}
+    keymaps = importlib.import_module(addon + ".blender.keymaps")
+    expected = f'Pie "Wide" has no shortcut: {pie_menu.TOO_WIDE}'
+    assert expected in keymaps.problems, keymaps.problems
+
+# The other edition is installed too. It stays off while this one is on.
+prefix, _, ours = addon.rpartition(".")
+other = prefix + "." + ("kompass_native" if ours == "kompass" else "kompass")
+addon_utils.enable(other, default_set=True)
+assert other not in bpy.context.preferences.addons
+
 addon_utils.disable(addon)
 assert not preferences.KompassPreferences.is_registered
+addon_utils.enable(other, default_set=True)
+assert other in bpy.context.preferences.addons
+addon_utils.disable(other)
 print("Kompass smoke test passed")

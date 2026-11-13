@@ -11,11 +11,11 @@ as the pie Kompass draws, as a pie of 12 always does. Slots are filled in the ed
 
 ## Project structure
 
-- `kompass/`: the extension; everything in it ships in the `.zip`.
-  - `core/`: the pie model, validation and JSON format (`model.py`), reading
-    and writing a pie file on disk (`store.py`), choosing pies for export and
-    merging imported ones (`transfer.py`), canvas geometry and motion
-    (`layout.py`), changes to the pies (`edit.py`).
+- `kompass/`: the extension. `build.py` makes Kompass and Kompass Native
+  (no `blender/live.py`, which only `blender/__init__.py` imports) from it.
+  - `core/`: pie model, validation and JSON (`model.py`), the pie file
+    (`store.py`), export choice and import merge (`transfer.py`), canvas
+    geometry and motion (`layout.py`), changes to the pies (`edit.py`).
   - `blender/`: everything that needs `bpy`. `storage.py` holds the pies
     loaded from `pies.json`, `pie.py` opens one as a native pie menu,
     `keymaps.py` gives each its shortcut, `tools.py` reads the tool list,
@@ -59,7 +59,7 @@ python3 .claude/suite-check.py   # every health check in .claude/suite.json
 pytest -q                        # unit tests
 python3 tests/smoke/run.py       # build, install and check in Blender
 xvfb-run -a python3 tests/smoke/run.py --interface   # the same, with a window
-blender --command extension build --source-dir kompass   # kompass-<version>.zip
+./build.sh                       # kompass-<version>.zip, kompass_native-<version>.zip
 ```
 
 Both Blender tests use a temporary profile and are skipped where `blender` or

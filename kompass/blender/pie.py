@@ -5,7 +5,7 @@
 import bpy
 
 from ..core import model
-from . import ADDON, storage, tools
+from . import ADDON, DRAWABLE, storage, tools
 
 # The icons a button can carry, "NONE" first.
 ICONS = tuple(
@@ -17,8 +17,19 @@ ICONS = tuple(
 LIVE = "kompass.pie_live"
 
 
+# Why Kompass Native cannot open a pie of 12 slots.
+TOO_WIDE = "Kompass Native opens pies of 4 and 8 slots"
+
+
+def opens(stored):
+    """Return whether this edition can open the pie."""
+    return DRAWABLE or len(stored.slots) <= model.NATIVE_SLOTS
+
+
 def drawn(stored):
     """Return whether Kompass draws the pie. Blender's pie menu holds 8 slots."""
+    if not DRAWABLE:
+        return False
     if len(stored.slots) > model.NATIVE_SLOTS:
         return True
     return bpy.context.preferences.addons[ADDON].preferences.drawn
@@ -38,6 +49,9 @@ class KOMPASS_OT_pie_open(bpy.types.Operator):
         pie = find(self.pie)
         if pie is None:
             self.report({"WARNING"}, f'Kompass has no pie "{self.pie}"')
+            return {"CANCELLED"}
+        if not opens(pie):
+            self.report({"WARNING"}, TOO_WIDE)
             return {"CANCELLED"}
         context.window_manager.popup_menu_pie(
             event,
@@ -75,6 +89,9 @@ def _draw_slot(row, context, slot):
         _draw_operator(row, slot, icon)
     else:
         target = find(slot.pie)
+        if not opens(target):
+            _draw_unavailable(row, slot.label or target.name)
+            return
         opener = LIVE if drawn(target) else KOMPASS_OT_pie_open.bl_idname
         button = row.operator(opener, text=slot.label or target.name, icon=icon)
         button.pie = slot.pie

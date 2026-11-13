@@ -16,10 +16,20 @@ cd Kompass
 ./build.sh install   # Windows: build.bat install
 ```
 
-The script finds Blender, writes `kompass-0.1.0.zip` into the folder and
-installs it. Close Blender first. Without `install` it only builds the
-`.zip`. Where it finds no Blender, set `BLENDER` to the path of the Blender
-program first.
+The script finds Blender, writes `kompass-0.1.0.zip` and
+`kompass_native-0.1.0.zip` into the folder and installs Kompass. Close
+Blender first. Without `install` it only builds the two `.zip` files. Where
+it finds no Blender, set `BLENDER` to the path of the Blender program first.
+
+## Editions
+
+Kompass opens pies as the pie Kompass draws, with up to 12 slots. Kompass
+Pie in its preferences switches pies of 4 and 8 slots to Blender's pie menu.
+Kompass Native ships without the drawn pie: every pie opens as Blender's pie
+menu, with 4 or 8 slots.
+
+Only one edition can be on at a time. The two keep their pies apart: to move
+them, Export All in one and Import in the other.
 
 To install a `.zip` by hand, drag it into Blender, or use Preferences >
 Get Extensions > the arrow menu at the top right > Install from Disk.

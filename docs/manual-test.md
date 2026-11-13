@@ -90,7 +90,7 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       the slot: the operator runs with that setting.
 - [ ] Close and reopen Blender: the changes are still there.
 - [ ] In the 3D Viewport, Shift+Alt+Q: the pie shows the new slots.
-- [ ] Preferences > Add-ons > Kompass, Kompass Pie on. Hold Shift+Alt+Q, move
+- [ ] Preferences > Add-ons > Kompass: Kompass Pie is on. Hold Shift+Alt+Q, move
       onto a slot and let go: the pie Kompass draws opens under the pointer
       and the slot is picked. Tap the keys: it stays open; click a slot.
 - [ ] Open it and rest on MESH: Mesh opens around the pointer. Esc: Select is
@@ -112,6 +112,11 @@ In the 3D Viewport, in Object Mode, with the default cube selected.
       MESH: SUBDIVIDE is grey and a click on it does nothing.
 - [ ] Turn Kompass Pie off. Give a pie 12 slots and a shortcut: it still
       opens as the drawn pie. Give it 8 slots again.
+- [ ] Install `kompass_native-<version>.zip` from disk: Blender says to turn
+      off Kompass first. Turn Kompass off and Kompass Native on: there is no
+      Kompass Pie setting, the editor offers 4 and 8 slots, and Shift+Alt+Q
+      opens Blender's pie menu. Import a pie of 12 with a shortcut: its row
+      says Kompass Native opens pies of 4 and 8 slots.
 - [ ] In the Shortcut panel click the shortcut and press Shift+C: the button
       reads Shift C and a line says Blender also has "Frame All" on it. Click
       it and press Esc: it stays. Choose Mesh Edit Mode below it. Press the X:
