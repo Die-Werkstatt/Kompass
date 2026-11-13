@@ -86,17 +86,19 @@ p { margin: 0 }
 .plates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px }
 .plate { border: 1px solid var(--line); background: rgb(17 17 17 / .45); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); padding: 32px; display: grid; gap: 0; align-content: start }
 .plate.full { border-color: var(--signal); position: relative }
-/* Two soft highlights circle the Kompass tile's outline from opposite ends and stay inside its 1 px border. */
-@property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg }
-.plate.full::before, .plate.full::after { content: ""; position: absolute; inset: -1px; padding: 1px; pointer-events: none;
-  background: conic-gradient(from var(--sweep), transparent 0deg, #ffcbb8 40deg, transparent 90deg, transparent 180deg, #ffcbb8 220deg, transparent 270deg);
+/* Two soft highlights circle the Kompass tile's outline from opposite ends and stay inside its 1 px border.
+   A fixed conic gradient turns underneath a masked ring: a transform the compositor runs, so the tile is never repainted. */
+.plate.full .sweep { position: absolute; inset: -1px; padding: 1px; pointer-events: none; overflow: hidden; opacity: .9;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-  opacity: .9; animation: sweep 7s linear infinite }
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0) }
 /* A wider, fainter band just inside the line softens the highlight inward only. */
-.plate.full::after { inset: 0; padding: 3px; opacity: .12 }
-@keyframes sweep { to { --sweep: 360deg } }
-@media (prefers-reduced-motion: reduce) { .plate.full::before, .plate.full::after { animation: none } }
+.plate.full .sweep.soft { inset: 0; padding: 3px; opacity: .12 }
+/* 160% of the tile's width covers its diagonal at every tile shape the layout makes. */
+.plate.full .sweep i { position: absolute; left: 50%; top: 50%; width: 160%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  background: conic-gradient(transparent 0deg, #ffcbb8 40deg, transparent 90deg, transparent 180deg, #ffcbb8 220deg, transparent 270deg);
+  animation: sweep 7s linear infinite }
+@keyframes sweep { to { transform: translate(-50%, -50%) rotate(360deg) } }
+@media (prefers-reduced-motion: reduce) { .plate.full .sweep i { animation: none } }
 .plate .name { display: flex; justify-content: space-between; align-items: baseline; gap: 12px }
 .plate h3 { font-size: 28px; line-height: 1; letter-spacing: .14em }
 .plate > p { color: var(--stone); margin-top: 12px }
@@ -197,6 +199,7 @@ p { margin: 0 }
           <a class="btn" href="/download/kompass.zip?repository=.%2Findex.json&amp;blender_version_min=5.2.0" download data-getting>Download Native</a>
         </article>
         <article class="plate full">
+          <span class="sweep" aria-hidden="true"><i></i></span><span class="sweep soft" aria-hidden="true"><i></i></span>
           <div class="name"><h3>Kompass</h3></div>
           <p>The Kompass pie and its visual editor.</p>
           <dl class="facts4">
