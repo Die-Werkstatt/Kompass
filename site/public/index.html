@@ -49,9 +49,6 @@ p { margin: 0 }
 .btn:hover::before, .btn:focus-visible::before { transform: translate(-50%, -50%) scale(1) }
 .btn.kompass { --fill: var(--signal); --on: #ffffff }
 .actions { display: flex; flex-wrap: wrap; gap: 12px }
-.btn[aria-disabled="true"] { opacity: .5; cursor: default }
-.btn[aria-disabled="true"]::before { display: none }
-.btn[aria-disabled="true"]:hover { color: inherit }
 
 /* demo stage (shared) */
 .stage { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: default }
@@ -196,7 +193,7 @@ p { margin: 0 }
             <div><dt>Navigation</dt><dd>Native</dd></div>
             <div><dt>Custom tools</dt><dd>Not supported</dd></div>
           </dl>
-          <a class="btn" href="/download/kompass.zip?repository=.%2Findex.json&amp;blender_version_min=5.2.0" download data-getting>Download Native</a>
+          <a class="btn" href="/download/kompass_native.zip?repository=.%2Findex.json&amp;blender_version_min=5.2.0" download data-getting="kompass_native.zip">Download Native</a>
         </article>
         <article class="plate full">
           <span class="sweep" aria-hidden="true"><i></i></span><span class="sweep soft" aria-hidden="true"><i></i></span>
@@ -208,16 +205,16 @@ p { margin: 0 }
             <div><dt>Navigation</dt><dd>Intuitive</dd></div>
             <div><dt>Custom tools</dt><dd>Supported</dd></div>
           </dl>
-          <span class="btn kompass" aria-disabled="true">In development</span>
+          <a class="btn kompass" href="/download/kompass.zip?repository=.%2Findex.json&amp;blender_version_min=5.2.0" download data-getting="kompass.zip">Download Kompass</a>
         </article>
       </div>
     </section>
     <footer class="foot"><span>Kompass for Blender</span><span>GPL-3.0-or-later</span></footer>
     <dialog class="getting" id="getting" aria-labelledby="getting-title">
       <header><h2 id="getting-title">Download started</h2><button class="close" type="button">Close</button></header>
-      <p class="lead">Drag <b>kompass.zip</b> into Blender, then click OK.</p>
-      <div class="film"><svg viewBox="0 0 480 270" role="img" aria-label="A cursor drags kompass.zip from the Downloads folder into Blender. Blender asks to install from disk, and the cursor clicks OK."></svg></div>
-      <p class="again">Nothing downloading? <a href="/download/kompass.zip" download>Download again</a></p>
+      <p class="lead">Drag <b data-file>kompass.zip</b> into Blender, then click OK.</p>
+      <div class="film"><svg viewBox="0 0 480 270" role="img" aria-label="A cursor drags the .zip from the Downloads folder into Blender. Blender asks to install from disk, and the cursor clicks OK."></svg></div>
+      <p class="again">Nothing downloading? <a href="/download/kompass.zip" download data-again>Download again</a></p>
     </dialog>
   </div>
 </div>
@@ -1155,6 +1152,10 @@ p { margin: 0 }
   document.querySelectorAll("[data-getting]").forEach(function (a) {
     a.addEventListener("click", function () {
       if (dlg.open) return;
+      var name = a.dataset.getting;
+      dlg.querySelector("[data-file]").textContent = name;
+      dlg.querySelector("[data-again]").href = "/download/" + name;
+      label.textContent = name;
       dlg.showModal();
       if (!still) { t0 = 0; raf = requestAnimationFrame(loop); }
     });

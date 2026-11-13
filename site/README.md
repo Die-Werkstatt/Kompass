@@ -5,12 +5,14 @@ serves it at `kompass-site.pages.dev` (`wrangler.jsonc`).
 
 `.github/workflows/site.yml` deploys it on every push to `main` that touches
 `site/`, and when a release is published. A release's tag must be `v` plus the
-manifest version, for example `v0.1.0`. The workflow builds `kompass-0.1.0.zip`
-from the tag, attaches it to the release, copies it to `download/kompass.zip`
-on the site and writes `download/index.json` with
-`blender --command extension server-generate`. Dragging the Download Native
-button into Blender installs the add-on and adds the site as a repository, so
-Blender offers later releases as updates.
+manifest version, for example `v0.1.0`. The workflow builds
+`kompass-0.1.0.zip` and `kompass_native-0.1.0.zip` from the tag with
+`build.py`, attaches both to the release, copies them to
+`download/kompass.zip` and `download/kompass_native.zip` on the site and
+writes `download/index.json` with `blender --command extension
+server-generate`. Dragging a download button into Blender installs that
+edition and adds the site as a repository, so Blender offers later releases
+as updates.
 
 ## Preview
 

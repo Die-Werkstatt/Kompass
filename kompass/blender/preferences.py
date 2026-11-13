@@ -3,7 +3,7 @@
 
 import bpy
 
-from . import ADDON, editor, files, keymaps, storage
+from . import ADDON, DRAWABLE, editor, files, keymaps, storage
 
 
 class KompassPreferences(bpy.types.AddonPreferences):
@@ -11,6 +11,7 @@ class KompassPreferences(bpy.types.AddonPreferences):
 
     drawn: bpy.props.BoolProperty(
         name="Kompass Pie",
+        default=True,
         description="Open pies of 4 and 8 slots as the pie Kompass draws, not as Blender's pie menu",
         update=lambda _self, _context: keymaps.rebind(),
     )
@@ -23,7 +24,8 @@ class KompassPreferences(bpy.types.AddonPreferences):
         row.operator(files.KOMPASS_OT_pies_import.bl_idname, text="Import")
         row.operator(files.KOMPASS_OT_pies_export.bl_idname, text="Export All")
         row = layout.row()
-        row.prop(self, "drawn")
+        if DRAWABLE:
+            row.prop(self, "drawn")
         # Without the file browser.
         row.operator_context = "EXEC_DEFAULT"
         starter = row.operator(

@@ -5,7 +5,7 @@
 import bpy
 
 from ..core import edit, model
-from . import keymaps, storage
+from . import DRAWABLE, keymaps, storage
 
 # The pie on the canvas is the last of these ids; before it, the pies whose
 # sub-pie slots led there.
@@ -294,7 +294,9 @@ class KOMPASS_PT_pies(bpy.types.Panel):
         if on_canvas is not None:
             row = self.layout.row(align=True)
             row.label(text="Slots")
-            for count in model.SLOT_COUNTS:
+            # Kompass Native cannot open a pie of 12 slots.
+            counts = model.SLOT_COUNTS if DRAWABLE else model.SLOT_COUNTS[:2]
+            for count in counts:
                 button = row.operator(
                     KOMPASS_OT_pie_slots.bl_idname,
                     text=str(count),

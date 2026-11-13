@@ -86,6 +86,9 @@ def register():
         if unknown:
             problems.append(f'Pie "{stored.name}" has no shortcut: {unknown}')
             continue
+        if not pie.opens(stored):
+            problems.append(f'Pie "{stored.name}" has no shortcut: {pie.TOO_WIDE}')
+            continue
         keymap = keyconfig.keymaps.new(
             name=shortcut.keymap, space_type=shortcut.space_type
         )

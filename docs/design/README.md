@@ -88,7 +88,8 @@ A long label slides while its slot is the picked one.
 
 Sandro decided on 11 Nov 2026 that the pie Kompass draws holds 12 slots (#8).
 Blender's own pie menu holds 8, so a pie of 12 always opens as the pie Kompass draws.
-A pie of 4 or 8 opens as Blender's pie menu unless Kompass Pie is on in the add-on's preferences.
+A pie of 4 or 8 opens as the drawn pie while Kompass Pie is on in the add-on's preferences, as it is from install.
+Kompass Native has no drawn pie: a pie of 4 or 8 opens as Blender's pie menu, and a pie of 12 gets no shortcut.
 
 ## The pie in an editor
 

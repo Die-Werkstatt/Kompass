@@ -1,6 +1,6 @@
 # Project-owned. Deploys site/ to Cloudflare Pages with the latest release's
-# .zip and its index.json. Publishing a release first builds that .zip from the
-# tag and attaches it to the release.
+# two .zip files and their index.json. Publishing a release first builds
+# Kompass and Kompass Native from the tag and attaches both to the release.
 name: site
 
 on:
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # attach the .zip to the release
+  contents: write # attach the .zip files to the release
 
 concurrency:
   group: site
@@ -42,7 +42,7 @@ jobs:
           rm "$archive"
           echo "$RUNNER_TEMP/blender" >> "$GITHUB_PATH"
 
-      - name: Build the .zip and attach it to the release
+      - name: Build both editions and attach them to the release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -54,18 +54,20 @@ jobs:
             echo "Tag $TAG does not match the manifest version $version." >&2
             exit 1
           fi
-          blender --command extension build --source-dir kompass --output-filepath "kompass-$version.zip"
-          gh release upload "$TAG" "kompass-$version.zip" --clobber
+          blender --background --factory-startup --python-exit-code 1 --python build.py
+          gh release upload "$TAG" "kompass-$version.zip" "kompass_native-$version.zip" --clobber
 
-      # The site serves the .zip under one name, so the download link never changes.
+      # The site serves each edition under one name, so the download links never change.
       - name: Put the latest release on the site
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          if gh release download --pattern 'kompass-*.zip' --dir "$RUNNER_TEMP/release"; then
+          if gh release download --pattern 'kompass*.zip' --dir "$RUNNER_TEMP/release"; then
             mkdir -p site/public/download
-            cp "$RUNNER_TEMP"/release/kompass-*.zip site/public/download/kompass.zip
+            for edition in kompass kompass_native; do
+              cp "$RUNNER_TEMP"/release/"$edition"-*.zip "site/public/download/$edition.zip"
+            done
             blender --command extension server-generate --repo-dir site/public/download
           else
             echo "No release with a .zip yet: the site deploys without a download."
