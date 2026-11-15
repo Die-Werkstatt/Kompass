@@ -168,7 +168,7 @@ def pie_svg(pie):
 def keys_svg():
     out, x = [], 40
     for key in ("SHIFT", "ALT", "Q"):
-        w = max(34, FONT.width(key, 11, 0.12) + 22)
+        w = max(34, FONT.width(key, 13, 0.1) + 22)
         out.append(
             element(
                 "rect",
@@ -189,7 +189,7 @@ def keys_svg():
                 "g",
                 {},
                 {"fill": "keys-text"},
-                FONT.label(key, 11, 0.12, x + w / 2, 602),
+                FONT.label(key, 13, 0.1, x + w / 2, 603),
             )
         )
         x += w + 8
