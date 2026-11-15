@@ -24,8 +24,8 @@ as the pie Kompass draws, as a pie of 12 always does. Slots are filled in the ed
 - `tests/`: unit tests, run without Blender. `tests/data/example.json` is a
   pie file. `tests/smoke/` runs inside Blender: `checks.py` without a window,
   `interface.py` with one, pressing shortcuts through simulated events.
-- `docs/`: brand notes (`brand/`), the pie design (`design/`), the release
-  checklist (`manual-test.md`). `site/`: the website (`workflows/site.yml`).
+- `docs/`: brand notes (`brand/`), the pie design (`design/`), the README
+  banner (`banner/`), the release checklist (`manual-test.md`). `site/`: the website (`workflows/site.yml`).
 - `agent_docs/`: these instructions, the roadmap and the dependency inventory.
 
 ## Architecture rules
