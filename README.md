@@ -1,6 +1,6 @@
 # Kompass
 
-<img src="docs/banner/kompass-banner.svg" width="100%" alt="A Kompass pie opens on Shift+Alt+Q. The pick line lights up Inset, Bevel and Snap, the Merge sub-pie opens on hover, the centre goes back, and a click runs Extrude.">
+<img src="docs/banner/kompass-banner.svg" width="100%" alt="A Kompass pie opens. The pick line lights up Inset, Bevel and Snap, the Merge sub-pie opens on hover, the centre goes back, and a click runs Extrude.">
 
 A Blender add-on for building your own pie menus, each on its own shortcut.
 In development: pies open from their shortcuts, as Blender's pie menu or as

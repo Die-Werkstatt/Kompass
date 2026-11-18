@@ -14,24 +14,19 @@ Needs fontTools with brotli for the .woff2: pip install fonttools brotli
 import math
 from pathlib import Path
 
-from draw import dot_svg, keys_svg, line_svg, pie_svg, pointer_svg
+from draw import dot_svg, line_svg, pie_svg, pointer_svg
 from glyphs import FONT
 from pie import (
     GROUND,
-    INK,
-    LINE,
     LINE_START,
     ROOT_CENTRE,
-    SIGNAL,
-    STONE,
     Pie,
     clamp,
     ease_in_out,
     ease_out,
     lerp,
-    mix,
 )
-from tracks import COLOUR, FPS, LOOP, POSITION, SHARE, TRACKS, put
+from tracks import FPS, LOOP, POSITION, SHARE, TRACKS, put
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "kompass-banner.svg"
@@ -65,7 +60,7 @@ MERGE = (
     ],
 )
 
-KEY_DOWN, KEY_UP = 0.5, 0.85
+KEY_DOWN = 0.5
 BACK_CLICK = 7.15
 RUN_CLICK = 8.6
 
@@ -168,9 +163,6 @@ def simulate(path):
             pie.record()
         record_line(active, p)
         record_pointer(p, t, clicks)
-        keys = 1.0 if KEY_DOWN <= t < KEY_UP else 0.0
-        put("keys-stroke", mix(LINE, SIGNAL, keys), COLOUR)
-        put("keys-text", mix(STONE, INK, keys), COLOUR)
     return sub_centre
 
 
@@ -210,9 +202,7 @@ def main():
     actual = simulate(moves(planned))
     actual = simulate(moves(actual))
     root, sub = Pie("root", MODELING, 1.0), Pie("sub", MERGE, 0.72)
-    body = "".join(
-        [keys_svg(), line_svg(), pie_svg(root), pie_svg(sub), dot_svg(), pointer_svg()]
-    )
+    body = "".join([line_svg(), pie_svg(root), pie_svg(sub), dot_svg(), pointer_svg()])
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {WIDTH} {HEIGHT}" '
         f'width="{WIDTH}" height="{HEIGHT}" role="img" aria-label="Kompass pie menu in use">'

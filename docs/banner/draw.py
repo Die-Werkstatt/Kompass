@@ -165,37 +165,6 @@ def pie_svg(pie):
     )
 
 
-def keys_svg():
-    out, x = [], 40
-    for key in ("SHIFT", "ALT", "Q"):
-        w = max(34, FONT.width(key, 13, 0.1) + 22)
-        out.append(
-            element(
-                "rect",
-                {
-                    "x": x,
-                    "y": 584,
-                    "width": num(w),
-                    "height": 28,
-                    "rx": 4,
-                    "fill": "none",
-                    "stroke_width": 1.5,
-                },
-                {"stroke": "keys-stroke"},
-            )
-        )
-        out.append(
-            element(
-                "g",
-                {},
-                {"fill": "keys-text"},
-                FONT.label(key, 13, 0.1, x + w / 2, 603),
-            )
-        )
-        x += w + 8
-    return "".join(out)
-
-
 def line_svg():
     dashed = element(
         "line",
