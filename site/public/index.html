@@ -51,7 +51,8 @@ p { margin: 0 }
 .actions { display: flex; flex-wrap: wrap; gap: 12px }
 
 /* demo stage (shared) */
-.stage { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: default }
+/* Touch pans and zooms the page; only a tap reaches the demo. */
+.stage { position: relative; overflow: hidden; touch-action: manipulation; user-select: none; -webkit-user-select: none; cursor: default }
 .stage svg.layer, .depth svg.layer { position: absolute; inset: 0; width: 100%; height: 100% }
 
 /* ============ A · Dial ============ */
@@ -158,14 +159,20 @@ p { margin: 0 }
             var h = document.getElementById("hero-title");
             h.innerHTML = "<span>" + titles[i][0] + "</span><span>" + titles[i][1] + "</span>";
             // Both lines take the column's width, up to 460 px on a wide single column.
+            // On a narrow screen the two sizes together stay under 26vw: short titles then end before the column does.
             function fit() {
-              var width = Math.min(h.parentNode.clientWidth, 460);
-              Array.prototype.forEach.call(h.children, function (line) {
-                // Text width does not scale exactly with font size: a second pass corrects the first.
-                var size = 100;
-                for (var pass = 0; pass < 2; pass++) { line.style.fontSize = size + "px"; size *= width / line.getBoundingClientRect().width; }
-                line.style.fontSize = size + "px";
-              });
+              var width = Math.min(h.parentNode.clientWidth, 460), lines = Array.prototype.slice.call(h.children);
+              function size(scale) {
+                return lines.map(function (line) {
+                  // Text width does not scale exactly with font size: a second pass corrects the first.
+                  var px = 100;
+                  for (var pass = 0; pass < 2; pass++) { line.style.fontSize = px + "px"; px *= width * scale / line.getBoundingClientRect().width; }
+                  line.style.fontSize = px + "px";
+                  return px;
+                });
+              }
+              var sizes = size(1), most = 0.26 * document.documentElement.clientWidth, sum = sizes[0] + sizes[1];
+              if (sum > most) size(most / sum);
             }
             fit();
             if (document.fonts) document.fonts.ready.then(fit);
@@ -687,9 +694,8 @@ p { margin: 0 }
       }
       d.lastActive = performance.now(); d.idleClose = false;
     }
-    st.addEventListener("pointerdown", function (e) {
-      if (e.button === 2) return;
-      var p = local(e); takeover(p); st.focus({ preventScroll: true });
+    function press(p) {
+      takeover(p); st.focus({ preventScroll: true });
       if (d.pendingOpen) { d.pendingOpen = p; d.track(p[0], p[1]); return; }
       if (!d.s.open || d.s.closing) { d.openAt(p[0], p[1]); d.downAt = Date.now(); d.dragging = true; return; }
       d.track(p[0], p[1]);
@@ -697,10 +703,27 @@ p { margin: 0 }
       var s = d.s, inDial = Math.hypot(p[0] - s.ccx, p[1] - s.ccy) <= s.innerR;
       if (!inDial && s.dir === null) { d.close(); return; }
       if (!d.choose()) d.back();
+    }
+    // A touch counts only as a tap: lifted within 500 ms and 10 px of where it landed. Anything longer scrolls the page.
+    var tap = null;
+    st.addEventListener("pointerdown", function (e) {
+      if (e.button === 2) return;
+      if (e.pointerType === "touch") { tap = { x: e.clientX, y: e.clientY, at: Date.now() }; return; }
+      press(local(e));
     });
     // Moving the pointer is not interaction for the idle timers: only clicks, keys and opening a sub-pie are.
-    st.addEventListener("pointermove", function (e) { if (!d.user) return; var p = local(e); d.track(p[0], p[1]); });
-    st.addEventListener("pointerup", function () { if (d.user && d.dragging && d.s.open && Date.now() - d.downAt > 250 && d.s.dir !== null) d.choose(); d.dragging = false; });
+    st.addEventListener("pointermove", function (e) {
+      if (e.pointerType === "touch") { if (tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 10) tap = null; return; }
+      if (!d.user) return; var p = local(e); d.track(p[0], p[1]);
+    });
+    st.addEventListener("pointercancel", function () { tap = null; d.dragging = false; });
+    st.addEventListener("pointerup", function (e) {
+      if (e.pointerType === "touch") {
+        if (tap && Date.now() - tap.at < 500 && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) <= 10) { press(local(e)); d.dragging = false; }
+        tap = null; return;
+      }
+      if (d.user && d.dragging && d.s.open && Date.now() - d.downAt > 250 && d.s.dir !== null) d.choose(); d.dragging = false;
+    });
     st.addEventListener("contextmenu", function (e) { if (d.user) { e.preventDefault(); d.back(); } });
     st.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && d.user) { d.back(); e.preventDefault(); }
@@ -733,9 +756,11 @@ p { margin: 0 }
     function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
     function norm(a) { var l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
     function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+    // Beside the copy the cube sits right of centre; alone on a narrow screen it sits in the middle, under the pie.
     function camera(w, h) {
+      var narrow = w < 600;
       var eye = [8, -10, 5], at = [0, 0, 0.8], f = norm(sub3(at, eye)), r = norm(cross(f, [0, 0, 1])), u = cross(r, f);
-      return { eye: eye, f: f, r: r, u: u, F: Math.min(h * 1.2, w * 0.9), ox: w * 0.68, oy: h * 0.64 };
+      return { eye: eye, f: f, r: r, u: u, F: Math.min(h * 1.2, w * 0.9), ox: w * (narrow ? 0.5 : 0.68), oy: h * (narrow ? 0.56 : 0.64) };
     }
     function view(p) { var d = sub3(p, cam.eye); return [dot(d, cam.r), dot(d, cam.u), dot(d, cam.f)]; }
     function screen(v) { return [cam.ox + cam.F * v[0] / v[2], cam.oy - cam.F * v[1] / v[2]]; }
