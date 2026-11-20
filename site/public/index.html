@@ -372,6 +372,9 @@ p { margin: 0 }
     s.px = x; s.py = y; d.dirty = true;
     if (!s.open || s.closing) return;
     d.layout();
+    // A pie pushed away from the pointer to fit the stage picks nothing until the pointer moves.
+    if (s.still && x === s.still[0] && y === s.still[1]) return;
+    s.still = null;
     var dx = x - s.ccx, dy = y - s.ccy, dist = Math.hypot(dx, dy);
     s.angle = dist < 8 ? s.angle : (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
     var was = s.dir, wasGone = s.gone, hit = dist > s.innerR ? d.pick(dx, dy) : { key: null };
@@ -399,12 +402,12 @@ p { margin: 0 }
     return { key: close === null ? null : +close };
   };
   Demo.prototype.openAt = function (x, y) {
-    var s = this.s; s.out = 1; s.lit = 0; s.gone = false; s.open = true; s.closing = false; s.o = 0; s.t = 0; s.ghost = null; s.stack = []; s.centres = []; s.suppress = null; s.scroll = {}; s.cx = x; s.cy = y; s.angle = null; s.shown = null; s.dir = null;
+    var s = this.s; s.out = 1; s.lit = 0; s.gone = false; s.open = true; s.closing = false; s.o = 0; s.t = 0; s.ghost = null; s.stack = []; s.centres = []; s.suppress = null; s.scroll = {}; s.cx = x; s.cy = y; s.angle = null; s.shown = null; s.dir = null; s.still = [x, y];
     this.track(x, y);
     if (this.opts.onOpen) this.opts.onOpen();
   };
   Demo.prototype.openSub = function (key) {
-    var s = this.s; clearTimeout(s.timer); s.pending = null; this.snapshot(s.px, s.py, 0.9); s.o = 0; s.t = 0; s.centres.push([s.ccx, s.ccy]); s.stack.push(key); s.cx = s.px; s.cy = s.py; s.dir = null; s.suppress = null; this.dirty = true; this.track(s.px, s.py);
+    var s = this.s; clearTimeout(s.timer); s.pending = null; this.snapshot(s.px, s.py, 0.9); s.o = 0; s.t = 0; s.centres.push([s.ccx, s.ccy]); s.stack.push(key); s.cx = s.px; s.cy = s.py; s.dir = null; s.suppress = null; s.angle = null; s.shown = null; s.still = [s.px, s.py]; this.dirty = true; this.track(s.px, s.py);
     if (this.user) this.lastActive = performance.now();
   };
   // Closing plays the open transition backwards; the pie is gone once it reaches 0.
@@ -434,11 +437,12 @@ p { margin: 0 }
   // Hovering the dial morphs the needle into a signal disc with a white border (e: 0 needle, 1 disc).
   Demo.prototype.drawDial = function (cx, cy, ang, dir, e) {
     var C = this.C, k = this.s.k, el = this.el.bind(this);
-    var R0 = 46 * k + 6, L = R0 - 22, W = 6 * k + 2;
+    // Needle and ticks scale with the ring (f is 1 on a full-size root pie): fixed lengths swamp a small sub-pie dial on a phone.
+    var R0 = 46 * k + 6, f = R0 / 52, L = 30 * f, W = 8 * f;
     el("circle", { cx: cx, cy: cy, r: R0 + 3, fill: C.ground, "fill-opacity": 0.92, stroke: C.line, "stroke-width": 1.5 });
     for (var t = 0; t < 72; t++) {
       var deg = t * 5, major = t % 9 === 0, on = dir !== null && deg === dir;
-      var a1 = P(cx, cy, R0 - (major ? lerp(12, 5, e) : 5), deg), a2 = P(cx, cy, R0, deg);
+      var a1 = P(cx, cy, R0 - (major ? lerp(12, 5, e) : 5) * f, deg), a2 = P(cx, cy, R0, deg);
       el("line", { x1: a1[0], y1: a1[1], x2: a2[0], y2: a2[1], stroke: on ? C.signal : major ? C.ink : C.stone, "stroke-width": on ? 3 : major ? 2 : 1, opacity: major || on ? 1 : .55 });
     }
     // On centre hover the outer arrow slides onto the ring, shrinks to nothing and fades.
@@ -458,7 +462,7 @@ p { margin: 0 }
   Demo.prototype.drawLine = function (cx, cy) {
     var s = this.s, C = this.C, el = this.el.bind(this);
     var dx = s.px - cx, dy = s.py - cy, far = Math.hypot(dx, dy), start = 46 * s.k + 6 + LINE_START;
-    if (far <= start || far <= s.innerR) return;
+    if (s.still || far <= start || far <= s.innerR) return;
     // The line leaves the pointer at a steady speed and slows into the dial.
     var q = 1 - s.out, pulled = q <= 0.4 ? q * 1.6 : 0.64 + 0.36 * (1 - Math.pow(1 - (q - 0.4) / 0.6, 3)), tip = 1 - pulled;
     if (tip <= 0) return;
