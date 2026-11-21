@@ -20,6 +20,7 @@ Nothing ships inside the extension besides its own code.
 | Blender 5.2 LTS | runtime, CI | The host. CI pins a patch release by checksum in `.github/workflows/checks.yml`. |
 | pytest | `requirements-dev.txt` | Unit tests for the code that runs without Blender. |
 | ruff | aislop workflow | Lint and format, pinned by the locked `aislop.yml`. |
+| fontTools, brotli | `docs/banner/make.py`, installed by hand | Read the Barlow outlines from the site's `.woff2` for the README banner's labels. Not installed by CI. |
 
 ## Removed
 
