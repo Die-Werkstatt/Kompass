@@ -51,7 +51,8 @@ p { margin: 0 }
 .actions { display: flex; flex-wrap: wrap; gap: 12px }
 
 /* demo stage (shared) */
-.stage { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: default }
+/* Touch pans and zooms the page; only a tap reaches the demo. */
+.stage { position: relative; overflow: hidden; touch-action: manipulation; user-select: none; -webkit-user-select: none; cursor: default }
 .stage svg.layer, .depth svg.layer { position: absolute; inset: 0; width: 100%; height: 100% }
 
 /* ============ A · Dial ============ */
@@ -158,14 +159,20 @@ p { margin: 0 }
             var h = document.getElementById("hero-title");
             h.innerHTML = "<span>" + titles[i][0] + "</span><span>" + titles[i][1] + "</span>";
             // Both lines take the column's width, up to 460 px on a wide single column.
+            // On a narrow screen the two sizes together stay under 26vw: short titles then end before the column does.
             function fit() {
-              var width = Math.min(h.parentNode.clientWidth, 460);
-              Array.prototype.forEach.call(h.children, function (line) {
-                // Text width does not scale exactly with font size: a second pass corrects the first.
-                var size = 100;
-                for (var pass = 0; pass < 2; pass++) { line.style.fontSize = size + "px"; size *= width / line.getBoundingClientRect().width; }
-                line.style.fontSize = size + "px";
-              });
+              var width = Math.min(h.parentNode.clientWidth, 460), lines = Array.prototype.slice.call(h.children);
+              function size(scale) {
+                return lines.map(function (line) {
+                  // Text width does not scale exactly with font size: a second pass corrects the first.
+                  var px = 100;
+                  for (var pass = 0; pass < 2; pass++) { line.style.fontSize = px + "px"; px *= width * scale / line.getBoundingClientRect().width; }
+                  line.style.fontSize = px + "px";
+                  return px;
+                });
+              }
+              var sizes = size(1), most = 0.26 * document.documentElement.clientWidth, sum = sizes[0] + sizes[1];
+              if (sum > most) size(most / sum);
             }
             fit();
             if (document.fonts) document.fonts.ready.then(fit);
@@ -365,6 +372,9 @@ p { margin: 0 }
     s.px = x; s.py = y; d.dirty = true;
     if (!s.open || s.closing) return;
     d.layout();
+    // A pie pushed away from the pointer to fit the stage picks nothing until the pointer moves.
+    if (s.still && x === s.still[0] && y === s.still[1]) return;
+    s.still = null;
     var dx = x - s.ccx, dy = y - s.ccy, dist = Math.hypot(dx, dy);
     s.angle = dist < 8 ? s.angle : (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
     var was = s.dir, wasGone = s.gone, hit = dist > s.innerR ? d.pick(dx, dy) : { key: null };
@@ -392,12 +402,12 @@ p { margin: 0 }
     return { key: close === null ? null : +close };
   };
   Demo.prototype.openAt = function (x, y) {
-    var s = this.s; s.out = 1; s.lit = 0; s.gone = false; s.open = true; s.closing = false; s.o = 0; s.t = 0; s.ghost = null; s.stack = []; s.centres = []; s.suppress = null; s.scroll = {}; s.cx = x; s.cy = y; s.angle = null; s.shown = null; s.dir = null;
+    var s = this.s; s.out = 1; s.lit = 0; s.gone = false; s.open = true; s.closing = false; s.o = 0; s.t = 0; s.ghost = null; s.stack = []; s.centres = []; s.suppress = null; s.scroll = {}; s.cx = x; s.cy = y; s.angle = null; s.shown = null; s.dir = null; s.still = [x, y];
     this.track(x, y);
     if (this.opts.onOpen) this.opts.onOpen();
   };
   Demo.prototype.openSub = function (key) {
-    var s = this.s; clearTimeout(s.timer); s.pending = null; this.snapshot(s.px, s.py, 0.9); s.o = 0; s.t = 0; s.centres.push([s.ccx, s.ccy]); s.stack.push(key); s.cx = s.px; s.cy = s.py; s.dir = null; s.suppress = null; this.dirty = true; this.track(s.px, s.py);
+    var s = this.s; clearTimeout(s.timer); s.pending = null; this.snapshot(s.px, s.py, 0.9); s.o = 0; s.t = 0; s.centres.push([s.ccx, s.ccy]); s.stack.push(key); s.cx = s.px; s.cy = s.py; s.dir = null; s.suppress = null; s.angle = null; s.shown = null; s.still = [s.px, s.py]; this.dirty = true; this.track(s.px, s.py);
     if (this.user) this.lastActive = performance.now();
   };
   // Closing plays the open transition backwards; the pie is gone once it reaches 0.
@@ -427,11 +437,12 @@ p { margin: 0 }
   // Hovering the dial morphs the needle into a signal disc with a white border (e: 0 needle, 1 disc).
   Demo.prototype.drawDial = function (cx, cy, ang, dir, e) {
     var C = this.C, k = this.s.k, el = this.el.bind(this);
-    var R0 = 46 * k + 6, L = R0 - 22, W = 6 * k + 2;
+    // Needle and ticks scale with the ring (f is 1 on a full-size root pie): fixed lengths swamp a small sub-pie dial on a phone.
+    var R0 = 46 * k + 6, f = R0 / 52, L = 30 * f, W = 8 * f;
     el("circle", { cx: cx, cy: cy, r: R0 + 3, fill: C.ground, "fill-opacity": 0.92, stroke: C.line, "stroke-width": 1.5 });
     for (var t = 0; t < 72; t++) {
       var deg = t * 5, major = t % 9 === 0, on = dir !== null && deg === dir;
-      var a1 = P(cx, cy, R0 - (major ? lerp(12, 5, e) : 5), deg), a2 = P(cx, cy, R0, deg);
+      var a1 = P(cx, cy, R0 - (major ? lerp(12, 5, e) : 5) * f, deg), a2 = P(cx, cy, R0, deg);
       el("line", { x1: a1[0], y1: a1[1], x2: a2[0], y2: a2[1], stroke: on ? C.signal : major ? C.ink : C.stone, "stroke-width": on ? 3 : major ? 2 : 1, opacity: major || on ? 1 : .55 });
     }
     // On centre hover the outer arrow slides onto the ring, shrinks to nothing and fades.
@@ -451,7 +462,7 @@ p { margin: 0 }
   Demo.prototype.drawLine = function (cx, cy) {
     var s = this.s, C = this.C, el = this.el.bind(this);
     var dx = s.px - cx, dy = s.py - cy, far = Math.hypot(dx, dy), start = 46 * s.k + 6 + LINE_START;
-    if (far <= start || far <= s.innerR) return;
+    if (s.still || far <= start || far <= s.innerR) return;
     // The line leaves the pointer at a steady speed and slows into the dial.
     var q = 1 - s.out, pulled = q <= 0.4 ? q * 1.6 : 0.64 + 0.36 * (1 - Math.pow(1 - (q - 0.4) / 0.6, 3)), tip = 1 - pulled;
     if (tip <= 0) return;
@@ -687,9 +698,8 @@ p { margin: 0 }
       }
       d.lastActive = performance.now(); d.idleClose = false;
     }
-    st.addEventListener("pointerdown", function (e) {
-      if (e.button === 2) return;
-      var p = local(e); takeover(p); st.focus({ preventScroll: true });
+    function press(p) {
+      takeover(p); st.focus({ preventScroll: true });
       if (d.pendingOpen) { d.pendingOpen = p; d.track(p[0], p[1]); return; }
       if (!d.s.open || d.s.closing) { d.openAt(p[0], p[1]); d.downAt = Date.now(); d.dragging = true; return; }
       d.track(p[0], p[1]);
@@ -697,10 +707,27 @@ p { margin: 0 }
       var s = d.s, inDial = Math.hypot(p[0] - s.ccx, p[1] - s.ccy) <= s.innerR;
       if (!inDial && s.dir === null) { d.close(); return; }
       if (!d.choose()) d.back();
+    }
+    // A touch counts only as a tap: lifted within 500 ms and 10 px of where it landed. Anything longer scrolls the page.
+    var tap = null;
+    st.addEventListener("pointerdown", function (e) {
+      if (e.button === 2) return;
+      if (e.pointerType === "touch") { tap = { x: e.clientX, y: e.clientY, at: Date.now() }; return; }
+      press(local(e));
     });
     // Moving the pointer is not interaction for the idle timers: only clicks, keys and opening a sub-pie are.
-    st.addEventListener("pointermove", function (e) { if (!d.user) return; var p = local(e); d.track(p[0], p[1]); });
-    st.addEventListener("pointerup", function () { if (d.user && d.dragging && d.s.open && Date.now() - d.downAt > 250 && d.s.dir !== null) d.choose(); d.dragging = false; });
+    st.addEventListener("pointermove", function (e) {
+      if (e.pointerType === "touch") { if (tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 10) tap = null; return; }
+      if (!d.user) return; var p = local(e); d.track(p[0], p[1]);
+    });
+    st.addEventListener("pointercancel", function () { tap = null; d.dragging = false; });
+    st.addEventListener("pointerup", function (e) {
+      if (e.pointerType === "touch") {
+        if (tap && Date.now() - tap.at < 500 && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) <= 10) { press(local(e)); d.dragging = false; }
+        tap = null; return;
+      }
+      if (d.user && d.dragging && d.s.open && Date.now() - d.downAt > 250 && d.s.dir !== null) d.choose(); d.dragging = false;
+    });
     st.addEventListener("contextmenu", function (e) { if (d.user) { e.preventDefault(); d.back(); } });
     st.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && d.user) { d.back(); e.preventDefault(); }
@@ -733,9 +760,11 @@ p { margin: 0 }
     function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
     function norm(a) { var l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
     function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+    // Beside the copy the cube sits right of centre; alone on a narrow screen it sits in the middle, under the pie.
     function camera(w, h) {
+      var narrow = w < 600;
       var eye = [8, -10, 5], at = [0, 0, 0.8], f = norm(sub3(at, eye)), r = norm(cross(f, [0, 0, 1])), u = cross(r, f);
-      return { eye: eye, f: f, r: r, u: u, F: Math.min(h * 1.2, w * 0.9), ox: w * 0.68, oy: h * 0.64 };
+      return { eye: eye, f: f, r: r, u: u, F: Math.min(h * 1.2, w * 0.9), ox: w * (narrow ? 0.5 : 0.68), oy: h * (narrow ? 0.56 : 0.64) };
     }
     function view(p) { var d = sub3(p, cam.eye); return [dot(d, cam.r), dot(d, cam.u), dot(d, cam.f)]; }
     function screen(v) { return [cam.ox + cam.F * v[0] / v[2], cam.oy - cam.F * v[1] / v[2]]; }
