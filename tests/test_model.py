@@ -180,7 +180,7 @@ def test_dumps_refuses_invalid_pies():
         model.dumps((pie,))
 
 
-# The architecture rule in agent_docs/CLAUDE.md: core runs without Blender.
+# The architecture rule in AGENTS.md: core runs without Blender.
 def test_core_never_imports_bpy():
     core = Path(model.__file__).parent
     for source in core.rglob("*.py"):
