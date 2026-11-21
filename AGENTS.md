@@ -4,6 +4,10 @@ Kompass is a Blender extension (GPL-3.0-or-later) for artists who want their
 own pie menus. A pie of 4 or 8 slots opens as Blender's pie menu on its shortcut, or
 as the pie Kompass draws, as a pie of 12 always does. Slots are filled in the editor.
 
+Rules shared with other projects are in `.claude/rules/`. An agent that does
+not load that directory itself reads `working.md`, `writing.md` and
+`simplicity.md` there before starting.
+
 ## Stack
 - Blender 5.2 LTS is the minimum version. It ships Python 3.13.
 - Python standard library only inside the add-on. No bundled wheels.
@@ -62,6 +66,9 @@ xvfb-run -a python3 tests/smoke/run.py --interface   # the same, with a window
 ./build.sh                       # kompass-<version>.zip, kompass_native-<version>.zip
 ```
 
+Before calling a task done, run `python3 .claude/suite-check.py`. A check it
+reports as skipped did not pass.
+
 Both Blender tests use a temporary profile and are skipped where `blender` or
 `xvfb-run` is missing. CI (`.github/workflows/checks.yml`) runs both.
 
@@ -92,3 +99,4 @@ Check before writing it down.
 
 - Commit secrets, `.env` files or credentials.
 - Edit generated files or lockfiles by hand; regenerate them.
+- Add a dependency without reading `agent_docs/DEPENDENCIES.md`.

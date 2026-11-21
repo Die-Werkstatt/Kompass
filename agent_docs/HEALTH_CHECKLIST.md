@@ -18,12 +18,12 @@ issue or PR that taught it.
 
 ## 3. Scalable / future-proof
 
-- [ ] Architecture rules in `agent_docs/CLAUDE.md` still describe the code.
+- [ ] Architecture rules in `AGENTS.md` still describe the code.
 - [ ] Dependencies are recorded in `agent_docs/DEPENDENCIES.md`.
 
 ## 4. Performant
 
-- [ ] TODO: the budgets that matter here (bundle size, startup, memory).
+No budget is set.
 
 ## Open backlog
 

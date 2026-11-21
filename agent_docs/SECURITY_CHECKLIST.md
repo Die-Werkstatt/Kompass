@@ -12,8 +12,8 @@ The threat surface of this project and how each part is held. Pair with
 
 ## S1. Inputs
 
-- [ ] TODO: every place untrusted input enters (files, network, IPC, CLI args)
-      and how it is validated.
+- [ ] Pie files (`pies.json`, an imported file) are read only by
+      `core.model.loads`, which refuses unknown keys and slot types.
 
 ## S2. Credentials and secrets
 
