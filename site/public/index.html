@@ -69,7 +69,8 @@ p { margin: 0 }
   -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
   -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent); mask-composite: intersect }
 .a-stage > svg.layer { z-index: 3 }
-.a-stage > svg.scene-grid { z-index: 1 }
+/* The grid only changes with the stage size: its own layer keeps it from being redrawn with every pie frame. */
+.a-stage > svg.scene-grid { z-index: 1; will-change: transform }
 .a-stage > svg.scene-cube { z-index: 2 }
 .depth { position: absolute; top: 0; z-index: 0; pointer-events: none; width: 760px; height: 100%; opacity: 0; transition: opacity .8s;
   transform: scale(.85); filter: blur(2.5px) brightness(.6) }
@@ -82,17 +83,24 @@ p { margin: 0 }
 .a-dl h2 { font-size: clamp(32px, 4vw, 48px); letter-spacing: .04em }
 .a-dl header p { color: var(--stone); font-size: 15px }
 .plates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px }
-.plate { border: 1px solid var(--line); background: rgb(17 17 17 / .45); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); padding: 32px; display: grid; gap: 0; align-content: start }
+/* No backdrop-filter: with the pies moving behind the plates, it re-blurs both plates on every frame. */
+.plate { border: 1px solid var(--line); background: rgb(17 17 17 / .8); padding: 32px; display: grid; gap: 0; align-content: start }
 .plate.full { border-color: var(--signal); position: relative }
 /* Two soft highlights circle the Kompass tile's outline from opposite ends and stay inside its 1 px border.
-   A fixed conic gradient turns underneath a masked ring: a transform the compositor runs, so the tile is never repainted. */
-.plate.full .sweep { position: absolute; inset: -1px; padding: 1px; pointer-events: none; overflow: hidden; opacity: .9;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0) }
+   A fixed conic gradient turns behind four thin strips along the edges. Each strip clips with overflow, which the compositor
+   does for free; a mask instead redraws the whole ring into its own buffer every frame. */
+.plate.full .sweep { position: absolute; inset: -1px; pointer-events: none; container-type: size; --w: 1px; --o: .9 }
 /* A wider, fainter band just inside the line softens the highlight inward only. */
-.plate.full .sweep.soft { inset: 0; padding: 3px; opacity: .12 }
-/* 160% of the tile's width covers its diagonal at every tile shape the layout makes. */
-.plate.full .sweep i { position: absolute; left: 50%; top: 50%; width: 160%; aspect-ratio: 1; transform: translate(-50%, -50%);
+.plate.full .sweep.soft { inset: 0; --w: 3px; --o: .12 }
+/* The side strips stop short of the corners so no pixel is lit twice. --x and --y are the strip's offset in the ring. */
+.plate.full .sweep b { position: absolute; overflow: hidden }
+.plate.full .sweep b:nth-child(1) { left: 0; right: 0; top: 0; height: var(--w); --x: 0px; --y: 0px }
+.plate.full .sweep b:nth-child(2) { left: 0; right: 0; bottom: 0; height: var(--w); --x: 0px; --y: calc(100cqh - var(--w)) }
+.plate.full .sweep b:nth-child(3) { left: 0; top: var(--w); bottom: var(--w); width: var(--w); --x: 0px; --y: var(--w) }
+.plate.full .sweep b:nth-child(4) { right: 0; top: var(--w); bottom: var(--w); width: var(--w); --x: calc(100cqw - var(--w)); --y: var(--w) }
+/* Every strip's gradient is centred on the tile. 160% of the tile's width covers its diagonal at every tile shape the layout makes. */
+.plate.full .sweep i { position: absolute; left: calc(50cqw - var(--x)); top: calc(50cqh - var(--y)); width: 160cqw; aspect-ratio: 1; opacity: var(--o);
+  transform: translate(-50%, -50%);
   background: conic-gradient(transparent 0deg, #ffcbb8 40deg, transparent 90deg, transparent 180deg, #ffcbb8 220deg, transparent 270deg);
   animation: sweep 7s linear infinite }
 @keyframes sweep { to { transform: translate(-50%, -50%) rotate(360deg) } }
@@ -203,7 +211,7 @@ p { margin: 0 }
           <a class="btn" href="/download/kompass_native.zip?repository=.%2Findex.json&amp;blender_version_min=5.2.0" download data-getting="kompass_native.zip">Download Native</a>
         </article>
         <article class="plate full">
-          <span class="sweep" aria-hidden="true"><i></i></span><span class="sweep soft" aria-hidden="true"><i></i></span>
+          <span class="sweep" aria-hidden="true"><b><i></i></b><b><i></i></b><b><i></i></b><b><i></i></b></span><span class="sweep soft" aria-hidden="true"><b><i></i></b><b><i></i></b><b><i></i></b><b><i></i></b></span>
           <div class="name"><h3>Kompass</h3></div>
           <p>The Kompass pie and its visual editor.</p>
           <dl class="facts4">
@@ -349,7 +357,13 @@ p { margin: 0 }
   // Distance from a point to a slot's box, 0 on the box.
   function gap(r, x, y) { return Math.hypot(Math.max(r.x - x, 0, x - r.x - r.w), Math.max(r.y - y, 0, y - r.y - r.h)); }
   var measure = document.createElement("canvas").getContext("2d");
-  function textW(str, fs) { measure.font = "600 " + fs + "px Barlow, sans-serif"; return measure.measureText(str).width + str.length * fs * 0.08; }
+  var widths = {};
+  // Layout runs several times a frame; a label's width only depends on its text and size.
+  function textW(str, fs) {
+    var key = fs + "|" + str;
+    if (!(key in widths)) { measure.font = "600 " + fs + "px Barlow, sans-serif"; widths[key] = measure.measureText(str).width + str.length * fs * 0.08; }
+    return widths[key];
+  }
 
   // The area where a root pie opens without being pushed: its sub-pies are planned to land inside it too.
   Demo.prototype.safe = function () {
@@ -440,11 +454,16 @@ p { margin: 0 }
     // Needle and ticks scale with the ring (f is 1 on a full-size root pie): fixed lengths swamp a small sub-pie dial on a phone.
     var R0 = 46 * k + 6, f = R0 / 52, L = 30 * f, W = 8 * f;
     el("circle", { cx: cx, cy: cy, r: R0 + 3, fill: C.ground, "fill-opacity": 0.92, stroke: C.line, "stroke-width": 1.5 });
+    // The 72 ticks go in three paths (minor, major, picked) instead of 72 elements rebuilt every frame.
+    var ticks = ["", "", ""];
     for (var t = 0; t < 72; t++) {
       var deg = t * 5, major = t % 9 === 0, on = dir !== null && deg === dir;
       var a1 = P(cx, cy, R0 - (major ? lerp(12, 5, e) : 5) * f, deg), a2 = P(cx, cy, R0, deg);
-      el("line", { x1: a1[0], y1: a1[1], x2: a2[0], y2: a2[1], stroke: on ? C.signal : major ? C.ink : C.stone, "stroke-width": on ? 3 : major ? 2 : 1, opacity: major || on ? 1 : .55 });
+      ticks[on ? 2 : major ? 1 : 0] += "M" + a1[0] + " " + a1[1] + "L" + a2[0] + " " + a2[1];
     }
+    if (ticks[0]) el("path", { d: ticks[0], fill: "none", stroke: C.stone, "stroke-width": 1, opacity: .55 });
+    if (ticks[1]) el("path", { d: ticks[1], fill: "none", stroke: C.ink, "stroke-width": 2 });
+    if (ticks[2]) el("path", { d: ticks[2], fill: "none", stroke: C.signal, "stroke-width": 3 });
     // On centre hover the outer arrow slides onto the ring, shrinks to nothing and fades.
     var ay = cy - lerp(R0 + 12, R0 + 3, e), as = 1 - e;
     var g = el("g", { transform: "rotate(" + (ang === null ? 0 : ang) + " " + cx + " " + cy + ")" });
