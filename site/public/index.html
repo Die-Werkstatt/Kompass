@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kompass for Blender</title>
 <meta name="description" content="Add and customize the tools you reach for most on radial menus in Blender.">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#303030">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/barlow-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -15,8 +15,9 @@
 @font-face { font-family: "Barlow"; font-style: normal; font-weight: 600; font-display: swap; src: url(/fonts/barlow-latin-600-normal.woff2) format("woff2") }
 @font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url(/fonts/ibm-plex-sans-latin-400-normal.woff2) format("woff2") }
 @font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url(/fonts/ibm-plex-sans-latin-500-normal.woff2) format("woff2") }
+/* The ground is the editor background of Blender's default dark theme (#303030, userdef_default_theme.c); plates take the darker #1d1d1d of its info and console editors, which keeps the signal text above 4.5:1. */
 :root {
-  --page: #000;
+  --page: #303030;
   --display: "Barlow", "Barlow Semi Condensed", "IBM Plex Sans", sans-serif;
   --text: "IBM Plex Sans", "Helvetica Neue", sans-serif;
   color-scheme: dark;
@@ -24,7 +25,7 @@
 * { box-sizing: border-box }
 body { overflow-x: clip; background: var(--page); font: 16px/1.55 var(--text); -webkit-font-smoothing: antialiased; }
 .site {
-  --bg: #000; --line: #2c2c2c; --ink: #f1f0ec; --stone: #8f8d88; --signal: #f2542d;
+  --bg: #303030; --line: #161616; --ink: #f1f0ec; --stone: #a8a6a1; --signal: #f2542d;
   background: var(--bg); color: var(--ink); min-height: 100%;
 }
 .wrap { max-width: 1200px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
@@ -84,7 +85,7 @@ p { margin: 0 }
 .a-dl header p { color: var(--stone); font-size: 15px }
 .plates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px }
 /* No backdrop-filter: with the pies moving behind the plates, it re-blurs both plates on every frame. */
-.plate { border: 1px solid var(--line); background: rgb(17 17 17 / .8); padding: 32px; display: grid; gap: 0; align-content: start }
+.plate { border: 1px solid var(--line); background: rgb(29 29 29 / .8); padding: 32px; display: grid; gap: 0; align-content: start }
 .plate.full { border-color: var(--signal); position: relative }
 /* Two soft highlights circle the Kompass tile's outline from opposite ends and stay inside its 1 px border.
    A fixed conic gradient turns behind four thin strips along the edges. Each strip clips with overflow, which the compositor
